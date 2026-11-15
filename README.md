@@ -7,10 +7,10 @@
 
 
 
-[![JavaScript](https://img.shields.io/badge/JavaScript-5-3178C6?logo=javascript)](https://www.javascriptlang.org/)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?logo=postgresql)](https://www.postgresql.org/)
-
-[![Docker](https://img.shields.io/badge/Docker-✓-2496ED?logo=docker)](https://www.docker.com/)
+![JavaScript](https://img.shields.io/badge/javascript-%23323330.svg?style=for-the-badge&logo=javascript&logoColor=%23F7DF1E)
+![Postgres](https://img.shields.io/badge/postgres-%23316192.svg?style=for-the-badge&logo=postgresql&logoColor=white)
+![FastAPI](https://img.shields.io/badge/fastapi-%23009688.svg?style=for-the-badge&logo=fastapi&logoColor=white)
+![Docker](https://img.shields.io/badge/docker-%230db7ed.svg?style=for-the-badge&logo=docker&logoColor=white)
 </div>
 
 Plataforma de control de cadena de frío para flotillas refrigeradas. Frostbase combina telemetría en vivo de temperatura y humedad, pedidos de entrega, planificación semanal de rutas, gestión de tiendas y un mapa de flotilla en tiempo real en un solo espacio de trabajo.
