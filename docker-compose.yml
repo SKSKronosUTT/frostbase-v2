@@ -1,0 +1,36 @@
+services:
+  db:
+    image: postgres:16
+    container_name: frostbase-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-frostbase}
+      POSTGRES_USER: ${POSTGRES_USER:-frostbase}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-frostbase}
+    ports:
+      - "5433:5432"
+    volumes:
+      - frostbase_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-frostbase} -d ${POSTGRES_DB:-frostbase}"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  app:
+    build: .
+    container_name: frostbase-app
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-frostbase}:${POSTGRES_PASSWORD:-frostbase}@db:5432/${POSTGRES_DB:-frostbase}
+      FROSTBASE_SECRET: ${FROSTBASE_SECRET:-frostbase-development-secret}
+      AUTO_SEED: ${AUTO_SEED:-true}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:8000,http://127.0.0.1:8000}
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  frostbase_pgdata:

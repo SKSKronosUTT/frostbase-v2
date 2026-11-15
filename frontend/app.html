@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="es" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Frostbase</title>
+  <link rel="icon" href="assets/frosty-logo-blue.png">
+  <link rel="stylesheet" href="vendor/leaflet/leaflet.css">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body class="app-page">
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <a class="sidebar-brand" href="#/monitoring">
+        <img src="assets/frosty-logo-blue.png" alt="" width="34" height="34">
+        <span>Frostbase</span>
+      </a>
+      <nav class="nav" id="main-nav" aria-label="Navegación principal"></nav>
+      <div class="sidebar-foot">
+        <span class="status-dot"></span>
+        <span>Sistemas operativos</span>
+      </div>
+    </aside>
+
+    <div class="workspace">
+      <header class="topbar">
+        <div class="topbar-left">
+          <button class="icon-btn menu-toggle" id="menu-toggle" aria-label="Abrir menú"></button>
+          <div>
+            <p class="eyebrow" id="page-eyebrow">Operaciones</p>
+            <h1 id="page-title">Monitoreo</h1>
+          </div>
+        </div>
+        <div class="topbar-right">
+          <button class="icon-btn" id="theme-toggle" aria-label="Cambiar tema"></button>
+          <div class="user-chip" id="user-chip">
+            <span class="avatar" id="user-avatar">FB</span>
+            <span class="user-meta">
+              <strong id="user-name">Cargando</strong>
+              <small id="user-role">—</small>
+            </span>
+            <button class="icon-btn" id="logout-btn" aria-label="Cerrar sesión"></button>
+          </div>
+        </div>
+      </header>
+      <main class="view" id="view" tabindex="-1"></main>
+    </div>
+  </div>
+  <div class="toast-stack" id="toast-stack" aria-live="polite"></div>
+  <div class="modal-root" id="modal-root"></div>
+  <script src="vendor/leaflet/leaflet.js"></script>
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

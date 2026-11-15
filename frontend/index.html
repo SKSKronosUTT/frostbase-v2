@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="es" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Frostbase | Control de cadena de frío</title>
+  <link rel="icon" href="assets/frosty-logo-blue.png">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body class="auth-page">
+  <main class="auth-shell">
+    <section class="auth-brand">
+      <div class="brand-mark">
+        <img src="assets/frosty-logo-blue.png" alt="" width="44" height="44">
+        <span>Frostbase</span>
+      </div>
+      <div class="auth-copy">
+        <p class="eyebrow">Operaciones de cadena de frío</p>
+        <h1>Controla cada grado de tu operación.</h1>
+        <p class="muted">Telemetría de flotilla, rutas de entrega y cumplimiento de temperatura en un solo espacio de trabajo.</p>
+      </div>
+      <figure class="auth-visual">
+        <img src="assets/mountain.jpg" alt="Paisaje de montaña fría">
+        <figcaption>Monitoreo en vivo de toda tu cadena de frío.</figcaption>
+      </figure>
+      <div class="auth-points">
+        <span>Cumplimiento de temperatura</span>
+        <span>Visibilidad de rutas</span>
+        <span>Alertas de puerta</span>
+      </div>
+    </section>
+
+    <section class="auth-panel">
+      <div class="auth-card">
+        <div class="mobile-brand">
+          <img src="assets/frosty-logo-blue.png" alt="" width="36" height="36">
+          <strong>Frostbase</strong>
+        </div>
+        <p class="eyebrow">Bienvenido de nuevo</p>
+        <h2>Inicia sesión en tu espacio</h2>
+        <form id="login-form" novalidate>
+          <label class="field">
+            <span>Correo electrónico</span>
+            <input id="login-email" type="email" autocomplete="email" placeholder="tu@frostbase.io" required>
+          </label>
+          <label class="field">
+            <span>Contraseña</span>
+            <input id="login-password" type="password" autocomplete="current-password" placeholder="••••••••" required>
+          </label>
+          <p id="login-error" class="form-error" role="alert"></p>
+          <button id="login-submit" class="btn btn-primary btn-block" type="submit">Iniciar sesión</button>
+        </form>
+        <div class="demo-box">
+          <p class="muted">Acceso de demostración</p>
+          <button id="demo-fill" type="button" class="link-button">Usar credenciales demo</button>
+        </div>
+        <p class="fineprint">Frostbase v1.0 · Plataforma de control de cadena de frío</p>
+      </div>
+    </section>
+  </main>
+  <script type="module" src="js/auth.js"></script>
+</body>
+</html>
