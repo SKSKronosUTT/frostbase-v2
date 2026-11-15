@@ -1,4 +1,17 @@
-# Frostbase
+<div align="center">
+
+<img src="frontend/assets/frosty-logo.png" alt="Cooffy Logo" width="200" />
+
+**Sistema Gestor de Comedores Escolares**
+
+
+
+
+[![JavaScript](https://img.shields.io/badge/JavaScript-5-3178C6?logo=javascript)](https://www.javascriptlang.org/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?logo=postgresql)](https://www.postgresql.org/)
+
+[![Docker](https://img.shields.io/badge/Docker-✓-2496ED?logo=docker)](https://www.docker.com/)
+</div>
 
 Plataforma de control de cadena de frío para flotillas refrigeradas. Frostbase combina telemetría en vivo de temperatura y humedad, pedidos de entrega, planificación semanal de rutas, gestión de tiendas y un mapa de flotilla en tiempo real en un solo espacio de trabajo.
 
