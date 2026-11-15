@@ -2,7 +2,7 @@
 
 <img src="frontend/assets/frosty-logo.png" alt="Cooffy Logo" width="200" />
 
-**Sistema Gestor de Comedores Escolares**
+**Sistema Monitoreo y Gestión de Camiones Refrigerados**
 
 
 
