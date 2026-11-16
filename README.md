@@ -1,6 +1,7 @@
+<h1>[DEPRECADO]</h1>
 <div align="center">
 
-<img src="frontend/assets/frosty-logo.png" alt="Cooffy Logo" width="200" />
+<img src="frontend/assets/frosty-logo.png" alt="Frosty Logo" width="200" />
 
 **Sistema Monitoreo y Gestión de Camiones Refrigerados**
 
