@@ -101,6 +101,10 @@ svg {
   display: none !important;
 }
 
+[hidden] {
+  display: none !important;
+}
+
 .muted {
   color: var(--text-muted);
 }

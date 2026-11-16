@@ -1,8 +1,46 @@
 .routes-layout {
   display: grid;
-  grid-template-columns: 330px minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr);
   gap: 18px;
   align-items: start;
+}
+
+.routes-layout.is-editing {
+  grid-template-columns: 340px minmax(0, 1fr);
+}
+
+.routes-side {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  min-width: 0;
+}
+
+.route-hint {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px 18px;
+}
+
+.route-hint__icon {
+  width: 38px;
+  height: 38px;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--accent-frost);
+  color: var(--ink);
+  border: 2px solid var(--border-ink);
+  box-shadow: 2px 2px 0 var(--ink);
+}
+
+.route-hint__text {
+  margin-top: 4px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-muted);
 }
 
 .routes-list-card {
@@ -82,16 +120,10 @@
   margin-right: 3px;
 }
 
-.route-editor-empty {
-  min-height: 420px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
 .route-editor {
   display: flex;
   flex-direction: column;
+  min-width: 0;
 }
 
 .route-editor__head {
@@ -295,13 +327,13 @@
 }
 
 @media (max-width: 1050px) {
-  .routes-layout {
+  .routes-layout.is-editing {
     grid-template-columns: 290px minmax(0, 1fr);
   }
 }
 
 @media (max-width: 900px) {
-  .routes-layout {
+  .routes-layout.is-editing {
     grid-template-columns: 1fr;
   }
 

@@ -42,8 +42,17 @@
         </div>
       </header>
 
-      <div class="routes-layout">
-        <aside class="card routes-list-card">
+      <div class="routes-layout" id="routesLayout">
+        <div class="routes-side">
+          <aside class="card route-hint" id="routeEditorEmpty">
+            <div class="route-hint__icon"><i class="fa-solid fa-circle-info"></i></div>
+            <div>
+              <h2 class="card__title">Cómo editar una ruta</h2>
+              <p class="route-hint__text">Selecciona una ruta de la lista para abrir el editor, o pulsa «Nueva ruta» arriba para crear una desde cero. Después podrás agregar puntos sobre el mapa.</p>
+            </div>
+          </aside>
+
+          <aside class="card routes-list-card">
           <div class="routes-list__head">
             <h2 class="card__title"><i class="fa-solid fa-route"></i> Rutas registradas</h2>
             <span class="section-header__meta" id="routesCount">—</span>
@@ -57,18 +66,8 @@
           <div class="routes-list" id="routesList">
             <div class="loading-block"><span class="spinner"></span> Cargando rutas…</div>
           </div>
-        </aside>
-
-        <section class="card route-editor-empty" id="routeEditorEmpty">
-          <div class="empty-state">
-            <div class="empty-state__icon"><i class="fa-solid fa-map-location-dot"></i></div>
-            <strong>Selecciona o crea una ruta</strong>
-            <p>Elige una ruta de la lista para editarla o crea una nueva para agregar puntos de entrega sobre el mapa.</p>
-            <button class="btn btn--primary btn--sm" type="button" style="margin-top: 6px;" id="emptyNewRouteButton">
-              <i class="fa-solid fa-plus"></i> Crear ruta
-            </button>
-          </div>
-        </section>
+          </aside>
+        </div>
 
         <section class="card route-editor" id="routeEditor" hidden>
           <div class="route-editor__head">

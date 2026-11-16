@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from app.models.device import Device
 from app.models.reading import Reading
 from app.models.setting import Setting
+from app.models.truck import Truck
 from app.repositories import readings as readings_repo
 from app.schemas.common import Page
 from app.schemas.iot import ReadingIngest
@@ -25,6 +26,11 @@ def ingest_reading(
         raise DeviceNotAssignedError(
             "El dispositivo no está asociado a un camión. Asígnelo antes de enviar lecturas."
         )
+
+    truck = db.get(Truck, device.truck_id)
+    if truck is not None and truck.status == "disponible":
+        truck.status = "en_ruta"
+        db.add(truck)
 
     now = utcnow()
     timestamp = ensure_utc(payload.timestamp) or now

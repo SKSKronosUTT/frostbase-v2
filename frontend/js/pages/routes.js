@@ -223,8 +223,8 @@ function renderMap({ fit = false } = {}) {
 }
 
 function showEditor() {
-  qs("#routeEditorEmpty").hidden = true;
   qs("#routeEditor").hidden = false;
+  qs("#routesLayout").classList.add("is-editing");
   setTimeout(() => {
     if (state.map) state.map.invalidateSize();
   }, 60);
@@ -232,7 +232,7 @@ function showEditor() {
 
 function showEmptyEditor() {
   qs("#routeEditor").hidden = true;
-  qs("#routeEditorEmpty").hidden = false;
+  qs("#routesLayout").classList.remove("is-editing");
   state.mode = "empty";
   state.routeId = null;
   state.points = [];
@@ -551,7 +551,6 @@ async function loadTrucks() {
 
 function wireEvents() {
   qs("#newRouteButton").addEventListener("click", startNewRoute);
-  qs("#emptyNewRouteButton").addEventListener("click", startNewRoute);
   qs("#saveRouteButton").addEventListener("click", saveRoute);
   qs("#calculateRouteButton").addEventListener("click", calculateRoute);
   qs("#deleteRouteButton").addEventListener("click", deleteRoute);
