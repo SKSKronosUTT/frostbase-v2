@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Flota | FrostBase</title>
+  <link rel="icon" href="assets/logo.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" />
+  <link rel="stylesheet" href="css/variables.css" />
+  <link rel="stylesheet" href="css/global.css" />
+  <link rel="stylesheet" href="css/components.css" />
+  <link rel="stylesheet" href="css/layout.css" />
+  <link rel="stylesheet" href="css/pages/trucks.css" />
+  <link rel="stylesheet" href="css/bauhaus.css" />
+  <script>
+    (function () {
+      try {
+        var stored = localStorage.getItem("frostbase-theme");
+        if (stored === "dark" || stored === "light") document.documentElement.dataset.theme = stored;
+      } catch (error) {}
+    })();
+  </script>
+</head>
+<body data-page="trucks">
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar"></aside>
+    <main class="main">
+      <header class="page-header">
+        <div class="page-header__title">
+          <span class="eyebrow">Administración</span>
+          <h1>Flota</h1>
+          <p class="page-header__subtitle">Camiones, dispositivos IoT y asignaciones operativas.</p>
+        </div>
+        <div class="page-header__actions">
+          <button class="btn btn--primary" id="newTruckButton" type="button">
+            <i class="fa-solid fa-plus"></i> Nuevo camión
+          </button>
+        </div>
+      </header>
+
+      <section class="card fleet-card">
+        <div class="fleet-tabs">
+          <div class="tabs" role="tablist" aria-label="Secciones de flota">
+            <button class="tab is-active" type="button" role="tab" data-tab="trucks" aria-selected="true">
+              <i class="fa-solid fa-truck"></i> Camiones
+            </button>
+            <button class="tab" type="button" role="tab" data-tab="devices" aria-selected="false">
+              <i class="fa-solid fa-microchip"></i> Dispositivos IoT
+            </button>
+          </div>
+          <div class="fleet-tabs__right">
+            <span class="section-header__meta" id="fleetTotals">Cargando…</span>
+          </div>
+        </div>
+
+        <div class="fleet-panel" id="trucksPanel">
+          <div class="toolbar">
+            <div class="toolbar__group">
+              <div class="input-with-icon">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input class="input" id="truckSearch" type="search" placeholder="Buscar por placas, marca o modelo" />
+              </div>
+              <select class="select" id="truckStatusFilter" aria-label="Filtrar camiones por estado">
+                <option value="">Todos los estados</option>
+                <option value="en_ruta">En ruta</option>
+                <option value="disponible">Disponible</option>
+                <option value="mantenimiento">Mantenimiento</option>
+              </select>
+            </div>
+            <span class="section-header__meta" id="trucksCount">—</span>
+          </div>
+          <div class="table-wrap">
+            <table class="table fleet-table">
+              <thead>
+                <tr>
+                  <th>Placas</th>
+                  <th>Vehículo</th>
+                  <th>Estado</th>
+                  <th>Ruta</th>
+                  <th>Temperatura</th>
+                  <th>Humedad</th>
+                  <th>Última comunicación</th>
+                  <th aria-label="Acciones"></th>
+                </tr>
+              </thead>
+              <tbody id="trucksTableBody">
+                <tr><td colspan="8"><div class="loading-block"><span class="spinner"></span> Cargando camiones…</div></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="pagination" id="trucksPagination"></div>
+        </div>
+
+        <div class="fleet-panel" id="devicesPanel" hidden>
+          <div class="toolbar">
+            <div class="toolbar__group">
+              <div class="input-with-icon">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input class="input" id="deviceSearch" type="search" placeholder="Buscar dispositivo por identificador" />
+              </div>
+            </div>
+            <div class="toolbar__group">
+              <span class="section-header__meta" id="devicesCount">—</span>
+              <button class="btn btn--primary btn--sm" id="newDeviceButton" type="button">
+                <i class="fa-solid fa-plus"></i> Nuevo dispositivo
+              </button>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table class="table fleet-table">
+              <thead>
+                <tr>
+                  <th>Identificador</th>
+                  <th>Camión asignado</th>
+                  <th>Estado</th>
+                  <th>Última comunicación</th>
+                  <th>Registro</th>
+                  <th aria-label="Acciones"></th>
+                </tr>
+              </thead>
+              <tbody id="devicesTableBody">
+                <tr><td colspan="6"><div class="loading-block"><span class="spinner"></span> Cargando dispositivos…</div></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="pagination" id="devicesPagination"></div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Modal de camión -->
+  <div class="modal-overlay hidden" id="truckModal">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="truckModalTitle">
+      <form id="truckForm">
+        <div class="modal__header">
+          <div>
+            <h2 id="truckModalTitle">Registrar camión</h2>
+            <p class="modal-subtitle">Los datos operativos se reflejan de inmediato en el monitoreo.</p>
+          </div>
+          <button class="icon-button modal__close" type="button" data-close="truckModal" aria-label="Cerrar">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+        <div class="modal__body">
+          <input type="hidden" id="truckId" />
+          <div class="form-grid truck-form">
+            <div class="form-field">
+              <label for="truckBrand">Marca *</label>
+              <input class="input" id="truckBrand" type="text" maxlength="100" required />
+            </div>
+            <div class="form-field">
+              <label for="truckModel">Modelo *</label>
+              <input class="input" id="truckModel" type="text" maxlength="100" required />
+            </div>
+            <div class="form-field">
+              <label for="truckYear">Año *</label>
+              <input class="input" id="truckYear" type="number" min="1950" max="2100" required />
+            </div>
+            <div class="form-field">
+              <label for="truckPlate">Placas *</label>
+              <input class="input" id="truckPlate" type="text" maxlength="40" placeholder="ABC-123-A" required />
+            </div>
+            <div class="form-field">
+              <label for="truckStatus">Estado operativo *</label>
+              <select class="select" id="truckStatus" required>
+                <option value="disponible">Disponible</option>
+                <option value="en_ruta">En ruta</option>
+                <option value="mantenimiento">Mantenimiento</option>
+              </select>
+            </div>
+            <div class="form-field">
+              <label for="truckRoute">Ruta asignada</label>
+              <select class="select" id="truckRoute">
+                <option value="">Sin ruta</option>
+              </select>
+            </div>
+            <div class="form-field form-field--full">
+              <label for="truckDevice">Dispositivo IoT asociado</label>
+              <select class="select" id="truckDevice">
+                <option value="">Sin dispositivo</option>
+              </select>
+              <span class="hint">Al asociar un dispositivo que pertenece a otro camión, se reasigna automáticamente.</span>
+            </div>
+            <div class="form-field form-field--full">
+              <label for="truckDescription">Descripción</label>
+              <textarea class="textarea" id="truckDescription" maxlength="2000" placeholder="Notas opcionales sobre la unidad"></textarea>
+            </div>
+          </div>
+        </div>
+        <div class="modal__footer">
+          <button class="btn btn--ghost" type="button" data-close="truckModal">Cancelar</button>
+          <button class="btn btn--primary" id="truckSubmit" type="submit">
+            <i class="fa-solid fa-floppy-disk"></i> Guardar camión
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal de dispositivo -->
+  <div class="modal-overlay hidden" id="deviceModal">
+    <div class="modal modal--sm" role="dialog" aria-modal="true" aria-labelledby="deviceModalTitle">
+      <form id="deviceForm">
+        <div class="modal__header">
+          <div>
+            <h2 id="deviceModalTitle">Registrar dispositivo</h2>
+            <p class="modal-subtitle">El identificador debe coincidir con el ESP32-S3.</p>
+          </div>
+          <button class="icon-button modal__close" type="button" data-close="deviceModal" aria-label="Cerrar">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+        <div class="modal__body">
+          <input type="hidden" id="devicePk" />
+          <div class="form-grid">
+            <div class="form-field form-field--full">
+              <label for="deviceIdentifier">Identificador del dispositivo *</label>
+              <input class="input" id="deviceIdentifier" type="text" maxlength="100" placeholder="ESP32-FROST-001" required />
+              <span class="hint" id="deviceIdentifierHint">Se usará para autenticar sus lecturas.</span>
+            </div>
+            <div class="form-field form-field--full">
+              <label for="deviceTruck">Camión asignado</label>
+              <select class="select" id="deviceTruck">
+                <option value="">Sin asignar</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="modal__footer">
+          <button class="btn btn--ghost" type="button" data-close="deviceModal">Cancelar</button>
+          <button class="btn btn--primary" id="deviceSubmit" type="submit">
+            <i class="fa-solid fa-floppy-disk"></i> Guardar dispositivo
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal de clave generada -->
+  <div class="modal-overlay hidden" id="secretModal">
+    <div class="modal modal--sm" role="dialog" aria-modal="true" aria-labelledby="secretModalTitle">
+      <div class="modal__header">
+        <div>
+          <h2 id="secretModalTitle">Clave del dispositivo</h2>
+          <p class="modal-subtitle" id="secretDeviceLabel"></p>
+        </div>
+        <button class="icon-button modal__close" type="button" data-close="secretModal" aria-label="Cerrar">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+      <div class="modal__body">
+        <div class="notice notice--warning">
+          <i class="fa-solid fa-triangle-exclamation"></i>
+          <span>Guarda esta clave ahora. No se volverá a mostrar y se almacena cifrada en el servidor.</span>
+        </div>
+        <div class="secret-box" style="margin-top: 14px;">
+          <code id="secretValue"></code>
+          <button class="icon-button" id="copySecretButton" type="button" aria-label="Copiar clave">
+            <i class="fa-regular fa-copy"></i>
+          </button>
+        </div>
+        <div class="notice notice--info device-key-warning">
+          <i class="fa-solid fa-circle-info"></i>
+          <span>Envíala en el encabezado <strong>X-Device-Key</strong> de cada lectura IoT.</span>
+        </div>
+      </div>
+      <div class="modal__footer">
+        <button class="btn btn--primary" type="button" data-close="secretModal">Entendido</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast-root" id="toastRoot" aria-live="polite"></div>
+  <script type="module" src="js/pages/trucks.js"></script>
+</body>
+</html>

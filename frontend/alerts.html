@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Historial de alertas | FrostBase</title>
+  <link rel="icon" href="assets/logo.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" />
+  <link rel="stylesheet" href="css/variables.css" />
+  <link rel="stylesheet" href="css/global.css" />
+  <link rel="stylesheet" href="css/components.css" />
+  <link rel="stylesheet" href="css/layout.css" />
+  <link rel="stylesheet" href="css/pages/alerts.css" />
+  <link rel="stylesheet" href="css/bauhaus.css" />
+  <script>
+    (function () {
+      try {
+        var stored = localStorage.getItem("frostbase-theme");
+        if (stored === "dark" || stored === "light") document.documentElement.dataset.theme = stored;
+      } catch (error) {}
+    })();
+  </script>
+</head>
+<body data-page="alerts">
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar"></aside>
+    <main class="main">
+      <header class="page-header">
+        <div class="page-header__title">
+          <span class="eyebrow">Monitoreo</span>
+          <h1>Historial de alertas</h1>
+          <p class="page-header__subtitle">Alertas de temperatura, humedad y desconexión de dispositivos.</p>
+        </div>
+      </header>
+
+      <section class="card" style="overflow: hidden;">
+        <form class="alerts-filters" id="alertsFilterForm">
+          <div class="form-field">
+            <label for="alertTruck">Camión</label>
+            <select class="select" id="alertTruck">
+              <option value="">Todos</option>
+            </select>
+          </div>
+          <div class="form-field">
+            <label for="alertType">Tipo de alerta</label>
+            <select class="select" id="alertType">
+              <option value="">Todos</option>
+              <option value="temperatura">Temperatura</option>
+              <option value="humedad">Humedad</option>
+              <option value="desconexion">Desconexión</option>
+            </select>
+          </div>
+          <div class="form-field">
+            <label for="alertStatus">Estado</label>
+            <select class="select" id="alertStatus">
+              <option value="">Todas</option>
+              <option value="activa">Activa</option>
+              <option value="resuelta">Resuelta</option>
+            </select>
+          </div>
+          <div class="form-field">
+            <label for="alertFrom">Desde</label>
+            <input class="input" id="alertFrom" type="datetime-local" />
+          </div>
+          <div class="form-field">
+            <label for="alertTo">Hasta</label>
+            <input class="input" id="alertTo" type="datetime-local" />
+          </div>
+          <div class="alerts-filters__actions">
+            <button class="btn btn--primary btn--sm" type="submit"><i class="fa-solid fa-filter"></i> Filtrar</button>
+            <button class="btn btn--ghost btn--sm" id="clearAlertFilters" type="button">Limpiar</button>
+          </div>
+        </form>
+
+        <div class="toolbar">
+          <span class="section-header__meta" id="alertsCount">—</span>
+          <div class="chips" id="alertsChips"></div>
+        </div>
+
+        <div class="table-wrap">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Fecha y hora</th>
+                <th>Camión</th>
+                <th>Tipo de alerta</th>
+                <th>Valor detectado</th>
+                <th>Rango permitido</th>
+                <th>Estado</th>
+                <th aria-label="Acciones"></th>
+              </tr>
+            </thead>
+            <tbody id="alertsTableBody">
+              <tr><td colspan="7"><div class="loading-block"><span class="spinner"></span> Cargando alertas…</div></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="pagination" id="alertsPagination"></div>
+      </section>
+    </main>
+  </div>
+
+  <div class="modal-overlay hidden" id="alertModal">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="alertModalTitle">
+      <div class="modal__header">
+        <div>
+          <h2 id="alertModalTitle">Detalle de la alerta</h2>
+          <p class="modal-subtitle" id="alertModalSubtitle"></p>
+        </div>
+        <button class="icon-button modal__close" type="button" data-close="alertModal" aria-label="Cerrar">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+      <div class="modal__body" id="alertModalBody">
+        <div class="loading-block"><span class="spinner"></span> Cargando detalle…</div>
+      </div>
+      <div class="modal__footer" id="alertModalFooter">
+        <button class="btn btn--ghost" type="button" data-close="alertModal">Cerrar</button>
+        <a class="btn btn--primary hidden" id="alertTruckLink" href="#"><i class="fa-solid fa-truck"></i> Ver camión</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast-root" id="toastRoot" aria-live="polite"></div>
+  <script type="module" src="js/pages/alerts.js"></script>
+</body>
+</html>

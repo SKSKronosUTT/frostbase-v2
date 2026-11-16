@@ -1,0 +1,987 @@
+/* ============================================================
+   FrostBase · Bauhaus "Frost" Design System
+   Constructivismo geométrico con paleta de azules fríos.
+   Se carga al final para redefinir la capa visual existente.
+   ============================================================ */
+
+/* ---------- Tipografía y lienzo ---------- */
+
+body {
+  font-family: var(--font-sans);
+  font-size: 14.5px;
+  background-color: var(--bg);
+  background-image: radial-gradient(
+    rgba(10, 27, 43, 0.07) 1.4px,
+    transparent 1.4px
+  );
+  background-size: 22px 22px;
+}
+
+[data-theme="dark"] body {
+  background-image: radial-gradient(
+    rgba(143, 227, 240, 0.08) 1.4px,
+    transparent 1.4px
+  );
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: -0.02em;
+}
+
+h1 {
+  line-height: 0.95;
+}
+
+h2 {
+  font-size: 20px;
+}
+
+h3 {
+  font-size: 16px;
+}
+
+.eyebrow,
+.label,
+.form-field label,
+.card__subtitle {
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-weight: 700;
+}
+
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--accent-deep);
+}
+
+[data-theme="dark"] .eyebrow {
+  color: var(--accent-frost);
+}
+
+.eyebrow::before {
+  content: "";
+  width: 10px;
+  height: 10px;
+  flex: 0 0 auto;
+  background: var(--accent-mid);
+  border: 2px solid var(--border-ink);
+  transform: rotate(45deg);
+}
+
+::selection {
+  background: var(--accent-frost);
+  color: var(--ink);
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent-mid);
+  outline-offset: 3px;
+}
+
+/* ---------- Sidebar ---------- */
+
+.sidebar {
+  border-right: 4px solid var(--border-ink);
+  padding: 24px 16px 18px;
+}
+
+.sidebar__brand {
+  padding: 0 4px 18px;
+  margin-bottom: 16px;
+  border-bottom: 2px solid rgba(234, 244, 250, 0.16);
+}
+
+.brand-logo {
+  border-radius: 0;
+  border: 2px solid var(--sidebar-text-strong);
+  background: transparent;
+  box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.6);
+}
+
+.brand-logo__img {
+  padding: 4px;
+}
+
+.brand-name {
+  text-transform: uppercase;
+  font-weight: 900;
+  letter-spacing: -0.01em;
+}
+
+.nav-link {
+  border-radius: 0;
+  border: 2px solid transparent;
+  font-weight: 700;
+  font-size: 11.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.nav-link i {
+  font-size: 14px;
+}
+
+.nav-link:hover {
+  border-color: rgba(234, 244, 250, 0.28);
+  background: var(--sidebar-soft);
+}
+
+.nav-link.is-active {
+  background: var(--accent-mid);
+  border-color: var(--sidebar-text-strong);
+  box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.65);
+}
+
+.sidebar__footer {
+  border-top: 2px solid rgba(234, 244, 250, 0.16);
+}
+
+.sidebar__user-avatar {
+  border-radius: var(--radius-pill);
+  border: 2px solid var(--sidebar-text-strong);
+}
+
+/* ---------- Encabezados de página ---------- */
+
+.main {
+  padding: 32px 34px 48px;
+}
+
+.page-header {
+  position: relative;
+  padding-bottom: 18px;
+  margin-bottom: 26px;
+  border-bottom: 4px solid var(--border-ink);
+}
+
+.page-header__title h1 {
+  font-size: clamp(30px, 4vw, 46px);
+  letter-spacing: -0.035em;
+}
+
+.page-header__subtitle {
+  font-size: 13.5px;
+  font-weight: 500;
+}
+
+.sidebar-mobile-toggle {
+  border-radius: 0;
+  border: 2px solid var(--border-ink);
+  box-shadow: 3px 3px 0 var(--ink);
+}
+
+/* ---------- Tarjetas ---------- */
+
+.card {
+  background: var(--surface);
+  border: 3px solid var(--border-ink);
+  border-radius: 0;
+  box-shadow: 6px 6px 0 var(--ink);
+}
+
+.card__header {
+  padding: 15px 18px;
+  border-bottom: 3px solid var(--border-ink);
+}
+
+.card__body {
+  padding: 18px;
+}
+
+.card__footer {
+  padding: 0 18px 18px;
+}
+
+.card__section {
+  padding: 18px;
+  border-top: 3px solid var(--border-ink);
+}
+
+.card__title {
+  font-size: 14px;
+  font-weight: 900;
+  letter-spacing: 0.01em;
+}
+
+.card__title i {
+  color: var(--accent-deep);
+}
+
+[data-theme="dark"] .card__title i {
+  color: var(--accent-frost);
+}
+
+/* ---------- Botones ---------- */
+
+.btn {
+  border: 2px solid var(--border-ink);
+  border-radius: 0;
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 4px 4px 0 var(--ink);
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.045em;
+  transition: transform 150ms ease-out, box-shadow 150ms ease-out,
+    background 150ms ease-out, color 150ms ease-out;
+}
+
+.btn:hover {
+  background: var(--surface);
+  transform: translate(-1px, -1px);
+  box-shadow: 6px 6px 0 var(--ink);
+}
+
+.btn:active {
+  transform: translate(2px, 2px);
+  box-shadow: none;
+}
+
+.btn--primary {
+  background: var(--accent-deep);
+  color: #ffffff;
+  box-shadow: 4px 4px 0 var(--ink);
+}
+
+.btn--primary:hover {
+  background: var(--accent-deep);
+  filter: brightness(0.94);
+}
+
+.btn--secondary {
+  background: var(--accent-mid);
+  color: #ffffff;
+}
+
+.btn--secondary:hover {
+  background: var(--accent-mid);
+  filter: brightness(0.94);
+}
+
+.btn--ghost {
+  background: var(--surface);
+  border-color: var(--border-ink);
+  color: var(--text);
+}
+
+.btn--ghost:hover {
+  background: var(--surface);
+}
+
+.btn--danger {
+  background: var(--danger);
+  color: #ffffff;
+}
+
+.btn--danger:hover {
+  background: var(--danger);
+  filter: brightness(0.94);
+}
+
+.btn--danger-soft {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.btn--danger-soft:hover {
+  background: var(--danger-soft);
+}
+
+.btn--sm {
+  border-width: 2px;
+  box-shadow: 2px 2px 0 var(--ink);
+}
+
+.btn--sm:hover {
+  box-shadow: 3px 3px 0 var(--ink);
+}
+
+/* ---------- Botones de icono ---------- */
+
+.icon-button {
+  border-radius: 0;
+  border: 2px solid var(--border-ink);
+  background: var(--surface);
+  box-shadow: 2px 2px 0 var(--ink);
+  transition: transform 150ms ease-out, box-shadow 150ms ease-out,
+    background 150ms ease-out, color 150ms ease-out;
+}
+
+.icon-button:hover {
+  background: var(--accent-frost);
+  color: var(--ink);
+  transform: translate(-1px, -1px);
+  box-shadow: 3px 3px 0 var(--ink);
+}
+
+.icon-button--primary:hover {
+  background: var(--accent-frost);
+  color: var(--ink);
+}
+
+.icon-button--danger:hover {
+  background: var(--danger);
+  color: #ffffff;
+}
+
+/* ---------- Badges y estados ---------- */
+
+.badge {
+  border-radius: var(--radius-pill);
+  border: 2px solid currentColor;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 2px 9px;
+}
+
+.badge--route {
+  color: var(--accent-deep);
+}
+
+[data-theme="dark"] .badge--route {
+  color: var(--accent-frost);
+}
+
+.badge--success {
+  color: #0b7a6a;
+}
+
+[data-theme="dark"] .badge--success {
+  color: #5fe0c8;
+}
+
+.badge--warning {
+  color: #8a5a00;
+}
+
+[data-theme="dark"] .badge--warning {
+  color: var(--warning);
+}
+
+.badge--danger {
+  color: var(--danger);
+}
+
+.badge--muted {
+  color: var(--offline);
+}
+
+.status-dot.is-online {
+  color: #0b7a6a;
+}
+
+[data-theme="dark"] .status-dot.is-online {
+  color: #5fe0c8;
+}
+
+/* ---------- Formularios ---------- */
+
+.input,
+.select,
+.textarea {
+  background: var(--surface);
+  border: 2px solid var(--border-ink);
+  border-radius: 0;
+  font-weight: 500;
+}
+
+.input:focus,
+.select:focus,
+.textarea:focus {
+  border-color: var(--accent-mid);
+  box-shadow: 3px 3px 0 var(--accent-frost);
+}
+
+.checkbox input {
+  accent-color: var(--accent-deep);
+}
+
+.divider {
+  height: 3px;
+  background: var(--border-ink);
+}
+
+/* ---------- Tablas ---------- */
+
+.table-wrap {
+  border-radius: 0;
+}
+
+.table th {
+  border-bottom: 3px solid var(--border-ink);
+  background: var(--surface-soft);
+  font-weight: 800;
+  letter-spacing: 0.09em;
+}
+
+.table td {
+  border-bottom: 2px solid var(--border);
+}
+
+.table tbody tr:hover {
+  background: var(--accent-glow);
+}
+
+/* ---------- Pestañas ---------- */
+
+.tabs {
+  gap: 0;
+  padding: 0;
+  background: transparent;
+  border: 2px solid var(--border-ink);
+  border-radius: 0;
+}
+
+.tab {
+  border-radius: 0;
+  border-right: 2px solid var(--border-ink);
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.tab:last-child {
+  border-right: 0;
+}
+
+.tab.is-active {
+  background: var(--accent-mid);
+  color: #ffffff;
+  box-shadow: none;
+}
+
+/* ---------- KPIs con bloqueo de color ---------- */
+
+.kpi-grid {
+  gap: 18px;
+}
+
+.kpi-card {
+  border: 3px solid var(--border-ink);
+  border-radius: 0;
+  box-shadow: 6px 6px 0 var(--ink);
+  color: var(--text);
+}
+
+.kpi-card:nth-child(1) {
+  background: var(--accent-deep);
+  color: #ffffff;
+}
+
+.kpi-card:nth-child(2) {
+  background: var(--accent-frost);
+  color: #0a1b2b;
+}
+
+.kpi-card:nth-child(3) {
+  background: var(--accent-mid);
+  color: #ffffff;
+}
+
+.kpi-card__icon {
+  border: 2px solid var(--border-ink);
+  border-radius: 0;
+  background: #ffffff;
+  color: #0a1b2b;
+  box-shadow: 2px 2px 0 var(--ink);
+}
+
+.kpi-card__label,
+.kpi-card__meta {
+  color: currentColor;
+  opacity: 0.78;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 700;
+}
+
+.kpi-card__value {
+  font-weight: 900;
+  letter-spacing: -0.04em;
+}
+
+.kpi-card--clickable:hover {
+  transform: translate(-1px, -1px);
+  border-color: var(--border-ink);
+  box-shadow: 8px 8px 0 var(--ink);
+}
+
+/* ---------- Carrusel de temperaturas ---------- */
+
+.temp-card {
+  border: 2px solid var(--border-ink);
+  border-radius: 0;
+  background: var(--surface);
+  box-shadow: 3px 3px 0 var(--ink);
+}
+
+.temp-card:hover {
+  border-color: var(--border-ink);
+  background: var(--surface);
+  transform: translateY(-2px);
+  box-shadow: 5px 5px 0 var(--ink);
+}
+
+.temp-card--alert {
+  border-color: var(--danger);
+  background: var(--danger-soft);
+}
+
+/* ---------- Paneles de estado / clima ---------- */
+
+.status-panel__hero {
+  border: 2px solid var(--border-ink);
+  border-radius: 0;
+  background: var(--surface-soft);
+}
+
+.status-panel__hero--alert {
+  background: var(--danger-soft);
+}
+
+.status-panel__icon,
+.weather-card__icon {
+  border: 2px solid var(--border-ink);
+  border-radius: 0;
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 2px 2px 0 var(--ink);
+}
+
+.status-panel__counts {
+  border-top: 2px solid var(--border-ink);
+}
+
+.weather-card__meta {
+  border-top: 2px solid var(--border-ink);
+}
+
+/* ---------- Mapa ---------- */
+
+.map {
+  border: 3px solid var(--border-ink);
+  border-radius: 0;
+  background: var(--surface-soft);
+}
+
+.leaflet-popup-content-wrapper {
+  border: 2px solid var(--border-ink);
+  border-radius: 0;
+  box-shadow: 4px 4px 0 var(--ink);
+}
+
+.map-popup__row strong {
+  color: var(--text);
+}
+
+.map-supply,
+.live-indicator,
+.update-time {
+  font-weight: 600;
+}
+
+.live-indicator {
+  border: 2px solid var(--border-ink);
+  border-radius: var(--radius-pill);
+  box-shadow: 2px 2px 0 var(--ink);
+}
+
+.truck-marker,
+.point-marker {
+  border-color: #ffffff;
+  box-shadow: 3px 3px 0 var(--ink);
+}
+
+.truck-marker--selected {
+  box-shadow: 0 0 0 5px var(--accent-frost), 3px 3px 0 var(--ink);
+}
+
+/* ---------- Empty states / tiles / notices ---------- */
+
+.empty-state__icon {
+  border: 2px solid var(--border-ink);
+  border-radius: 0;
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 3px 3px 0 var(--ink);
+}
+
+.info-tile {
+  border: 2px solid var(--border-ink);
+  border-radius: 0;
+  background: var(--surface-soft);
+}
+
+.secret-box {
+  border: 2px dashed var(--border-ink);
+  border-radius: 0;
+  background: var(--surface-soft);
+}
+
+.notice {
+  border-width: 2px;
+  border-style: solid;
+  border-radius: 0;
+}
+
+.notice--info {
+  border-color: var(--accent-mid);
+}
+
+.notice--warning {
+  border-color: var(--warning);
+}
+
+.notice--danger {
+  border-color: var(--danger);
+}
+
+.chip {
+  border: 2px solid var(--border-ink);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  font-weight: 600;
+}
+
+/* ---------- Modales y toasts ---------- */
+
+.modal-overlay {
+  backdrop-filter: none;
+}
+
+.modal {
+  border: 4px solid var(--border-ink);
+  border-radius: 0;
+  box-shadow: 10px 10px 0 var(--ink);
+}
+
+.modal__footer {
+  border-top: 3px solid var(--border-ink);
+}
+
+.toast {
+  border: 2px solid var(--border-ink);
+  border-radius: 0;
+  box-shadow: 4px 4px 0 var(--ink);
+}
+
+.toast__icon {
+  border: 2px solid var(--border-ink);
+  border-radius: 0;
+}
+
+.toast__close {
+  border-radius: 0;
+}
+
+/* ---------- Toggle ---------- */
+
+.toggle-switch {
+  border: 2px solid var(--border-ink);
+  background: var(--surface-soft);
+}
+
+.toggle-switch[aria-pressed="true"] {
+  background: var(--accent-mid);
+}
+
+/* ---------- Página de login (composición Bauhaus) ---------- */
+
+body.login-page {
+  padding: 36px;
+}
+
+.login-theme-toggle {
+  border-radius: 0;
+  border: 2px solid var(--border-ink);
+  background: var(--surface);
+  box-shadow: 3px 3px 0 var(--ink);
+}
+
+.login-shell {
+  border: 4px solid var(--border-ink);
+  border-radius: 0;
+  box-shadow: 12px 12px 0 var(--ink);
+  background: var(--surface);
+  grid-template-columns: 1.05fr 0.95fr;
+}
+
+.login-brand {
+  background: var(--accent-deep);
+  padding: 46px;
+  border-right: 4px solid var(--border-ink);
+}
+
+.login-brand::before {
+  width: 360px;
+  height: 360px;
+  right: -130px;
+  top: -130px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--accent-frost);
+}
+
+.login-brand::after {
+  width: 210px;
+  height: 210px;
+  left: -70px;
+  bottom: -80px;
+  border: 0;
+  border-radius: 0;
+  background: var(--accent-mid);
+  transform: rotate(45deg);
+}
+
+.login-brand__logo {
+  border-radius: 0;
+  border: 2px solid #ffffff;
+  background: transparent;
+  box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.4);
+}
+
+.login-brand__name {
+  text-transform: uppercase;
+  font-weight: 900;
+  letter-spacing: -0.01em;
+}
+
+.login-brand__content {
+  max-width: 390px;
+}
+
+.login-brand__content h1 {
+  font-size: clamp(30px, 3.4vw, 44px);
+  line-height: 0.94;
+  letter-spacing: -0.035em;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.login-brand__content p {
+  color: rgba(255, 255, 255, 0.82);
+  font-weight: 500;
+}
+
+.login-brand__feature {
+  font-weight: 600;
+}
+
+.login-brand__feature i {
+  border: 2px solid #ffffff;
+  border-radius: 0;
+  background: var(--accent-frost);
+  color: #0a1b2b;
+  font-size: 12px;
+}
+
+.login-brand__footer {
+  color: rgba(255, 255, 255, 0.6);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-weight: 700;
+}
+
+.login-panel {
+  position: relative;
+  padding: 52px 46px;
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.login-panel::before {
+  content: "";
+  position: absolute;
+  top: 30px;
+  right: 34px;
+  width: 0;
+  height: 0;
+  border-left: 26px solid transparent;
+  border-right: 26px solid transparent;
+  border-bottom: 45px solid var(--accent-frost);
+  filter: drop-shadow(2px 2px 0 var(--border-ink));
+  pointer-events: none;
+}
+
+.login-panel__head h2 {
+  font-size: 30px;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+}
+
+.login-panel__head h2::after {
+  content: "";
+  display: block;
+  width: 52px;
+  height: 8px;
+  margin-top: 12px;
+  background: var(--accent-frost);
+  border: 2px solid var(--border-ink);
+}
+
+.login-submit {
+  padding-top: 13px;
+  padding-bottom: 13px;
+}
+
+.password-toggle {
+  border-radius: 0;
+}
+
+.login-footer {
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 600;
+}
+
+/* ---------- Páginas específicas ---------- */
+
+.settings-section + .settings-section {
+  border-top: 3px solid var(--border-ink);
+}
+
+.settings-section__icon {
+  border: 2px solid var(--border-ink);
+  border-radius: 0;
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 2px 2px 0 var(--ink);
+}
+
+.range-preview {
+  border: 2px solid var(--border-ink);
+  border-radius: 0;
+  background: var(--surface-soft);
+}
+
+.points-section {
+  border: 2px solid var(--border-ink);
+  border-radius: 0;
+}
+
+.points-section__head {
+  border-bottom: 2px solid var(--border-ink);
+  background: var(--surface-soft);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.point-row__order,
+.route-point__num {
+  border: 2px solid var(--border-ink);
+  background: var(--accent-frost);
+  color: #0a1b2b;
+  box-shadow: 2px 2px 0 var(--ink);
+}
+
+.route-list-item.is-active {
+  background: var(--accent-glow);
+  box-shadow: inset 5px 0 0 var(--accent-mid);
+}
+
+.route-assign {
+  border-top: 2px solid var(--border-ink);
+}
+
+.detail-hero__icon {
+  border: 2px solid var(--border-ink);
+  border-radius: 0;
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 2px 2px 0 var(--ink);
+}
+
+.reading-tile {
+  border: 2px solid var(--border-ink);
+  border-radius: 0;
+  background: var(--surface-soft);
+}
+
+.reading-tile--alert {
+  border-color: var(--danger);
+  background: var(--danger-soft);
+}
+
+.history-card .table-wrap,
+.history-filters {
+  border-color: var(--border-ink);
+}
+
+.alert-detail-hero {
+  border: 2px solid var(--danger);
+  border-radius: 0;
+}
+
+.alerts-filters {
+  border-bottom: 3px solid var(--border-ink);
+}
+
+/* ---------- Responsive ---------- */
+
+@media (max-width: 1120px) {
+  .main {
+    padding: 26px 22px 40px;
+  }
+}
+
+@media (max-width: 900px) {
+  .sidebar {
+    border-right: 4px solid var(--border-ink);
+    box-shadow: 8px 0 0 rgba(0, 0, 0, 0.35);
+  }
+
+  .main {
+    padding: 82px 18px 36px;
+  }
+}
+
+@media (max-width: 860px) {
+  .login-brand {
+    border-right: 0;
+    border-bottom: 4px solid var(--border-ink);
+  }
+
+  .login-panel::before {
+    display: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .main {
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+
+  .page-header__title h1 {
+    font-size: 32px;
+  }
+
+  .card,
+  .kpi-card {
+    box-shadow: 4px 4px 0 var(--ink);
+  }
+
+  .btn {
+    box-shadow: 3px 3px 0 var(--ink);
+  }
+
+  .login-shell {
+    box-shadow: 7px 7px 0 var(--ink);
+  }
+
+  body.login-page {
+    padding: 14px;
+  }
+
+  .login-panel {
+    padding: 30px 24px 34px;
+  }
+}

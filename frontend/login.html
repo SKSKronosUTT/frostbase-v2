@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Iniciar sesión | FrostBase</title>
+  <meta name="description" content="Acceso administrativo al sistema de monitoreo de camiones refrigerados FrostBase." />
+  <link rel="icon" href="assets/logo.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" />
+  <link rel="stylesheet" href="css/variables.css" />
+  <link rel="stylesheet" href="css/global.css" />
+  <link rel="stylesheet" href="css/components.css" />
+  <link rel="stylesheet" href="css/pages/login.css" />
+  <link rel="stylesheet" href="css/bauhaus.css" />
+  <script>
+    (function () {
+      try {
+        var stored = localStorage.getItem("frostbase-theme");
+        if (stored === "dark" || stored === "light") {
+          document.documentElement.dataset.theme = stored;
+        }
+      } catch (error) {}
+    })();
+  </script>
+</head>
+<body class="login-page">
+  <button class="login-theme-toggle" id="themeToggle" type="button" aria-label="Cambiar tema">
+    <i class="fa-solid fa-moon"></i>
+  </button>
+
+  <div class="login-shell">
+    <section class="login-brand" aria-label="FrostBase">
+      <div class="login-brand__top">
+        <span class="login-brand__logo">
+          <img src="assets/logo.png" alt="Logotipo FrostBase"
+               onerror="this.style.display='none'; this.parentElement.classList.add('login-brand__logo--placeholder');" />
+        </span>
+        <span class="login-brand__name">FrostBase</span>
+      </div>
+      <div class="login-brand__content">
+        <h1>Control total de tu cadena de frío.</h1>
+        <p>Monitoreo en tiempo real de temperatura, humedad y ubicación para tu flota de camiones refrigerados.</p>
+        <div class="login-brand__features">
+          <div class="login-brand__feature"><i class="fa-solid fa-temperature-low"></i> Lecturas IoT cada 10 segundos</div>
+          <div class="login-brand__feature"><i class="fa-solid fa-location-dot"></i> Ubicación GPS y rutas en el mapa</div>
+          <div class="login-brand__feature"><i class="fa-solid fa-bell"></i> Alertas automáticas fuera de rango</div>
+        </div>
+      </div>
+      <p class="login-brand__footer">Sistema de monitoreo industrial · Tijuana, B.C.</p>
+    </section>
+
+    <section class="login-panel">
+      <div class="login-panel__head">
+        <h2>Iniciar sesión</h2>
+        <p>Acceso exclusivo para administradores de la flota.</p>
+      </div>
+      <form class="login-form" id="loginForm" novalidate>
+        <div class="form-field">
+          <label for="identifier">Usuario o correo electrónico</label>
+          <div class="input-with-icon">
+            <i class="fa-solid fa-user"></i>
+            <input class="input" id="identifier" name="identifier" type="text"
+                   autocomplete="username" placeholder="admin" required />
+          </div>
+        </div>
+        <div class="form-field">
+          <label for="password">Contraseña</label>
+          <div class="password-field">
+            <input class="input" id="password" name="password" type="password"
+                   autocomplete="current-password" placeholder="••••••••" required />
+            <button class="password-toggle" type="button" id="passwordToggle" aria-label="Mostrar contraseña">
+              <i class="fa-solid fa-eye"></i>
+            </button>
+          </div>
+        </div>
+        <button class="btn btn--primary btn--block login-submit" id="loginButton" type="submit">
+          <i class="fa-solid fa-arrow-right-to-bracket"></i>
+          Entrar al panel
+        </button>
+      </form>
+      <p class="login-footer"><i class="fa-solid fa-lock"></i> Conexión protegida con sesión HttpOnly</p>
+    </section>
+  </div>
+
+  <div class="toast-root" id="toastRoot" aria-live="polite"></div>
+  <script type="module" src="js/pages/login.js"></script>
+</body>
+</html>

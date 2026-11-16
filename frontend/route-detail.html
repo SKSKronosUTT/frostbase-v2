@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Detalle de ruta | FrostBase</title>
+  <link rel="icon" href="assets/logo.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="css/variables.css" />
+  <link rel="stylesheet" href="css/global.css" />
+  <link rel="stylesheet" href="css/components.css" />
+  <link rel="stylesheet" href="css/layout.css" />
+  <link rel="stylesheet" href="css/pages/routes.css" />
+  <link rel="stylesheet" href="css/bauhaus.css" />
+  <script>
+    (function () {
+      try {
+        var stored = localStorage.getItem("frostbase-theme");
+        if (stored === "dark" || stored === "light") document.documentElement.dataset.theme = stored;
+      } catch (error) {}
+    })();
+  </script>
+</head>
+<body data-page="route-detail">
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar"></aside>
+    <main class="main">
+      <header class="page-header">
+        <div class="page-header__title">
+          <div class="breadcrumb">
+            <a href="routes.html">Rutas</a>
+            <i class="fa-solid fa-chevron-right" style="font-size: 8px;"></i>
+            <span>Detalle</span>
+          </div>
+          <h1 id="routeTitle">Detalle de ruta</h1>
+          <p class="page-header__subtitle" id="routeSubtitle">Cargando información…</p>
+        </div>
+        <div class="page-header__actions">
+          <a class="btn btn--ghost" href="routes.html"><i class="fa-solid fa-arrow-left"></i> Volver a rutas</a>
+          <a class="btn btn--primary" id="editRouteButton" href="routes.html"><i class="fa-solid fa-pen"></i> Editar ruta</a>
+        </div>
+      </header>
+
+      <div class="route-detail-grid">
+        <article class="card">
+          <header class="card__header">
+            <h2 class="card__title"><i class="fa-solid fa-map-location-dot"></i> Mapa de la ruta</h2>
+            <span class="section-header__meta" id="geometryStatus">—</span>
+          </header>
+          <div class="card__body">
+            <div class="notice notice--warning hidden" id="geometryWarning" style="margin-bottom: 12px;">
+              <i class="fa-solid fa-triangle-exclamation"></i>
+              <span>Esta ruta no tiene geometría calculada. La línea punteada solo une los puntos de entrega.</span>
+            </div>
+            <div class="map map--editor" id="routeDetailMap"></div>
+            <div class="map-legend">
+              <span class="map-legend__item"><span class="map-legend__line"></span> Geometría de la ruta</span>
+              <span class="map-legend__item"><i class="fa-solid fa-location-dot" style="color: var(--color-primary);"></i> Punto de entrega</span>
+            </div>
+          </div>
+        </article>
+
+        <div class="detail-column">
+          <article class="card">
+            <header class="card__header">
+              <h2 class="card__title"><i class="fa-solid fa-circle-info"></i> Información de la ruta</h2>
+            </header>
+            <div class="card__body" id="routeInfo">
+              <div class="loading-block"><span class="spinner"></span> Cargando…</div>
+            </div>
+          </article>
+
+          <article class="card">
+            <header class="card__header">
+              <h2 class="card__title"><i class="fa-solid fa-list-ol"></i> Puntos de entrega</h2>
+              <span class="section-header__meta" id="pointsCount">—</span>
+            </header>
+            <div class="card__body" id="routePoints">
+              <div class="loading-block"><span class="spinner"></span> Cargando…</div>
+            </div>
+          </article>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <div class="toast-root" id="toastRoot" aria-live="polite"></div>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script type="module" src="js/pages/route-detail.js"></script>
+</body>
+</html>

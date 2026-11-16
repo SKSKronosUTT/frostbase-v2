@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Panel de Control | FrostBase</title>
+  <link rel="icon" href="assets/logo.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="css/variables.css" />
+  <link rel="stylesheet" href="css/global.css" />
+  <link rel="stylesheet" href="css/components.css" />
+  <link rel="stylesheet" href="css/layout.css" />
+  <link rel="stylesheet" href="css/pages/dashboard.css" />
+  <link rel="stylesheet" href="css/bauhaus.css" />
+  <script>
+    (function () {
+      try {
+        var stored = localStorage.getItem("frostbase-theme");
+        if (stored === "dark" || stored === "light") document.documentElement.dataset.theme = stored;
+      } catch (error) {}
+    })();
+  </script>
+</head>
+<body data-page="dashboard">
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar"></aside>
+    <main class="main">
+      <header class="page-header">
+        <div class="page-header__title">
+          <span class="eyebrow">Monitoreo en tiempo real</span>
+          <h1>Panel de Control</h1>
+          <p class="page-header__subtitle">Estado de la flota, cadena de frío y alertas activas.</p>
+        </div>
+        <div class="header-actions">
+          <div class="live-indicator" id="connectionBadge">
+            <span class="live-indicator__dot"></span>
+            <span id="connectionText">En vivo</span>
+          </div>
+          <span class="update-time" id="lastUpdate"><i class="fa-regular fa-clock"></i> Actualizando…</span>
+        </div>
+      </header>
+
+      <section class="kpi-grid" aria-label="Indicadores principales">
+        <article class="kpi-card">
+          <div class="kpi-card__icon"><i class="fa-solid fa-truck-fast"></i></div>
+          <div class="kpi-card__content">
+            <span class="kpi-card__label">Camiones activos</span>
+            <div class="kpi-card__value" id="kpiActive">—</div>
+            <span class="kpi-card__meta" id="kpiActiveMeta">en ruta actualmente</span>
+          </div>
+        </article>
+        <article class="kpi-card">
+          <div class="kpi-card__icon kpi-card__icon--temp"><i class="fa-solid fa-temperature-half"></i></div>
+          <div class="kpi-card__content">
+            <span class="kpi-card__label">Temperatura promedio</span>
+            <div class="kpi-card__value" id="kpiTemperature">—</div>
+            <span class="kpi-card__meta" id="kpiTemperatureMeta">lecturas recientes</span>
+          </div>
+        </article>
+        <article class="kpi-card">
+          <div class="kpi-card__icon kpi-card__icon--success"><i class="fa-solid fa-circle-check"></i></div>
+          <div class="kpi-card__content">
+            <span class="kpi-card__label">Efectividad</span>
+            <div class="kpi-card__value" id="kpiEffectiveness">—</div>
+            <span class="kpi-card__meta" id="kpiEffectivenessMeta">últimas 24 horas</span>
+          </div>
+        </article>
+      </section>
+
+      <section class="dashboard-grid">
+        <div class="dashboard-main">
+          <article class="card map-card">
+            <header class="card__header">
+              <h2 class="card__title"><i class="fa-solid fa-map-location-dot"></i> Ubicación en tiempo real</h2>
+              <div class="map-toolbar">
+                <select class="select" id="truckFilter" aria-label="Filtrar camión en el mapa">
+                  <option value="">Todos los camiones</option>
+                </select>
+              </div>
+            </header>
+            <div class="card__body">
+              <div class="map map--dashboard" id="dashboardMap"></div>
+              <div class="map-legend">
+                <span class="map-legend__item"><span class="map-legend__dot map-legend__dot--route"></span> En ruta</span>
+                <span class="map-legend__item"><span class="map-legend__dot map-legend__dot--idle"></span> Fuera de ruta</span>
+                <span class="map-legend__item"><span class="map-legend__line"></span> Ruta asignada</span>
+                <span class="map-legend__item muted" id="mapSummary">Sin datos</span>
+              </div>
+            </div>
+          </article>
+
+          <article class="card carousel-card">
+            <header class="card__header">
+              <div>
+                <h2 class="card__title"><i class="fa-solid fa-temperature-low"></i> Temperaturas de la flota</h2>
+                <p class="card__subtitle">Lecturas actuales por camión</p>
+              </div>
+              <div class="carousel__controls">
+                <button class="icon-button" id="tempPrev" type="button" aria-label="Temperaturas anteriores"><i class="fa-solid fa-chevron-left"></i></button>
+                <button class="icon-button" id="tempNext" type="button" aria-label="Temperaturas siguientes"><i class="fa-solid fa-chevron-right"></i></button>
+              </div>
+            </header>
+            <div class="card__body">
+              <div class="carousel" id="tempCarousel">
+                <div class="carousel__track" id="tempTrack"></div>
+                <div class="empty-state hidden" id="tempEmpty">
+                  <div class="empty-state__icon"><i class="fa-solid fa-truck"></i></div>
+                  <strong>Sin lecturas disponibles</strong>
+                  <p>Registra un camión y un dispositivo IoT para comenzar a monitorear temperaturas.</p>
+                </div>
+              </div>
+            </div>
+          </article>
+        </div>
+
+        <aside class="dashboard-side">
+          <article class="card status-card">
+            <header class="card__header">
+              <h2 class="card__title"><i class="fa-solid fa-shield-heart"></i> Estado general</h2>
+              <span class="badge badge--success" id="statusBadge">Operativo</span>
+            </header>
+            <div class="card__body">
+              <div class="status-panel" id="statusPanel"></div>
+            </div>
+          </article>
+
+          <article class="card weather-card">
+            <header class="card__header">
+              <div>
+                <h2 class="card__title"><i class="fa-solid fa-cloud-sun"></i> Clima exterior</h2>
+                <p class="card__subtitle" id="weatherCity">Tijuana</p>
+              </div>
+            </header>
+            <div class="card__body">
+              <div class="weather-card" id="weatherCard">
+                <div class="loading-block"><span class="spinner"></span> Consultando clima…</div>
+              </div>
+            </div>
+          </article>
+        </aside>
+      </section>
+    </main>
+  </div>
+
+  <div class="toast-root" id="toastRoot" aria-live="polite"></div>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script type="module" src="js/pages/dashboard.js"></script>
+</body>
+</html>
