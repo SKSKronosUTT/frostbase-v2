@@ -32,8 +32,9 @@ class Settings(BaseSettings):
     admin_password: str = "ChangeMe123!"
 
     cors_origins: str = (
-        "http://localhost:8000,http://127.0.0.1:8000,"
-        "http://localhost:8010,http://127.0.0.1:8010"
+        "http://localhost:8050,http://127.0.0.1:8050,"
+        "http://localhost:8060,http://127.0.0.1:8060,"
+        "http://localhost:8070,http://127.0.0.1:8070"
     )
 
     device_offline_seconds: int = 60

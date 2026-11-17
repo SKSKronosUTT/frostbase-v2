@@ -37,9 +37,9 @@ services:
       OSRM_BASE_URL: ${OSRM_BASE_URL:-https://router.project-osrm.org}
       WEATHER_CACHE_SECONDS: ${WEATHER_CACHE_SECONDS:-600}
       AUTO_CREATE_TABLES: "false"
-      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:8020,http://127.0.0.1:8020}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:8050,http://127.0.0.1:8050,http://localhost:8060,http://127.0.0.1:8060,http://localhost:8070,http://127.0.0.1:8070}
     ports:
-      - "${APP_PORT:-8020}:8000"
+      - "${APP_PORT:-8050}:8050"
 
 volumes:
   frostbase_v4_pgdata:

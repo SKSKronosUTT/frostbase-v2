@@ -1,6 +1,6 @@
 # Referencia de la API
 
-Base URL: `http://localhost:8000/api/v1`
+Base URL: `http://localhost:8050/api/v1`
 
 Documentación interactiva: `/docs` (Swagger UI), `/redoc` (ReDoc), `/openapi.json`.
 
@@ -61,7 +61,7 @@ FastAPI devuelve `{"detail": "mensaje"}`. Códigos usados:
 ### Ejemplo de login
 
 ```bash
-curl -s -c cookies.txt -X POST http://localhost:8000/api/v1/auth/login \
+curl -s -c cookies.txt -X POST http://localhost:8050/api/v1/auth/login \
   -H "Content-Type: application/json" \
   -d '{"identifier":"admin","password":"ChangeMe123!"}'
 ```
@@ -308,7 +308,7 @@ Si el dispositivo no tiene camión asignado: `409`.
 ### GET /iot/config
 
 ```bash
-curl -s http://localhost:8000/api/v1/iot/config \
+curl -s http://localhost:8050/api/v1/iot/config \
   -H "X-Device-Id: ESP32-FROST-001" \
   -H "X-Device-Key: <clave>"
 ```

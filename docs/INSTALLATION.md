@@ -40,7 +40,7 @@ Variables principales:
 | `ADMIN_USERNAME` | Usuario administrador inicial | `admin` |
 | `ADMIN_EMAIL` | Correo del administrador | `admin@frostbase.local` |
 | `ADMIN_PASSWORD` | Contraseña inicial | `ChangeMe123!` |
-| `APP_PORT` | Puerto publicado del contenedor | `8000` |
+| `APP_PORT` | Puerto publicado del contenedor | `8050` |
 | `ENVIRONMENT` | Entorno (`development`/`production`) | `development` |
 | `AUTO_CREATE_TABLES` | Crear tablas al iniciar (sin Alembic) | `true` |
 | `CORS_ORIGINS` | Orígenes permitidos, separados por coma | localhost |
@@ -74,12 +74,17 @@ Secuencia de arranque:
 1. `db` inicia PostgreSQL 16 y espera el healthcheck.
 2. `app` ejecuta `alembic upgrade head`.
 3. Se crea el administrador si la tabla está vacía.
-4. Uvicorn escucha en el puerto `8000` interno, publicado como `APP_PORT`.
+4. Uvicorn escucha en el puerto `8050` interno, publicado como `APP_PORT`.
 5. El frontend se sirve en `/`.
 
 Acceso: `http://localhost:${APP_PORT}`.
 
-Si el puerto está ocupado, ajuste `APP_PORT` en `.env` y reinicie:
+Si el puerto está ocupado, ajuste `APP_PORT` en `.env` (por ejemplo `8060`, luego `8070`) y reinicie. Si usa el simulador, actualice también `FROSTBASE_API_URL` en `iot-simulator/.env`:
+
+```env
+APP_PORT=8060
+FROSTBASE_API_URL=http://localhost:8060/api/v1
+```
 
 ```bash
 docker compose up -d
@@ -113,7 +118,7 @@ cp .env.example .env
 
 cd backend
 alembic upgrade head
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8050
 ```
 
 El backend resuelve `FRONTEND_DIR` o busca `../frontend` relativo al paquete. En desarrollo puede servir el frontend con `python -m http.server` dentro de `frontend/`, pero entonces deberá ajustar `CORS_ORIGINS` y la base de la API.
@@ -140,15 +145,15 @@ cat respaldo.sql | docker compose exec -T db psql -U frostbase -d frostbase
 docker compose ps
 
 # Salud de la API (Swagger)
-curl -o /dev/null -w "%{http_code}\n" http://localhost:8000/docs
+curl -o /dev/null -w "%{http_code}\n" http://localhost:8050/docs
 
 # Login
-curl -s -c cookies.txt -X POST http://localhost:8000/api/v1/auth/login \
+curl -s -c cookies.txt -X POST http://localhost:8050/api/v1/auth/login \
   -H "Content-Type: application/json" \
   -d '{"identifier":"admin","password":"ChangeMe123!"}'
 
 # Resumen del panel
-curl -s -b cookies.txt http://localhost:8000/api/v1/dashboard/summary
+curl -s -b cookies.txt http://localhost:8050/api/v1/dashboard/summary
 ```
 
 ## 8. Solución de problemas

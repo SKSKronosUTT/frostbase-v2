@@ -26,7 +26,9 @@ docker compose up -d --build
 docker compose logs -f app
 ```
 
-La aplicación queda disponible en `http://localhost:${APP_PORT}` (por defecto `http://localhost:8000`). Al arrancar se ejecuta `alembic upgrade head`, se crea el administrador inicial si no existe y se monta el frontend en la raíz.
+La aplicación queda disponible en `http://localhost:${APP_PORT}` (por defecto `http://localhost:8050`). Al arrancar se ejecuta `alembic upgrade head`, se crea el administrador inicial si no existe y se monta el frontend en la raíz.
+
+Si el puerto `8050` está ocupado, cambie `APP_PORT` en `.env` a `8060` o `8070` y actualice `FROSTBASE_API_URL` en `iot-simulator/.env` con el mismo puerto.
 
 Para cargar datos de demostración (ruta en Tijuana, 3 camiones y 2 dispositivos):
 
@@ -61,7 +63,7 @@ cp .env.example .env
 Configure en `iot-simulator/.env`:
 
 ```env
-FROSTBASE_API_URL=http://localhost:8000/api/v1
+FROSTBASE_API_URL=http://localhost:8050/api/v1
 DEVICE_ID=ESP32-FROST-001
 DEVICE_KEY=<clave impresa por el seed o al crear el dispositivo>
 ```

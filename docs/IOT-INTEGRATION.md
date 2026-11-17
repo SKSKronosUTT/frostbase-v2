@@ -18,7 +18,7 @@ FrostBase expone una API REST simple para que un ESP32-S3 (o cualquier cliente H
 Desde la UI (detalle del camión) o con la API administrativa:
 
 ```bash
-curl -s -X POST http://localhost:8000/api/v1/devices \
+curl -s -X POST http://localhost:8050/api/v1/devices \
   -b "frostbase_token=<cookie>" \
   -H "Content-Type: application/json" \
   -d '{"device_id":"ESP32-FROST-003","truck_id":1}'
@@ -27,7 +27,7 @@ curl -s -X POST http://localhost:8000/api/v1/devices \
 La respuesta incluye `device_key`. **Solo se muestra una vez**; el servidor guarda su hash Argon2. Si se pierde, rote la clave:
 
 ```bash
-curl -s -X POST http://localhost:8000/api/v1/devices/3/rotate-key \
+curl -s -X POST http://localhost:8050/api/v1/devices/3/rotate-key \
   -b "frostbase_token=<cookie>"
 ```
 
