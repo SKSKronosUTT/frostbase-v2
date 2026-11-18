@@ -1,0 +1,18 @@
+﻿==============================================================================
+PRUEBA:     DR-02 - Pérdida total de la base y recuperación
+EJECUCIÓN:  2026-11-16T04:05:52+00:00
+COMMIT:     77d7bc8
+EVIDENCIA:  results.json SHA-256 4DCD13E505726982AF07CFBD050670DBC94D64BFBD63075DDD372D104544E68F
+COMANDO:    python backend/scripts/run_dlp_drp_tests.py --evidence-dir "C:\Users\dell\Documents\GitHub\frostbase-v2\docs\security\evidence\2026-11-15-demo"
+RESULTADO:  3 PASS / 0 FAIL / 1 INFO
+CAPTURA:    incluya esta cabecera y las líneas de resultado
+==============================================================================
+[OK] DR-02.1 Simulaci¾n de pÚrdida total de la base de prßctica: {'database': 'frostbase_drill', 'exists_after_drop': False}
+[OK] DR-02.2 Recuperaci¾n completa del servicio y de los datos: {'healthy': True, 'dashboard_status': 200, 'checksums_match': True, 'restore_seconds': 1.05, 'differences': []}
+[OK] DR-02.3 RTO medido dentro de la meta: {'rto_seconds': 2.6, 'target_seconds': 120}
+[INFO] DR-02.4 RPO documentado (ventana de pÚrdida potencial): {'last_backup': '2026-11-16T04:06:22+00:00', 'disaster_at': '2026-11-16T04:06:51.064350+00:00', 'rpo_minutes': 0.48, 'note': 'Sin WAL archiving el RPO es el tiempo desde el ·ltimo respaldo'}
+
+------------------------------------------------------------------------------
+Leyenda: [OK]=PASS, [FALLO]=hallazgo, [INFO]=informativo.
+Los FAIL son hallazgos de seguridad, no errores del procedimiento.
+Evidencia estructurada: results.json / summary.md

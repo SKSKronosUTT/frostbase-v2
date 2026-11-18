@@ -1,0 +1,4 @@
+# Dependencias opcionales para los scripts de respaldo (se ejecutan en el host).
+# Instalar con:
+#   pip install -r backend/scripts/requirements-backup.txt
+cryptography>=42,<46

@@ -1,0 +1,14 @@
+{
+    "generated_at":  "2026-11-16T04:05:51.8799147Z",
+    "commit":  "77d7bc8",
+    "branch":  "main",
+    "host":  "DESKTOP-IDG59D7",
+    "user":  "dell",
+    "os":  "Microsoft Windows 11 Pro",
+    "powershell":  "5.1.26100.9818",
+    "python":  "Python 3.14.2",
+    "evidence_dir":  "C:\\Users\\dell\\Documents\\GitHub\\frostbase-v2\\docs\\security\\evidence\\2026-11-15-demo",
+    "suite_command":  "python backend/scripts/run_dlp_drp_tests.py --evidence-dir \"C:\\Users\\dell\\Documents\\GitHub\\frostbase-v2\\docs\\security\\evidence\\2026-11-15-demo\"",
+    "suite_exit_code":  1,
+    "suite_results_generated_at":  "2026-11-16T04:05:52+00:00"
+}

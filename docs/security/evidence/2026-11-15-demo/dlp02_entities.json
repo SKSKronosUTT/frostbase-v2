@@ -1,0 +1,19 @@
+{
+  "user": {
+    "id": "f714121dd8214580a4f83752",
+    "active_after_delete": "false"
+  },
+  "store": {
+    "id": "0f9afc7d33f54ee5a44ad680",
+    "active_after_delete": "false"
+  },
+  "route": {
+    "id": "13f88abdf0b7484abb2e9e94",
+    "active_after_delete": "false"
+  },
+  "truck": {
+    "id": "2e04e432e36b4f75a73ee239",
+    "state_after_delete": "OS",
+    "truck_logs": 2
+  }
+}

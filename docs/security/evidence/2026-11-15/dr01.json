@@ -1,0 +1,31 @@
+{
+  "backup": {
+    "database": "frostbase_drill",
+    "label": "dr01",
+    "created_at": "2026-11-16T01:49:37+00:00",
+    "file": "C:\\Users\\dell\\Documents\\GitHub\\frostbase-v2\\db-backups\\frostbase_drill_dr01_20261116T014937Z.dump",
+    "size_bytes": 57921,
+    "sha256": "2d08ca48c4c7392a1e92ba6c2fc2aad62542ac5c0793a71d4983923cd311f6b9",
+    "format": "pg_dump custom (-Fc)",
+    "objects": 98,
+    "verified_with_pg_restore_list": true
+  },
+  "restore": {
+    "target_database": "frostbase_restore",
+    "source_dump": "C:\\Users\\dell\\Documents\\GitHub\\frostbase-v2\\db-backups\\frostbase_drill_dr01_20261116T014937Z.dump",
+    "restored_at": "2026-11-16T01:49:39+00:00",
+    "seconds": 0.62,
+    "warnings": ""
+  },
+  "comparison": {
+    "match": true,
+    "expected_digest": "5a0341b93fdb8c00a623a1b509cbba3e9ec4bfe94408d641f61e44aa36ad92e6",
+    "actual_digest": "5a0341b93fdb8c00a623a1b509cbba3e9ec4bfe94408d641f61e44aa36ad92e6",
+    "differences": []
+  },
+  "functional": {
+    "server_ok": true,
+    "login_ok": true,
+    "dashboard_status": 200
+  }
+}

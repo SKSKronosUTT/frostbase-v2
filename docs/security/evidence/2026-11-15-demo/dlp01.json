@@ -1,0 +1,11 @@
+{
+  "anonymous": {
+    "/api/users": 401,
+    "/api/orders": 401,
+    "/api/readings": 401,
+    "/api/dashboard/summary": 401,
+    "/api/stores": 401,
+    "/api/trucks": 401
+  },
+  "users_status": 200
+}

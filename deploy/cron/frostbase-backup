@@ -1,0 +1,18 @@
+# /etc/cron.d/frostbase-backup
+#
+# Respaldo diario cifrado, con retención y verificación por restauración.
+# Instalar con:
+#   sudo install -o root -g root -m 644 deploy/cron/frostbase-backup \
+#       /etc/cron.d/frostbase-backup
+#
+# Requiere el wrapper /opt/frostbase/deploy/cron/frostbase-backup.sh y el
+# archivo de configuración /etc/frostbase/backup.env (ver backup.env.example).
+#
+# flock evita ejecuciones solapadas si el respaldo anterior aún no termina.
+# Ajuste la hora a la ventana de menor actividad de su operación.
+
+SHELL=/bin/bash
+PATH=/usr/local/bin:/usr/bin:/bin
+MAILTO=ops@example.com
+
+15 2 * * * frostbase /usr/bin/flock -n /run/frostbase-backup.lock /opt/frostbase/deploy/cron/frostbase-backup.sh >> /var/log/frostbase-backup.log 2>&1

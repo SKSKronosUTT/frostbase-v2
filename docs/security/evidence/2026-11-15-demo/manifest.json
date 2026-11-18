@@ -1,0 +1,122 @@
+{
+    "generated_at":  "2026-11-16T04:06:53.1783028Z",
+    "commit":  "77d7bc8",
+    "branch":  "main",
+    "host":  "DESKTOP-IDG59D7",
+    "user":  "dell",
+    "os":  "Microsoft Windows 11 Pro",
+    "powershell":  "5.1.26100.9818",
+    "python":  "Python 3.14.2",
+    "evidence_dir":  "C:\\Users\\dell\\Documents\\GitHub\\frostbase-v2\\docs\\security\\evidence\\2026-11-15-demo",
+    "suite_exit_code":  1,
+    "results_sha256":  "4DCD13E505726982AF07CFBD050670DBC94D64BFBD63075DDD372D104544E68F",
+    "script":  "C:\\Users\\dell\\Documents\\GitHub\\frostbase-v2\\backend\\scripts\\capture_evidence.ps1",
+    "script_sha256":  "F17E07DF4F83C975AF703E4C96E9440BAA9084C012B193B9A4CF75BF198BD83E",
+    "files":  [
+                  {
+                      "path":  "backup_dr01.json",
+                      "bytes":  5445,
+                      "sha256":  "7B8BD25434645A938FD52067A7F8A26161DBAD1C93A8DA06AE3DDC8307994B57"
+                  },
+                  {
+                      "path":  "capture-guide.md",
+                      "bytes":  1580,
+                      "sha256":  "F5565C12A81C2641E8626C25D5380E7EB872CFD249D1D7959C898EB5BBE8AF80"
+                  },
+                  {
+                      "path":  "captures\\DLP-01.txt",
+                      "bytes":  2297,
+                      "sha256":  "FC43853226AD6882F9D39913A107F9398878FD1B9BBA71512121FF83A24B59AB"
+                  },
+                  {
+                      "path":  "captures\\DLP-02.txt",
+                      "bytes":  2823,
+                      "sha256":  "D4CBD8C360A0DAACCE6D2025949F0F72739E12B57ACC915438E20C0C3ACACA3F"
+                  },
+                  {
+                      "path":  "captures\\DR-01.txt",
+                      "bytes":  1589,
+                      "sha256":  "F2C6172CDFE2168631EE52CBC41E17EA096204AEA56A3BFC28C57A899A07551D"
+                  },
+                  {
+                      "path":  "captures\\DR-02.txt",
+                      "bytes":  1555,
+                      "sha256":  "DE578E5400F7713924ABEA051AEAA9F3865E90C670779407B5C0C7EEAB24D3C9"
+                  },
+                  {
+                      "path":  "checksums_baseline.json",
+                      "bytes":  2195,
+                      "sha256":  "8FB49FFBF00AFA4BE2A1EB02A54045DB5E23C1E74C73E83B3E0C31AE0279E268"
+                  },
+                  {
+                      "path":  "checksums_restored_dr01.json",
+                      "bytes":  2197,
+                      "sha256":  "6ADADDB169FC0B87701933D78496FF4EED017963671090DB85CBC5C9384213A7"
+                  },
+                  {
+                      "path":  "checksums_restored_dr02.json",
+                      "bytes":  2195,
+                      "sha256":  "C769E8146E9CFE0A5C43F9442ECCFB8E40F71EB334C10B85146F0F867B552FBE"
+                  },
+                  {
+                      "path":  "context.json",
+                      "bytes":  667,
+                      "sha256":  "47E4BF958E58A00C643CC11F7E83F1EFAA8B4632B40B1763941282796165AC20"
+                  },
+                  {
+                      "path":  "dlp01.json",
+                      "bytes":  212,
+                      "sha256":  "A9D53EA956D2D32BBF05FD47B76AE4506CE5CD9312A98DE73CBECB7A01035962"
+                  },
+                  {
+                      "path":  "dlp01_users_sample.json",
+                      "bytes":  477,
+                      "sha256":  "362A48643403744C7EBC9668E78614BFC9A6D9B3E6A1B14FCAE503D2211738B6"
+                  },
+                  {
+                      "path":  "dlp02.json",
+                      "bytes":  621,
+                      "sha256":  "1DB43FCA3F674462430D4F588097E1849F3D5A956DEE702E84452EC9360CCEF3"
+                  },
+                  {
+                      "path":  "dlp02_entities.json",
+                      "bytes":  400,
+                      "sha256":  "DD1B88ED7A766D67182FE2DF0BAC69A8AA54E902B481E67D9C770024FB40EC9F"
+                  },
+                  {
+                      "path":  "dr01.json",
+                      "bytes":  6529,
+                      "sha256":  "E36A7A3618AFBE262083470104BF2D1AC372CCEDD6642C5AAD518B2963B31223"
+                  },
+                  {
+                      "path":  "dr02.json",
+                      "bytes":  348,
+                      "sha256":  "5DAD5464C4D38716E7C47608B80ABB2BF8943DCF2B9EE0B4E5E822EF73BB8F07"
+                  },
+                  {
+                      "path":  "environment.json",
+                      "bytes":  316,
+                      "sha256":  "6A4230957E89553ED3BBCA45FBC1793626A45E0A8D7CCCCDB874E3FFEBAC7829"
+                  },
+                  {
+                      "path":  "results.json",
+                      "bytes":  28101,
+                      "sha256":  "4DCD13E505726982AF07CFBD050670DBC94D64BFBD63075DDD372D104544E68F"
+                  },
+                  {
+                      "path":  "rto_rpo.json",
+                      "bytes":  50,
+                      "sha256":  "9267BAA09335E6CD360A12CCF3E953C36BC67D9F9AC8D7661A2843ACA0E74935"
+                  },
+                  {
+                      "path":  "run.log",
+                      "bytes":  10760,
+                      "sha256":  "5FE2B07FE9271BEF0F68ECA55496C1C1A2DCB69A9EA74FC0DB496C9531A33719"
+                  },
+                  {
+                      "path":  "summary.md",
+                      "bytes":  5790,
+                      "sha256":  "918741EDB264403338C88B1498705978E37B80D058F9797A84DDB1CC821029D3"
+                  }
+              ]
+}

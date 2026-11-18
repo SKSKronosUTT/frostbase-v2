@@ -1,0 +1,21 @@
+﻿==============================================================================
+PRUEBA:     DLP-02 - Borrado lógico, integridad y trazabilidad
+EJECUCIÓN:  2026-11-16T03:35:10+00:00
+COMMIT:     77d7bc8
+EVIDENCIA:  results.json SHA-256 5E541864C17982A5B987F8832462AB1139FB0616AB6D405F4E0811A22D56C1C7
+COMANDO:    python backend/scripts/run_dlp_drp_tests.py --evidence-dir "C:\Users\dell\Documents\GitHub\frostbase-v2\docs\security\evidence\2026-11-16-demo"
+RESULTADO:  4 PASS / 3 FAIL / 0 INFO
+CAPTURA:    incluya esta cabecera y las líneas de resultado
+==============================================================================
+[OK] DLP-02.1 Cancelar un pedido es un borrado l¾gico y queda en bitßcora: {'http_status': 200, 'order_id': '67ca1e89df584248b51f5fc4', 'state_after': 'CO', 'order_logs_before': 1, 'order_logs_after': 2, 'cancelled_by': 'rol conductor'}
+[OK] DLP-02.2 Usuario, tienda, ruta y cami¾n se desactivan sin borrar la fila: {'user': {'id': 'e519c7a505074f63b8dd8e5e', 'active_after_delete': 'false'}, 'store': {'id': 'daf62ee2c7e1484c99880443', 'active_after_delete': 'false'}, 'route': {'id': '1da17b0ba92a4b1bbe690e5a', 'active_after_delete': 'false'}, 'truck': {'id': 'edebaee7afc946639bed6c1d', 'state_after_delete': 'OS', 'truck_logs': 2}}
+[FALLO] DLP-02.3 Los endpoints HTTP no ejecutan borrados fÝsicos: {'delete_from_occurrences': [{'file': 'backend/app/routers/routes.py', 'line': 20, 'statement': 'execute(conn, "DELETE FROM route_stores WHERE route_id = %s", (route_id,))'}], 'scope_note': 'El ·nico caso es el reemplazo transaccional de route_stores en la actualizaci¾n de rutas; no conserva historial de asignaciones.'}
+[FALLO] DLP-02.4 Las bitßcoras identifican al actor de cada cambio: {'actor_columns_found': '', 'audit_log_table': None, 'gap': 'No se registra quiÚn cancel¾, desactiv¾ o modific¾ el dato'}
+[OK] DLP-02.5 La integridad referencial impide borrar un pedido con bitßcora: {'order_id': '06526aec166d47b4992b5566', 'blocked': True, 'error': 'ERROR:  update or delete on table "orders" violates foreign key constraint "order_logs_id_order_fkey" on table "order_logs"\nDETAIL:  Key (id)=(06526aec166d47b4992b5566) is still referenced from table "order_logs".'}
+[FALLO] DLP-02.6 Un borrado fÝsico deliberado sÝ destruye la informaci¾n: {'order_id': '06526aec166d47b4992b5566', 'rows_after_hard_delete': 0}
+[OK] DLP-02.7 El dato destruido se recupera desde el respaldo: {'order_id': '06526aec166d47b4992b5566', 'recovered': True, 'restore_seconds': 0.55, 'matches_original': True}
+
+------------------------------------------------------------------------------
+Leyenda: [OK]=PASS, [FALLO]=hallazgo, [INFO]=informativo.
+Los FAIL son hallazgos de seguridad, no errores del procedimiento.
+Evidencia estructurada: results.json / summary.md

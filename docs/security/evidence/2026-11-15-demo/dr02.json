@@ -1,0 +1,12 @@
+{
+  "rto_seconds": 2.6,
+  "rpo_minutes": 0.48,
+  "healthy": true,
+  "dashboard_status": 200,
+  "comparison": {
+    "match": true,
+    "expected_digest": "5a0341b93fdb8c00a623a1b509cbba3e9ec4bfe94408d641f61e44aa36ad92e6",
+    "actual_digest": "5a0341b93fdb8c00a623a1b509cbba3e9ec4bfe94408d641f61e44aa36ad92e6",
+    "differences": []
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "database": "frostbase_drill",
+  "label": "dr01",
+  "created_at": "2026-11-16T01:49:37+00:00",
+  "file": "C:\\Users\\dell\\Documents\\GitHub\\frostbase-v2\\db-backups\\frostbase_drill_dr01_20261116T014937Z.dump",
+  "size_bytes": 57921,
+  "sha256": "2d08ca48c4c7392a1e92ba6c2fc2aad62542ac5c0793a71d4983923cd311f6b9",
+  "format": "pg_dump custom (-Fc)",
+  "objects": 98,
+  "verified_with_pg_restore_list": true
+}

@@ -1,0 +1,460 @@
+{
+  "project": "frostbase-v2",
+  "generated_at": "2026-11-16T01:49:26+00:00",
+  "commit": "77d7bc8",
+  "environment": {
+    "platform": "Windows-11-10.0.26200-SP0",
+    "python": "3.14.2",
+    "postgres_version": "16.14 (Debian 16.14-1.pgdg13+1)",
+    "db_container": "frostbase-db",
+    "app_image": "frostbase-v2-app:latest",
+    "network": "frostbase-v2_default"
+  },
+  "artifacts": {
+    "baseline_digest": "5a0341b93fdb8c00a623a1b509cbba3e9ec4bfe94408d641f61e44aa36ad92e6"
+  },
+  "summary": {
+    "PASS": 14,
+    "FAIL": 7,
+    "INFO": 1,
+    "ERROR": 0
+  },
+  "results": [
+    {
+      "id": "PREP-01",
+      "name": "Copia de práctica frostbase_drill creada",
+      "status": "PASS",
+      "expected": "Restauración exacta de la base principal",
+      "observed": {
+        "source_database": "frostbase",
+        "drill_database": "frostbase_drill",
+        "source_dump": "C:\\Users\\dell\\Documents\\GitHub\\frostbase-v2\\db-backups\\frostbase_drill_source_20261116T014927Z.dump",
+        "source_sha256": "84cbf084173c5e587854bd68304747f8bd0f6bdb4721fdbf7c1c7b5aa147112f",
+        "restore_seconds": 0.58
+      },
+      "evidence": "checksums_baseline.json",
+      "recorded_at": "2026-11-16T01:49:29+00:00"
+    },
+    {
+      "id": "DR-01.1",
+      "name": "Respaldo lógico íntegro y verificable",
+      "status": "PASS",
+      "expected": "pg_dump -Fc validado con pg_restore --list",
+      "observed": {
+        "file": "C:\\Users\\dell\\Documents\\GitHub\\frostbase-v2\\db-backups\\frostbase_drill_dr01_20261116T014937Z.dump",
+        "size_bytes": 57921,
+        "sha256": "2d08ca48c4c7392a1e92ba6c2fc2aad62542ac5c0793a71d4983923cd311f6b9",
+        "objects": 98
+      },
+      "evidence": "backup_dr01.json",
+      "recorded_at": "2026-11-16T01:49:38+00:00"
+    },
+    {
+      "id": "DR-01.2",
+      "name": "Restauración completa sin diferencias",
+      "status": "PASS",
+      "expected": "Mismo digest y mismas filas/checksums en las 20 tablas",
+      "observed": {
+        "restore_seconds": 0.62,
+        "expected_digest": "5a0341b93fdb8c00a623a1b509cbba3e9ec4bfe94408d641f61e44aa36ad92e6",
+        "actual_digest": "5a0341b93fdb8c00a623a1b509cbba3e9ec4bfe94408d641f61e44aa36ad92e6",
+        "differences": []
+      },
+      "evidence": "checksums_restored_dr01.json",
+      "recorded_at": "2026-11-16T01:49:44+00:00"
+    },
+    {
+      "id": "DR-01.3",
+      "name": "La base restaurada es funcional para la aplicación",
+      "status": "PASS",
+      "expected": "Health 200, login de administrador y dashboard 200",
+      "observed": {
+        "server_ok": true,
+        "login_ok": true,
+        "dashboard_status": 200
+      },
+      "evidence": "checksums_restored_dr01.json",
+      "recorded_at": "2026-11-16T01:49:48+00:00"
+    },
+    {
+      "id": "DLP-01.1",
+      "name": "Acceso anónimo bloqueado en endpoints de datos",
+      "status": "PASS",
+      "expected": "HTTP 401 en todos los endpoints",
+      "observed": {
+        "/api/users": 401,
+        "/api/orders": 401,
+        "/api/readings": 401,
+        "/api/dashboard/summary": 401,
+        "/api/stores": 401,
+        "/api/trucks": 401
+      },
+      "evidence": "dlp01.json",
+      "recorded_at": "2026-11-16T01:49:48+00:00"
+    },
+    {
+      "id": "DLP-01.2",
+      "name": "Un conductor no puede enumerar usuarios ni ver PII",
+      "status": "FAIL",
+      "expected": "403, o como mínimo respuesta sin email/teléfono/cumpleaños",
+      "observed": {
+        "http_status": 200,
+        "users_returned": 11,
+        "pii_exposed": true,
+        "password_hash_exposed": false,
+        "redacted_sample": [
+          {
+            "email": "a***@logisticarf.com",
+            "phone": "***0207",
+            "birthDate": "***",
+            "isAdmin": false
+          },
+          {
+            "email": "a***@logisticarf.com",
+            "phone": "***0103",
+            "birthDate": "***",
+            "isAdmin": true
+          },
+          {
+            "email": "c***@logisticarf.com",
+            "phone": "***0102",
+            "birthDate": "***",
+            "isAdmin": true
+          }
+        ]
+      },
+      "evidence": "dlp01_users_sample.json",
+      "recorded_at": "2026-11-16T01:49:48+00:00"
+    },
+    {
+      "id": "DLP-01.3",
+      "name": "RBAC en endpoints exclusivos de administrador",
+      "status": "PASS",
+      "expected": "HTTP 403 para el rol conductor",
+      "observed": {
+        "endpoint": "POST /api/simulator/check",
+        "http_status": 403
+      },
+      "evidence": "dlp01.json",
+      "recorded_at": "2026-11-16T01:49:48+00:00"
+    },
+    {
+      "id": "DLP-01.4",
+      "name": "Token manipulado rechazado",
+      "status": "PASS",
+      "expected": "HTTP 401 al alterar el cuerpo firmado",
+      "observed": {
+        "http_status": 401
+      },
+      "evidence": "dlp01.json",
+      "recorded_at": "2026-11-16T01:49:49+00:00"
+    },
+    {
+      "id": "DLP-01.5",
+      "name": "Documentación de API no expuesta sin autenticación",
+      "status": "FAIL",
+      "expected": "HTTP 401/403/404",
+      "observed": {
+        "endpoint": "/openapi.json",
+        "http_status": 200
+      },
+      "evidence": "dlp01.json",
+      "recorded_at": "2026-11-16T01:49:49+00:00"
+    },
+    {
+      "id": "DLP-01.6",
+      "name": "Base de datos no accesible desde el host con credenciales por defecto",
+      "status": "FAIL",
+      "expected": "Conexión rechazada en el puerto 5433",
+      "observed": {
+        "host_db_access": true,
+        "rows_read": "11",
+        "port": 5433
+      },
+      "evidence": "dlp01.json",
+      "recorded_at": "2026-11-16T01:49:50+00:00"
+    },
+    {
+      "id": "DLP-01.7",
+      "name": "Los respaldos contienen PII en texto claro y sin cifrar",
+      "status": "FAIL",
+      "expected": "Respaldo cifrado o sin PII en claro",
+      "observed": {
+        "rows_with_email_in_dump": 11,
+        "backup_encrypted": false,
+        "backup_file": "C:\\Users\\dell\\Documents\\GitHub\\frostbase-v2\\db-backups\\frostbase_drill_dr01_20261116T014937Z.dump",
+        "inspection_error": null
+      },
+      "evidence": "backup_dr01.json",
+      "recorded_at": "2026-11-16T01:49:51+00:00"
+    },
+    {
+      "id": "DLP-02.1",
+      "name": "Cancelar un pedido es un borrado lógico y queda en bitácora",
+      "status": "PASS",
+      "expected": "HTTP 200, fila conservada, estado CO y nuevo registro en order_logs",
+      "observed": {
+        "http_status": 200,
+        "order_id": "528798793b204af1be5cf9bf",
+        "state_after": "CO",
+        "order_logs_before": 1,
+        "order_logs_after": 2,
+        "cancelled_by": "rol conductor"
+      },
+      "evidence": "dlp02.json",
+      "recorded_at": "2026-11-16T01:49:52+00:00"
+    },
+    {
+      "id": "DLP-02.2",
+      "name": "Usuario, tienda, ruta y camión se desactivan sin borrar la fila",
+      "status": "PASS",
+      "expected": "active=false / estado OS conservando la fila original",
+      "observed": {
+        "user": {
+          "id": "e55158ec2b8648da8ce21493",
+          "active_after_delete": "false"
+        },
+        "store": {
+          "id": "3c3c8db301ca4e0383fa1ab9",
+          "active_after_delete": "false"
+        },
+        "route": {
+          "id": "3c6a21121d0e465aa114b8d6",
+          "active_after_delete": "false"
+        },
+        "truck": {
+          "id": "63578b825f694c5a8fb7f10e",
+          "state_after_delete": "OS",
+          "truck_logs": 2
+        }
+      },
+      "evidence": "dlp02_entities.json",
+      "recorded_at": "2026-11-16T01:49:54+00:00"
+    },
+    {
+      "id": "DLP-02.3",
+      "name": "Los endpoints HTTP no ejecutan borrados físicos",
+      "status": "FAIL",
+      "expected": "0 sentencias DELETE FROM en backend/app/routers",
+      "observed": {
+        "delete_from_occurrences": [
+          {
+            "file": "backend/app/routers/routes.py",
+            "line": 20,
+            "statement": "execute(conn, \"DELETE FROM route_stores WHERE route_id = %s\", (route_id,))"
+          }
+        ],
+        "scope_note": "El único caso es el reemplazo transaccional de route_stores en la actualización de rutas; no conserva historial de asignaciones."
+      },
+      "evidence": "dlp02.json",
+      "recorded_at": "2026-11-16T01:49:54+00:00"
+    },
+    {
+      "id": "DLP-02.4",
+      "name": "Las bitácoras identifican al actor de cada cambio",
+      "status": "FAIL",
+      "expected": "Columna de usuario/actor en las bitácoras o tabla audit_log",
+      "observed": {
+        "actor_columns_found": "",
+        "audit_log_table": null,
+        "gap": "No se registra quién canceló, desactivó o modificó el dato"
+      },
+      "evidence": "dlp02.json",
+      "recorded_at": "2026-11-16T01:49:55+00:00"
+    },
+    {
+      "id": "DLP-02.5",
+      "name": "La integridad referencial impide borrar un pedido con bitácora",
+      "status": "PASS",
+      "expected": "Violación de llave foránea al intentar DELETE físico",
+      "observed": {
+        "order_id": "06526aec166d47b4992b5566",
+        "blocked": true,
+        "error": "ERROR:  update or delete on table \"orders\" violates foreign key constraint \"order_logs_id_order_fkey\" on table \"order_logs\"\nDETAIL:  Key (id)=(06526aec166d47b4992b5566) is still referenced from table \"order_logs\"."
+      },
+      "evidence": "dlp02.json",
+      "recorded_at": "2026-11-16T01:49:55+00:00"
+    },
+    {
+      "id": "DLP-02.6",
+      "name": "Un borrado físico deliberado sí destruye la información",
+      "status": "FAIL",
+      "expected": "La información debería sobrevivir o bloquearse",
+      "observed": {
+        "order_id": "06526aec166d47b4992b5566",
+        "rows_after_hard_delete": 0
+      },
+      "evidence": "dlp02.json",
+      "recorded_at": "2026-11-16T01:49:56+00:00"
+    },
+    {
+      "id": "DLP-02.7",
+      "name": "El dato destruido se recupera desde el respaldo",
+      "status": "PASS",
+      "expected": "Fila restaurada idéntica a la original",
+      "observed": {
+        "order_id": "06526aec166d47b4992b5566",
+        "recovered": true,
+        "restore_seconds": 0.54,
+        "matches_original": true
+      },
+      "evidence": "dlp02.json",
+      "recorded_at": "2026-11-16T01:49:57+00:00"
+    },
+    {
+      "id": "DR-02.1",
+      "name": "Simulación de pérdida total de la base de práctica",
+      "status": "PASS",
+      "expected": "Base de datos eliminada por completo",
+      "observed": {
+        "database": "frostbase_drill",
+        "exists_after_drop": false
+      },
+      "evidence": "dr02.json",
+      "recorded_at": "2026-11-16T01:49:58+00:00"
+    },
+    {
+      "id": "DR-02.2",
+      "name": "Recuperación completa del servicio y de los datos",
+      "status": "PASS",
+      "expected": "Health 200, login/dashboard 200 y checksums idénticos",
+      "observed": {
+        "healthy": true,
+        "dashboard_status": 200,
+        "checksums_match": true,
+        "restore_seconds": 0.96,
+        "differences": []
+      },
+      "evidence": "checksums_restored_dr02.json",
+      "recorded_at": "2026-11-16T01:50:05+00:00"
+    },
+    {
+      "id": "DR-02.3",
+      "name": "RTO medido dentro de la meta",
+      "status": "PASS",
+      "expected": "RTO <= 120 segundos para el volumen actual",
+      "observed": {
+        "rto_seconds": 2.45,
+        "target_seconds": 120
+      },
+      "evidence": "dr02.json",
+      "recorded_at": "2026-11-16T01:50:05+00:00"
+    },
+    {
+      "id": "DR-02.4",
+      "name": "RPO documentado (ventana de pérdida potencial)",
+      "status": "INFO",
+      "expected": "RPO definido por la frecuencia de respaldos",
+      "observed": {
+        "last_backup": "2026-11-16T01:49:37+00:00",
+        "disaster_at": "2026-11-16T01:50:05.332158+00:00",
+        "rpo_minutes": 0.47,
+        "note": "Sin WAL archiving el RPO es el tiempo desde el último respaldo"
+      },
+      "evidence": "dr02.json",
+      "recorded_at": "2026-11-16T01:50:05+00:00"
+    }
+  ],
+  "details": {
+    "preparation": {
+      "source_backup": {
+        "database": "frostbase",
+        "label": "drill_source",
+        "created_at": "2026-11-16T01:49:28+00:00",
+        "file": "C:\\Users\\dell\\Documents\\GitHub\\frostbase-v2\\db-backups\\frostbase_drill_source_20261116T014927Z.dump",
+        "size_bytes": 57905,
+        "sha256": "84cbf084173c5e587854bd68304747f8bd0f6bdb4721fdbf7c1c7b5aa147112f",
+        "format": "pg_dump custom (-Fc)",
+        "objects": 98,
+        "verified_with_pg_restore_list": true
+      },
+      "restore": {
+        "target_database": "frostbase_drill",
+        "source_dump": "C:\\Users\\dell\\Documents\\GitHub\\frostbase-v2\\db-backups\\frostbase_drill_source_20261116T014927Z.dump",
+        "restored_at": "2026-11-16T01:49:29+00:00",
+        "seconds": 0.58,
+        "warnings": ""
+      }
+    },
+    "dr01": {
+      "backup": {
+        "database": "frostbase_drill",
+        "label": "dr01",
+        "created_at": "2026-11-16T01:49:37+00:00",
+        "file": "C:\\Users\\dell\\Documents\\GitHub\\frostbase-v2\\db-backups\\frostbase_drill_dr01_20261116T014937Z.dump",
+        "size_bytes": 57921,
+        "sha256": "2d08ca48c4c7392a1e92ba6c2fc2aad62542ac5c0793a71d4983923cd311f6b9",
+        "format": "pg_dump custom (-Fc)",
+        "objects": 98,
+        "verified_with_pg_restore_list": true
+      },
+      "restore": {
+        "target_database": "frostbase_restore",
+        "source_dump": "C:\\Users\\dell\\Documents\\GitHub\\frostbase-v2\\db-backups\\frostbase_drill_dr01_20261116T014937Z.dump",
+        "restored_at": "2026-11-16T01:49:39+00:00",
+        "seconds": 0.62,
+        "warnings": ""
+      },
+      "comparison": {
+        "match": true,
+        "expected_digest": "5a0341b93fdb8c00a623a1b509cbba3e9ec4bfe94408d641f61e44aa36ad92e6",
+        "actual_digest": "5a0341b93fdb8c00a623a1b509cbba3e9ec4bfe94408d641f61e44aa36ad92e6",
+        "differences": []
+      },
+      "functional": {
+        "server_ok": true,
+        "login_ok": true,
+        "dashboard_status": 200
+      }
+    },
+    "dlp01": {
+      "anonymous": {
+        "/api/users": 401,
+        "/api/orders": 401,
+        "/api/readings": 401,
+        "/api/dashboard/summary": 401,
+        "/api/stores": 401,
+        "/api/trucks": 401
+      },
+      "users_status": 200
+    },
+    "dlp02": {
+      "order_id": "528798793b204af1be5cf9bf",
+      "target_order": "06526aec166d47b4992b5566",
+      "entities": {
+        "user": {
+          "id": "e55158ec2b8648da8ce21493",
+          "active_after_delete": "false"
+        },
+        "store": {
+          "id": "3c3c8db301ca4e0383fa1ab9",
+          "active_after_delete": "false"
+        },
+        "route": {
+          "id": "3c6a21121d0e465aa114b8d6",
+          "active_after_delete": "false"
+        },
+        "truck": {
+          "id": "63578b825f694c5a8fb7f10e",
+          "state_after_delete": "OS",
+          "truck_logs": 2
+        }
+      },
+      "audit_columns": "",
+      "hard_delete_lost": true,
+      "recovered": true
+    },
+    "dr02": {
+      "rto_seconds": 2.45,
+      "rpo_minutes": 0.47,
+      "healthy": true,
+      "dashboard_status": 200,
+      "comparison": {
+        "match": true,
+        "expected_digest": "5a0341b93fdb8c00a623a1b509cbba3e9ec4bfe94408d641f61e44aa36ad92e6",
+        "actual_digest": "5a0341b93fdb8c00a623a1b509cbba3e9ec4bfe94408d641f61e44aa36ad92e6",
+        "differences": []
+      }
+    }
+  }
+}

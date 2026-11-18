@@ -1,0 +1,87 @@
+{
+  "database": "frostbase_drill",
+  "generated_at": "2026-11-16T03:35:30+00:00",
+  "digest": "5a0341b93fdb8c00a623a1b509cbba3e9ec4bfe94408d641f61e44aa36ad92e6",
+  "tables": {
+    "alert_types": {
+      "rows": 5,
+      "checksum": "ba0b289051f6ae534476be1284fed516"
+    },
+    "alerts": {
+      "rows": 6,
+      "checksum": "8ab02313a6473a22d4e99f2d7ea73f9a"
+    },
+    "door_events": {
+      "rows": 4,
+      "checksum": "0bf83a07c155824ee27445d8158f3b48"
+    },
+    "order_logs": {
+      "rows": 20,
+      "checksum": "1d12c857604eaef3d8d3342a6c63ca60"
+    },
+    "orders": {
+      "rows": 15,
+      "checksum": "7e3efa35532378c602fba69412ebe91a"
+    },
+    "osrm_routes": {
+      "rows": 56,
+      "checksum": "19db0b4cb3ff97059520d3eb6366a08c"
+    },
+    "parameters": {
+      "rows": 1,
+      "checksum": "cd88646cfa2202d6f580864641110169"
+    },
+    "readings": {
+      "rows": 300,
+      "checksum": "fd8310b0805c6a711a243d82224d65c9"
+    },
+    "route_stores": {
+      "rows": 40,
+      "checksum": "6733de1ffb3e71d643e1e574fdd3dc74"
+    },
+    "routes": {
+      "rows": 8,
+      "checksum": "036663a2ca284784867be2877141beb1"
+    },
+    "state_orders": {
+      "rows": 4,
+      "checksum": "017f05c3030bf8b76d6b4fb5ea935765"
+    },
+    "state_trips": {
+      "rows": 3,
+      "checksum": "3c3a7d18075dfecc320867fc2bde5ca3"
+    },
+    "state_trucks": {
+      "rows": 4,
+      "checksum": "3dff0c00d6ffb7b3ef26158cfd6e8069"
+    },
+    "stores": {
+      "rows": 40,
+      "checksum": "c72c7a1ca5f4f2b47db8b52771caa33e"
+    },
+    "trip_logs": {
+      "rows": 10,
+      "checksum": "99c64610d0d2aa4d8ec39ccab05bb28a"
+    },
+    "trip_orders": {
+      "rows": 3,
+      "checksum": "272a1b8a94d94cdb8a930883321f11b4"
+    },
+    "trips": {
+      "rows": 2,
+      "checksum": "7293ac990b042f499a264198a2d99017"
+    },
+    "truck_logs": {
+      "rows": 13,
+      "checksum": "9b2a7b2e180f821bcfe8cad1f9f6d5e4"
+    },
+    "trucks": {
+      "rows": 12,
+      "checksum": "57da6be940ba94ea2f521956aebacadc"
+    },
+    "users": {
+      "rows": 11,
+      "checksum": "d2a8fa5359119793b3db04e970c0350c"
+    }
+  }
+}

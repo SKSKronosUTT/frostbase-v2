@@ -1,0 +1,23 @@
+[Unit]
+Description=Frostbase encrypted backup and verification
+Documentation=file:/opt/frostbase/docs/security/backup-restore-guide.md
+After=network-online.target docker.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+# El usuario debe pertenecer al grupo docker (acceso a /var/run/docker.sock).
+User=frostbase
+Group=frostbase
+EnvironmentFile=/etc/frostbase/backup.env
+ExecStart=/opt/frostbase/deploy/cron/frostbase-backup.sh
+Nice=10
+IOSchedulingClass=best-effort
+IOSchedulingPriority=7
+PrivateTmp=true
+TimeoutStartSec=2h
+# Los respaldos se guardan fuera del directorio del repositorio.
+ReadWritePaths=/var/backups/frostbase /var/log
+
+[Install]
+WantedBy=multi-user.target

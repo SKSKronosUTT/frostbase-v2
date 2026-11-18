@@ -1,0 +1,17 @@
+﻿==============================================================================
+PRUEBA:     DR-01 - Respaldo lógico y restauración completa
+EJECUCIÓN:  2026-11-16T04:05:52+00:00
+COMMIT:     77d7bc8
+EVIDENCIA:  results.json SHA-256 4DCD13E505726982AF07CFBD050670DBC94D64BFBD63075DDD372D104544E68F
+COMANDO:    python backend/scripts/run_dlp_drp_tests.py --evidence-dir "C:\Users\dell\Documents\GitHub\frostbase-v2\docs\security\evidence\2026-11-15-demo"
+RESULTADO:  3 PASS / 0 FAIL / 0 INFO
+CAPTURA:    incluya esta cabecera y las líneas de resultado
+==============================================================================
+[OK] DR-01.1 Respaldo l¾gico Ýntegro y verificable: {'file': 'C:\\Users\\dell\\Documents\\GitHub\\frostbase-v2\\db-backups\\frostbase_drill_dr01_20261116T040611Z.dump', 'size_bytes': 57921, 'sha256': 'ab027831924f65ede07324325cbbe85a0dad87c68c60e6ffd13b97eb001d7b38', 'objects': 98}
+[OK] DR-01.2 Restauraci¾n completa sin diferencias: {'restore_seconds': 1.1, 'expected_digest': '5a0341b93fdb8c00a623a1b509cbba3e9ec4bfe94408d641f61e44aa36ad92e6', 'actual_digest': '5a0341b93fdb8c00a623a1b509cbba3e9ec4bfe94408d641f61e44aa36ad92e6', 'differences': []}
+[OK] DR-01.3 La base restaurada es funcional para la aplicaci¾n: {'server_ok': True, 'login_ok': True, 'dashboard_status': 200}
+
+------------------------------------------------------------------------------
+Leyenda: [OK]=PASS, [FALLO]=hallazgo, [INFO]=informativo.
+Los FAIL son hallazgos de seguridad, no errores del procedimiento.
+Evidencia estructurada: results.json / summary.md

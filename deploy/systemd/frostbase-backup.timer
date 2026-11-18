@@ -1,0 +1,13 @@
+[Unit]
+Description=Daily Frostbase backup timer
+
+[Timer]
+# 02:15 UTC. Cambie la hora según la ventana de menor actividad.
+OnCalendar=*-*-* 02:15:00 UTC
+# Persist=true ejecuta el respaldo al arrancar si se perdió la ventana
+# (por ejemplo, si el servidor estaba apagado).
+Persistent=true
+RandomizedDelaySec=300
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,21 @@
+﻿==============================================================================
+PRUEBA:     DLP-01 - Control de acceso y exfiltración
+EJECUCIÓN:  2026-11-16T03:35:10+00:00
+COMMIT:     77d7bc8
+EVIDENCIA:  results.json SHA-256 5E541864C17982A5B987F8832462AB1139FB0616AB6D405F4E0811A22D56C1C7
+COMANDO:    python backend/scripts/run_dlp_drp_tests.py --evidence-dir "C:\Users\dell\Documents\GitHub\frostbase-v2\docs\security\evidence\2026-11-16-demo"
+RESULTADO:  3 PASS / 4 FAIL / 0 INFO
+CAPTURA:    incluya esta cabecera y las líneas de resultado
+==============================================================================
+[OK] DLP-01.1 Acceso an¾nimo bloqueado en endpoints de datos: {'/api/users': 401, '/api/orders': 401, '/api/readings': 401, '/api/dashboard/summary': 401, '/api/stores': 401, '/api/trucks': 401}
+[FALLO] DLP-01.2 Un conductor no puede enumerar usuarios ni ver PII: {'http_status': 200, 'users_returned': 11, 'pii_exposed': True, 'password_hash_exposed': False, 'redacted_sample': [{'email': 'a***@logisticarf.com', 'phone': '***0207', 'birthDate': '***', 'isAdmin': False}, {'email': 'a***@logisticarf.com', 'phone': '***0103', 'birthDate': '***', 'isAdmin': True}, {'email': 'c***@logisticarf.com', 'phone': '***0102', 'birthDate': '***', 'isAdmin': True}]}
+[OK] DLP-01.3 RBAC en endpoints exclusivos de administrador: {'endpoint': 'POST /api/simulator/check', 'http_status': 403}
+[OK] DLP-01.4 Token manipulado rechazado: {'http_status': 401}
+[FALLO] DLP-01.5 Documentaci¾n de API no expuesta sin autenticaci¾n: {'endpoint': '/openapi.json', 'http_status': 200}
+[FALLO] DLP-01.6 Base de datos no accesible desde el host con credenciales por defecto: {'host_db_access': True, 'rows_read': '11', 'port': 5433}
+[FALLO] DLP-01.7 Los respaldos contienen PII en texto claro y sin cifrar: {'rows_with_email_in_dump': 11, 'backup_encrypted': False, 'backup_file': 'C:\\Users\\dell\\Documents\\GitHub\\frostbase-v2\\db-backups\\frostbase_drill_dr01_20261116T033530Z.dump', 'inspection_error': None}
+
+------------------------------------------------------------------------------
+Leyenda: [OK]=PASS, [FALLO]=hallazgo, [INFO]=informativo.
+Los FAIL son hallazgos de seguridad, no errores del procedimiento.
+Evidencia estructurada: results.json / summary.md

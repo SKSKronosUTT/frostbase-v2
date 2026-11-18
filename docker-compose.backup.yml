@@ -1,0 +1,26 @@
+# Overlay opcional para habilitar WAL archiving y PITR.
+#
+# Uso:
+#   docker compose -f docker-compose.yml -f docker-compose.backup.yml up -d db
+#
+# Requiere reiniciar PostgreSQL. El archivo WAL se guarda en el volumen
+# frostbase_wal_archive; ese volumen debe respaldarse junto con el base backup
+# (ver backend/scripts/db_basebackup.py) para poder hacer PITR.
+services:
+  db:
+    command:
+      - postgres
+      - -c
+      - wal_level=replica
+      - -c
+      - archive_mode=on
+      - -c
+      - archive_timeout=60
+      - -c
+      - archive_command=test ! -f /var/lib/postgresql/wal-archive/%f && cp %p /var/lib/postgresql/wal-archive/%f
+    volumes:
+      - frostbase_pgdata:/var/lib/postgresql/data
+      - frostbase_wal_archive:/var/lib/postgresql/wal-archive
+
+volumes:
+  frostbase_wal_archive:
