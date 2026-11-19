@@ -28,6 +28,10 @@ def get_settings(db: Session) -> Setting:
     return settings_repo.get_or_create(db)
 
 
+def ensure_settings(db: Session) -> Setting:
+    return settings_repo.ensure_default(db)
+
+
 def get_settings_out(db: Session) -> SettingsOut:
     return serialize_settings(get_settings(db))
 

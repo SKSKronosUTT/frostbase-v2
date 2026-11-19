@@ -1,5 +1,7 @@
-from datetime import datetime, timezone
+from datetime import datetime
 
+from sqlalchemy import select
+from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.orm import Session
 
 from app.models.device import Device
@@ -21,7 +23,12 @@ class DeviceNotAssignedError(Exception):
 
 def ingest_reading(
     db: Session, *, device: Device, payload: ReadingIngest, setting: Setting
-) -> tuple[Reading, list]:
+) -> tuple[Reading, list, bool]:
+    """Inserta una lectura de forma atómica e idempotente.
+
+    Devuelve ``(reading, alerts, duplicate)``. Si ya existe una lectura con el
+    mismo ``(device_id, reading_timestamp)``, no se evalúan alertas de nuevo.
+    """
     if device.truck_id is None:
         raise DeviceNotAssignedError(
             "El dispositivo no está asociado a un camión. Asígnelo antes de enviar lecturas."
@@ -34,30 +41,45 @@ def ingest_reading(
 
     now = utcnow()
     timestamp = ensure_utc(payload.timestamp) or now
-    if timestamp.tzinfo is None:
-        timestamp = timestamp.replace(tzinfo=timezone.utc)
 
-    reading = Reading(
-        device_id=device.id,
-        truck_id=device.truck_id,
-        temperature=payload.temperature,
-        humidity=payload.humidity,
-        latitude=payload.latitude,
-        longitude=payload.longitude,
-        received_at=now,
-        reading_timestamp=timestamp,
+    stmt = (
+        pg_insert(Reading)
+        .values(
+            device_id=device.id,
+            truck_id=device.truck_id,
+            temperature=payload.temperature,
+            humidity=payload.humidity,
+            latitude=payload.latitude,
+            longitude=payload.longitude,
+            received_at=now,
+            reading_timestamp=timestamp,
+        )
+        .on_conflict_do_nothing(
+            index_elements=["device_id", "reading_timestamp"]
+        )
+        .returning(Reading)
     )
-    db.add(reading)
+    reading = db.scalars(stmt).first()
+
+    if reading is None:
+        existing = db.scalar(
+            select(Reading).where(
+                Reading.device_id == device.id,
+                Reading.reading_timestamp == timestamp,
+            )
+        )
+        if existing is None:
+            raise RuntimeError("No se pudo recuperar la lectura existente")
+        return existing, [], True
+
     device.last_seen = now
     db.add(device)
-    db.commit()
-    db.refresh(reading)
-    db.refresh(device)
+    db.flush()
 
     alerts = alert_service.evaluate_reading(
         db, device=device, reading=reading, setting=setting
     )
-    return reading, alerts
+    return reading, alerts, False
 
 
 def list_readings(

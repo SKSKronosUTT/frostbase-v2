@@ -41,6 +41,6 @@ def ensure_schema() -> None:
 
 
 def bootstrap_database(db: Session) -> None:
-    settings_service.get_settings(db)
+    settings_service.ensure_settings(db)
     auth_service.ensure_initial_admin(db)
     logger.info("Base de datos inicializada correctamente")
