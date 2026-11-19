@@ -6,7 +6,7 @@ services:
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-frostbase}
       POSTGRES_USER: ${POSTGRES_USER:-frostbase}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-frostbase}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Define POSTGRES_PASSWORD en .env}
     volumes:
       - frostbase_v4_pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -23,23 +23,38 @@ services:
       db:
         condition: service_healthy
     environment:
-      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-frostbase}:${POSTGRES_PASSWORD:-frostbase}@db:5432/${POSTGRES_DB:-frostbase}
-      SECRET_KEY: ${SECRET_KEY:-dev-only-change-this-secret-key}
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-frostbase}:${POSTGRES_PASSWORD:?Define POSTGRES_PASSWORD en .env}@db:5432/${POSTGRES_DB:-frostbase}
+      SECRET_KEY: ${SECRET_KEY:?Define SECRET_KEY (>=64 chars) en .env}
+      DEVICE_KEY_PEPPER: ${DEVICE_KEY_PEPPER:?Define DEVICE_KEY_PEPPER (>=64 chars) en .env}
       ENVIRONMENT: ${ENVIRONMENT:-production}
       ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
       ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@frostbase.local}
-      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-ChangeMe123!}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?Define ADMIN_PASSWORD (>=12 chars) en .env}
       ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES:-720}
-      COOKIE_SECURE: ${COOKIE_SECURE:-false}
+      COOKIE_SECURE: ${COOKIE_SECURE:-true}
       COOKIE_SAMESITE: ${COOKIE_SAMESITE:-lax}
-      DEVICE_OFFLINE_SECONDS: ${DEVICE_OFFLINE_SECONDS:-60}
       DASHBOARD_FRESH_MINUTES: ${DASHBOARD_FRESH_MINUTES:-10}
+      DISCONNECT_CHECK_SECONDS: ${DISCONNECT_CHECK_SECONDS:-30}
       OSRM_BASE_URL: ${OSRM_BASE_URL:-https://router.project-osrm.org}
       WEATHER_CACHE_SECONDS: ${WEATHER_CACHE_SECONDS:-600}
       AUTO_CREATE_TABLES: "false"
+      RATE_LIMIT_BACKEND: ${RATE_LIMIT_BACKEND:-memory}
+      REDIS_URL: ${REDIS_URL:-}
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:8050,http://127.0.0.1:8050,http://localhost:8060,http://127.0.0.1:8060,http://localhost:8070,http://127.0.0.1:8070}
     ports:
       - "${APP_PORT:-8050}:8050"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8050/health', timeout=3).status == 200 else 1)",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 40s
 
 volumes:
   frostbase_v4_pgdata:
