@@ -5,6 +5,7 @@ Las variables de entorno se fijan **antes** de importar ``app`` porque
 """
 
 import os
+import time
 from pathlib import Path
 
 TEST_DATABASE_URL = os.getenv(
@@ -34,6 +35,7 @@ from alembic import command  # noqa: E402
 from alembic.config import Config  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402
 from sqlalchemy import text  # noqa: E402
+from sqlalchemy.exc import OperationalError  # noqa: E402
 
 from app.core.database import SessionLocal, engine  # noqa: E402
 from app.core.ratelimit import reset_rate_limits  # noqa: E402
@@ -49,7 +51,22 @@ BACKEND_DIR = Path(__file__).resolve().parents[1]
 
 @pytest.fixture(scope="session", autouse=True)
 def _prepare_database():
-    with engine.connect() as connection:
+    connection = None
+    last_error: OperationalError | None = None
+    for _ in range(30):
+        try:
+            connection = engine.connect()
+            break
+        except OperationalError as exc:
+            last_error = exc
+            time.sleep(1)
+    if connection is None:
+        raise AssertionError(
+            "No se pudo conectar a la base de pruebas. "
+            "Ejecute: docker compose -f compose.test.yml up -d --wait"
+        ) from last_error
+
+    with connection:
         connection.execute(text("DROP SCHEMA IF EXISTS public CASCADE"))
         connection.execute(text("CREATE SCHEMA public"))
         connection.commit()

@@ -50,18 +50,21 @@ def test_login_rate_limit_returns_429(client):
 
 
 def test_login_constant_time_smoke():
-    def measure(identifier: str, samples: int = 12) -> float:
-        durations: list[float] = []
-        for _ in range(samples):
-            with SessionLocal() as db:
-                started = time.perf_counter()
-                with pytest.raises(auth_service.AuthenticationError):
-                    auth_service.authenticate(db, identifier, "WrongPassword123!")
-                durations.append(time.perf_counter() - started)
-        return statistics.median(durations)
+    def measure_once(identifier: str) -> float:
+        with SessionLocal() as db:
+            started = time.perf_counter()
+            with pytest.raises(auth_service.AuthenticationError):
+                auth_service.authenticate(db, identifier, "WrongPassword123!")
+            return time.perf_counter() - started
 
-    unknown_user = measure("nobody@example.com")
-    existing_user = measure("admin")
+    unknown_samples: list[float] = []
+    existing_samples: list[float] = []
+    for _ in range(12):
+        unknown_samples.append(measure_once("nobody@example.com"))
+        existing_samples.append(measure_once("admin"))
+
+    unknown_user = statistics.median(unknown_samples)
+    existing_user = statistics.median(existing_samples)
 
     # Ambos casos deben ejecutar Argon2 y no diferenciarse de forma evidente.
     assert unknown_user > 0.002
