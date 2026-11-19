@@ -83,6 +83,10 @@ Las variables `DEVICE_OFFLINE_SECONDS`, `WEATHER_CITY`, `WEATHER_LATITUDE` y
 `WEATHER_LONGITUDE` **ya no se documentan ni se inyectan**: el código no las lee.
 El umbral de desconexión se configura en el panel (`offline_timeout_seconds`).
 
+> Con `RATE_LIMIT_BACKEND=memory` y más de un worker, cada proceso mantiene su
+> propio contador: la protección es parcial. Para producción multi-worker use
+> `RATE_LIMIT_BACKEND=redis` con `REDIS_URL` o `limit_req` en el proxy inverso.
+
 > En Docker Compose, la `DATABASE_URL` del contenedor se construye automáticamente
 > con el host `db`. La variable del `.env` se usa para ejecución local.
 

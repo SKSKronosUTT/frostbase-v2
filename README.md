@@ -478,4 +478,8 @@ Antes de modificar código, lee **[PLAN-MEJORA.md](PLAN-MEJORA.md)**. Allí est�
 - No adelantes tareas de fases posteriores.
 - Actualiza el registro §9 del plan al terminar una tarea.
 
-> ✅ **Tareas de la Fase 1 completadas:** configuración segura y fail-fast, `.env` regenerado, Alembic gobernando el esquema, política de contraseña con revocación de JWT e higiene de respaldos. Queda pendiente la regresión manual del gate F1 (navegador + simulador). El estado de las fases restantes está en `PLAN-MEJORA.md` §9.
+> ✅ **Tareas de la Fase 1 completadas:** configuración segura y fail-fast, `.env` regenerado, Alembic gobernando el esquema, política de contraseña con revocación de JWT e higiene de respaldos.
+>
+> ✅ **Tareas de la Fase 2 completadas:** rate limiting, login en tiempo constante con lockout, claves de dispositivo HMAC, ingesta IoT atómica e idempotente y arnés de pruebas con PostgreSQL real.
+>
+> Queda pendiente la regresión manual de los gates F1/F2 (navegador + simulador 10 min). El estado de las fases restantes está en `PLAN-MEJORA.md` §9.
