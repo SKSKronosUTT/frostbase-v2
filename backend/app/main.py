@@ -35,11 +35,18 @@ async def _disconnect_watcher() -> None:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    logger.info(
+        "Configuración efectiva: environment=%s cors=%s cookie_secure=%s "
+        "auto_create_tables=%s rate_limit_backend=%s",
+        settings.environment,
+        ",".join(settings.cors_origin_list) or "(sin orígenes)",
+        settings.cookie_secure,
+        settings.auto_create_tables,
+        settings.rate_limit_backend,
+    )
     ensure_schema()
     with SessionLocal() as db:
         bootstrap_database(db)
-    if settings.is_production and settings.secret_key.startswith("dev-only"):
-        logger.error("SECRET_KEY insegura en producción. Configure una clave real.")
     task = asyncio.create_task(_disconnect_watcher())
     logger.info("FrostBase iniciado en entorno '%s'", settings.environment)
     try:
