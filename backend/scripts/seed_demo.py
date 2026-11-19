@@ -11,7 +11,7 @@ from __future__ import annotations
 import logging
 
 from app.core.database import SessionLocal
-from app.core.security import generate_device_secret, hash_device_secret
+from app.core.security import device_fingerprint, generate_device_secret
 from app.models.device import Device
 from app.models.route import DeliveryPoint, Route
 from app.models.truck import Truck
@@ -112,7 +112,8 @@ def main() -> None:
                     Device(
                         device_id=data["device_id"],
                         truck_id=truck.id,
-                        key_hash=hash_device_secret(secret),
+                        key_hash=device_fingerprint(secret),
+                        key_scheme="hmac",
                     )
                 )
                 created_devices.append((data["device_id"], secret))
