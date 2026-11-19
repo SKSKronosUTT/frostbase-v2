@@ -258,7 +258,7 @@ Cuando el simulador arranque, verás una lectura cada 10 segundos y el camión a
 La suite usa un PostgreSQL 16 real y recrea el esquema con Alembic. Requiere Python 3.12+.
 
 ```bash
-docker compose -f compose.test.yml up -d
+docker compose -f compose.test.yml up -d --wait
 
 cd backend
 python -m venv .venv

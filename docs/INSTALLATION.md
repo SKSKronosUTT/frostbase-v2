@@ -207,7 +207,7 @@ existen en SQLite) y recrean el esquema con Alembic en cada ejecución.
 
 ```bash
 # 1. Base de datos de test (puerto 55432)
-docker compose -f compose.test.yml up -d
+docker compose -f compose.test.yml up -d --wait
 
 # 2. Dependencias de desarrollo
 cd backend
