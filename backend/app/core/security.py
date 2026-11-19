@@ -23,7 +23,9 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
         return False
 
 
-def create_access_token(subject: str, expires_minutes: int | None = None) -> str:
+def create_access_token(
+    subject: str, expires_minutes: int | None = None, *, token_version: int = 1
+) -> str:
     expire = datetime.now(timezone.utc) + timedelta(
         minutes=expires_minutes or settings.access_token_expire_minutes
     )
@@ -32,6 +34,7 @@ def create_access_token(subject: str, expires_minutes: int | None = None) -> str
         "exp": expire,
         "iat": datetime.now(timezone.utc),
         "type": "admin",
+        "tv": token_version,
     }
     return jwt.encode(payload, settings.secret_key, algorithm=ALGORITHM)
 

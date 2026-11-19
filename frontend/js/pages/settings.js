@@ -1,5 +1,5 @@
 import { api } from "../core/api.js";
-import { initProtectedPage } from "../core/app.js";
+import { initProtectedPage, openPasswordChangeModal } from "../core/app.js";
 import { getCachedAdmin } from "../core/auth.js";
 import { notify } from "../core/notifications.js";
 import { toggleTheme } from "../core/theme.js";
@@ -164,6 +164,10 @@ async function init() {
 
   qs("#settingsThemeToggle").addEventListener("click", () => {
     toggleTheme(getCachedAdmin());
+  });
+
+  qs("#changePasswordButton").addEventListener("click", () => {
+    openPasswordChangeModal();
   });
 
   window.addEventListener("frostbase:theme", () => {
