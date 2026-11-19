@@ -36,6 +36,8 @@ settings          (fila única, id = 1)
 | `email` | varchar(255) | único, indexado |
 | `password_hash` | varchar(255) | Argon2 |
 | `theme` | varchar(10) | `light` / `dark` |
+| `must_change_password` | boolean | Fuerza cambio en el próximo login |
+| `token_version` | integer | Revocación de JWT (`tv` claim) |
 | `created_at` | timestamptz | |
 | `last_login` | timestamptz | nullable |
 
