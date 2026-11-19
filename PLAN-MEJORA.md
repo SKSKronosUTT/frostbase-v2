@@ -1261,7 +1261,7 @@ try {
 | T1.4 | F1 | ✅ | OpenCode (agente IA) | `acc5dd2` | 2026-11-19 | `scripts/migrate.py` con `pg_advisory_lock`; dos migraciones simultáneas exit 0; `alembic current == heads == 0002`; drill `create_all` + `stamp head` verificado. |
 | T1.5 | F1 | ✅ | OpenCode (agente IA) | `0ca9be0` | 2026-11-19 | Migración 0002 up/down probada en BD temporal; login con `must_change_password=true`; cambio de contraseña funcional; JWT previo → 401 y JWT nuevo → 200. |
 | T1.6 | F1 | ✅ | OpenCode (agente IA) | `47617ee` | 2026-11-19 | `frostbase_v4_pgdata` corregido; tabla de variables sincronizada; comandos PowerShell; `docs/security/evidence` eliminado; README enlaza plan y docs. |
-| T1.7 | F1 | ✅ | OpenCode (agente IA) | `211a2f8` | 2026-11-19 | `db-backups/` movido a `%USERPROFILE%\backups\frostbase`; `.gitignore` ampliado; restore drill medido: 0.79 s, conteos verificados; RPO 24 h / RTO 30 min documentados. |
+| T1.7 | F1 | ✅ | OpenCode (agente IA) | `211a2f8` | 2026-11-19 | `db-backups/` movido a `%USERPROFILE%\backups\frostbase`; `.gitignore` ampliado; restore drill medido: 0.79 s, conteos verificados; RPO 24 h / RTO 30 min documentados. Cifrado no aplicado: requiere clave del responsable; procedimiento `age`/GPG documentado. |
 | T2.1 | F2 | ⬜ | — | — | — | — |
 | T2.2 | F2 | ⬜ | — | — | — | — |
 | T2.3 | F2 | ⬜ | — | — | — | — |
