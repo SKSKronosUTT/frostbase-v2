@@ -1,11 +1,14 @@
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, HTTPException, Query, Request, Response, status
 
 from app.api.deps import CurrentAdmin, DbSession
+from app.core.ratelimit import RateLimit
 from app.schemas.common import Page
 from app.schemas.device import DeviceCreate, DeviceCreatedOut, DeviceOut, DeviceUpdate
 from app.services import device_service
 
 router = APIRouter(prefix="/devices", tags=["Dispositivos IoT"])
+
+_rotate_key_limiter = RateLimit("devices:rotate", limit=10, window_seconds=3600)
 
 
 @router.get("", response_model=Page[DeviceOut])
@@ -68,7 +71,14 @@ def update_device(
 
 
 @router.post("/{device_pk}/rotate-key", response_model=DeviceCreatedOut)
-def rotate_key(device_pk: int, db: DbSession, _: CurrentAdmin) -> DeviceCreatedOut:
+def rotate_key(
+    device_pk: int,
+    request: Request,
+    response: Response,
+    db: DbSession,
+    admin: CurrentAdmin,
+) -> DeviceCreatedOut:
+    _rotate_key_limiter.check(request, response, extra=str(admin.id))
     try:
         return device_service.rotate_key(db, device_pk)
     except device_service.DeviceNotFoundError as exc:
