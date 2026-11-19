@@ -13,6 +13,10 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY backend/ /app/backend/
 COPY frontend/ /app/frontend/
 
+COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN sed -i 's/\r$//' /usr/local/bin/entrypoint.sh \
+    && chmod +x /usr/local/bin/entrypoint.sh
+
 EXPOSE 8050
 
-CMD ["sh", "-c", "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8050"]
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
