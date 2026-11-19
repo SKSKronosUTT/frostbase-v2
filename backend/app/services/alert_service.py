@@ -1,3 +1,4 @@
+import contextlib
 import logging
 from datetime import datetime, timedelta
 
@@ -38,6 +39,8 @@ def _create_active_alert(db: Session, alert: Alert) -> Alert | None:
                 db.flush()
             return alert
         except IntegrityError:
+            with contextlib.suppress(Exception):
+                db.expunge(alert)
             existing = alerts_repo.find_active(
                 db, alert.device_id, alert.alert_type
             )
