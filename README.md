@@ -253,6 +253,28 @@ Cuando el simulador arranque, verás una lectura cada 10 segundos y el camión a
 
 ---
 
+## Pruebas automatizadas (opcional)
+
+La suite usa un PostgreSQL 16 real y recrea el esquema con Alembic. Requiere Python 3.12+.
+
+```bash
+docker compose -f compose.test.yml up -d
+
+cd backend
+python -m venv .venv
+source .venv/bin/activate        # Windows: .\.venv\Scripts\Activate.ps1
+pip install -r requirements-dev.txt
+pytest -q
+```
+
+Resultado esperado: `10 passed` en menos de 60 segundos. Para limpiar la base de pruebas:
+
+```bash
+docker compose -f compose.test.yml down
+```
+
+---
+
 ## Operación diaria
 
 | Quiero… | Comando |
@@ -438,7 +460,9 @@ Navegador  →  FastAPI (backend)  →  PostgreSQL
 ## Seguridad
 
 - El arranque falla si faltan `SECRET_KEY`, `DEVICE_KEY_PEPPER`, `ADMIN_PASSWORD` o `POSTGRES_PASSWORD`.
-- Las contraseñas se guardan con Argon2 y las claves de dispositivo se almacenan hasheadas.
+- Las contraseñas se guardan con Argon2 y las claves de dispositivo se almacenan hasheadas (HMAC-SHA256 en claves nuevas y Argon2 en las legacy).
+- El login tiene rate limit por IP e identificador, bloqueo progresivo y mensajes genéricos.
+- La ingesta IoT tiene rate limit por dispositivo e IP, ingesta atómica e idempotencia por `(device_id, timestamp)`.
 - Los JWT viajan en cookies `HttpOnly`; en producción se exige `COOKIE_SECURE=true` y HTTPS.
 - Cambiar la contraseña incrementa `token_version` y revoca los JWT anteriores.
 - Nunca subas `.env`, respaldos ni claves reales al repositorio.

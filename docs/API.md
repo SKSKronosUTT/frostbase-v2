@@ -18,7 +18,13 @@ Si `must_change_password` es `true`, el panel bloquea la navegación con un moda
 obligatorio hasta definir la nueva contraseña.
 
 Errores de autenticación: `401` (sin sesión o credenciales inválidas), `400`
-(contraseña actual incorrecta al cambiarla), `422` (política de contraseña).
+(contraseña actual incorrecta al cambiarla), `422` (política de contraseña) y
+`429` (rate limit o bloqueo por intentos fallidos).
+
+El login aplica una ventana deslizante de **5 intentos/minuto por IP** y
+**10 intentos/15 minutos por identificador**. Tras varios fallos se aplica un
+bloqueo progresivo con `Retry-After`. El mensaje de error es idéntico para
+usuario inexistente y contraseña incorrecta.
 
 ### Dispositivos IoT
 
@@ -50,6 +56,7 @@ FastAPI devuelve `{"detail": "mensaje"}`. Códigos usados:
 | `404` | Recurso no encontrado |
 | `409` | Conflicto (placa o dispositivo duplicado, dispositivo sin camión) |
 | `422` | Validación de datos |
+| `429` | Rate limit o bloqueo temporal por intentos fallidos |
 | `503` | Servicio externo no disponible (OSRM) |
 
 ---
@@ -177,7 +184,10 @@ Respuesta (`201`):
 }
 ```
 
-> Guarde `device_key`: solo se muestra al crearla o rotarla.
+> Guarde `device_key`: solo se muestra al crearla o rotarla. Las claves nuevas se
+> guardan como HMAC-SHA256 con `DEVICE_KEY_PEPPER` (verificación O(1)); los
+> dispositivos antiguos usan Argon2 con un caché de aciertos de 300 s. Rote la
+> clave si el equipo se compromete; la anterior deja de funcionar de inmediato.
 
 ---
 
@@ -295,6 +305,18 @@ Los límites se derivan: `min = ideal - tolerancia`, `max = ideal + tolerancia`.
 | `POST` | `/iot/readings` | `X-Device-Key` | Registra lectura y evalúa alertas |
 | `GET` | `/iot/config` | `X-Device-Id` + `X-Device-Key` | Devuelve camión, ruta y umbrales |
 
+Límites de abuso (ventana deslizante):
+
+| Endpoint | Límite |
+|---|---|
+| `POST /iot/readings` | 30/min por `device_id` y 120/min por IP |
+| `GET /iot/config` | 60/min por `device_id` y 120/min por IP |
+
+Los límites se aplican **antes** de verificar la clave. Una respuesta `429`
+incluye `Retry-After` y `X-RateLimit-Limit`, `X-RateLimit-Remaining` y
+`X-RateLimit-Reset` (segundos). El firmware debe esperar `Retry-After` antes de
+reintentar y usar backoff exponencial.
+
 ### POST /iot/readings
 
 ```json
@@ -308,7 +330,14 @@ Los límites se derivan: `min = ideal - tolerancia`, `max = ideal + tolerancia`.
 }
 ```
 
-Validaciones: `device_id` 3–100 caracteres, temperatura −80…80 °C, humedad 0…100 %, latitud/longitud dentro de rangos geográficos. El camión se obtiene de la base de datos, nunca del payload.
+Validaciones:
+
+- `device_id` 3–100 caracteres y debe existir.
+- Temperatura −80…80 °C; humedad 0…100 %; latitud/longitud dentro de rango.
+- `timestamp` es opcional (si falta se usa la hora del servidor). Si se envía,
+  debe estar entre **7 días en el pasado** y **5 minutos en el futuro**. Un
+  timestamp sin zona horaria se interpreta como UTC. Fuera de ventana → `422`.
+- El camión se obtiene de la base de datos, nunca del payload.
 
 Respuesta:
 
@@ -317,11 +346,27 @@ Respuesta:
   "success": true,
   "message": "Lectura registrada correctamente",
   "truck_id": 1,
-  "alerts": []
+  "alerts": [],
+  "duplicate": false,
+  "reading_id": 12345
 }
 ```
 
-Si el dispositivo no tiene camión asignado: `409`.
+La ingesta es **idempotente** por `(device_id, reading_timestamp)`. Si se reenvía
+el mismo payload, no se crea otra fila: la respuesta trae `duplicate: true`,
+`reading_id` de la lectura existente y `alerts: []`. Para que la idempotencia
+funcione, el dispositivo debe conservar el mismo `timestamp` al reintentar.
+
+### Códigos HTTP de `/iot/*`
+
+| Código | Causa | Acción sugerida |
+|---|---|---|
+| `200` | Lectura registrada o duplicada | Continuar; revisar `duplicate` |
+| `401` | Falta la clave o no coincide | Revisar clave; no reintentar en bucle rápido |
+| `409` | Dispositivo sin camión asignado | Asignar camión desde el panel |
+| `422` | Payload inválido o timestamp fuera de ventana | Corregir payload, no reintentar igual |
+| `429` | Rate limit | Esperar `Retry-After` y aplicar backoff |
+| `5xx` | Error temporal del servidor | Reintentar con backoff exponencial |
 
 ### GET /iot/config
 
@@ -344,4 +389,18 @@ curl -s http://localhost:8050/api/v1/iot/config \
 }
 ```
 
-Consulte [IOT-INTEGRATION.md](IOT-INTEGRATION.md) para el ejemplo de firmware.
+### Rotación de claves de dispositivo
+
+- Al crear o rotar un dispositivo se devuelve `device_key` **una sola vez**.
+- Las claves nuevas usan HMAC-SHA256 con `DEVICE_KEY_PEPPER` (verificación O(1)).
+- Los dispositivos previos a la migración `0003_device_key_scheme` siguen con
+  Argon2; `DEVICE_KEY_FAST_PATH=true` cachea el acierto 300 s para no repetir el
+  KDF en cada lectura. Los fallos nunca se cachean.
+- Rotar `DEVICE_KEY_PEPPER` invalida todas las claves HMAC: rote también las
+  claves de los dispositivos en la misma ventana.
+- `POST /devices/{id}/rotate-key` está limitado a 10 rotaciones/hora por admin.
+- Para migrar todo el parque: `python -m scripts.rotate_all_device_keys --dry-run`
+  y luego `--yes` (imprime el mapa de claves una sola vez).
+
+Consulte [IOT-INTEGRATION.md](IOT-INTEGRATION.md) para el ejemplo de firmware y
+las recomendaciones de backoff.

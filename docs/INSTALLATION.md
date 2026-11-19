@@ -56,6 +56,7 @@ Variables que el código lee actualmente:
 |---|:--:|---|---|
 | `SECRET_KEY` | ✅ | — | Firma de JWT. ≥ 64 caracteres. |
 | `DEVICE_KEY_PEPPER` | ✅ | — | Secreto independiente para HMAC de dispositivos. |
+| `DEVICE_KEY_FAST_PATH` | — | `true` | Cachea 300 s el acierto Argon2 de dispositivos legacy. |
 | `ADMIN_PASSWORD` | ✅ | — | Contraseña inicial del administrador. ≥ 12 caracteres. |
 | `POSTGRES_DB` | — | `frostbase` | Nombre de la base. |
 | `POSTGRES_USER` | — | `frostbase` | Usuario de PostgreSQL. |
@@ -194,6 +195,32 @@ alembic downgrade -1
 El arranque en contenedor aplica las migraciones con
 `docker compose exec app python -m scripts.migrate`. Para respaldo, restauración
 probada, RPO y RTO consulte **[docs/ops/BACKUP-RESTORE.md](ops/BACKUP-RESTORE.md)**.
+
+## 7.1 Pruebas automatizadas
+
+Las pruebas usan un PostgreSQL 16 real (índices parciales y `ON CONFLICT` no
+existen en SQLite) y recrean el esquema con Alembic en cada ejecución.
+
+```bash
+# 1. Base de datos de test (puerto 55432)
+docker compose -f compose.test.yml up -d
+
+# 2. Dependencias de desarrollo
+cd backend
+python -m venv .venv
+source .venv/bin/activate        # Windows: .\.venv\Scripts\Activate.ps1
+pip install -r requirements-dev.txt
+
+# 3. Ejecutar
+pytest -q
+
+# 4. Limpiar (opcional)
+docker compose -f compose.test.yml down
+```
+
+Si usa otra base, defina `TEST_DATABASE_URL` antes de `pytest`. La suite fija
+`SECRET_KEY`, `DEVICE_KEY_PEPPER` y `ADMIN_PASSWORD` de test antes de importar
+`app`.
 
 ## 8. Cambio de contraseña inicial
 
