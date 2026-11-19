@@ -43,7 +43,7 @@ def get_current_admin(request: Request, db: DbSession) -> Admin:
     except (TypeError, ValueError):
         admin_id = -1
     admin = admin_repo.get_by_id(db, admin_id)
-    if admin is None:
+    if admin is None or payload.get("tv") != admin.token_version:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Sesión inválida o expirada",

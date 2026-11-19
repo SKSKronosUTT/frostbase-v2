@@ -205,7 +205,7 @@ FrostBase/
 │   ├── IOT-INTEGRATION.md
 │   └── INSTALLATION.md
 │
-├── docker-compose.yml
+├── compose.yml
 ├── .gitignore
 └── README.md
 ```

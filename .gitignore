@@ -11,3 +11,10 @@ venv/
 .DS_Store
 node_modules/
 db-backups/
+# Respaldos y dumps (nunca dentro del repositorio)
+*.dump
+*.dump.*
+*.tar.gz
+*.tgz
+*.sql
+*.dump.enc

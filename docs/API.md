@@ -12,8 +12,13 @@ Documentación interactiva: `/docs` (Swagger UI), `/redoc` (ReDoc), `/openapi.js
 2. El servidor responde con el perfil y establece la cookie `frostbase_token` (`HttpOnly`, `SameSite=Lax`, expiración configurable).
 3. Todas las rutas administrativas aceptan la cookie o `Authorization: Bearer <token>`.
 4. `POST /auth/logout` elimina la cookie.
+5. `POST /auth/change-password` exige la contraseña actual y una nueva de al menos 12 caracteres. Al cambiarla se incrementa `token_version` y **todos los JWT emitidos antes dejan de ser válidos** (la sesión que hace el cambio recibe una cookie nueva).
 
-Errores de autenticación: `401` (sin sesión o credenciales inválidas).
+Si `must_change_password` es `true`, el panel bloquea la navegación con un modal
+obligatorio hasta definir la nueva contraseña.
+
+Errores de autenticación: `401` (sin sesión o credenciales inválidas), `400`
+(contraseña actual incorrecta al cambiarla), `422` (política de contraseña).
 
 ### Dispositivos IoT
 
@@ -57,13 +62,14 @@ FastAPI devuelve `{"detail": "mensaje"}`. Códigos usados:
 | `POST` | `/auth/logout` | Cierra sesión (`204`) |
 | `GET` | `/auth/me` | Perfil del administrador actual |
 | `PUT` | `/auth/preferences` | Actualiza preferencia de tema (`light`/`dark`) |
+| `POST` | `/auth/change-password` | Cambia la contraseña y revoca los JWT anteriores |
 
 ### Ejemplo de login
 
 ```bash
 curl -s -c cookies.txt -X POST http://localhost:8050/api/v1/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"identifier":"admin","password":"ChangeMe123!"}'
+  -d '{"identifier":"admin","password":"<ADMIN_PASSWORD>"}'
 ```
 
 ```json
@@ -73,11 +79,23 @@ curl -s -c cookies.txt -X POST http://localhost:8050/api/v1/auth/login \
     "username": "admin",
     "email": "admin@frostbase.local",
     "theme": "light",
+    "must_change_password": false,
     "created_at": "2026-11-16T19:39:45.753833Z",
     "last_login": "2026-11-16T19:40:03.059663Z"
   }
 }
 ```
+
+### Ejemplo de cambio de contraseña
+
+```bash
+curl -s -b cookies.txt -X POST http://localhost:8050/api/v1/auth/change-password \
+  -H "Content-Type: application/json" \
+  -d '{"current_password":"<actual>","new_password":"<nueva-de-12-o-mas>"}'
+```
+
+Devuelve el perfil actualizado y renueva la cookie. La nueva contraseña no puede
+ser igual a la actual ni contener el nombre de usuario.
 
 ---
 
@@ -222,7 +240,7 @@ La geometría se devuelve como lista de pares `[latitud, longitud]`. Si OSRM fal
 `alert_type`: `temperatura`, `humedad`, `desconexion`.
 `status`: `activa`, `resuelta`.
 
-Una sola alerta activa por dispositivo y tipo. Se resuelve automáticamente cuando una lectura vuelve al rango o el dispositivo se reconecta. Las desconexiones se detectan con una tarea periódica que compara `last_seen` con `DEVICE_OFFLINE_SECONDS` (o el valor configurado en el panel).
+Una sola alerta activa por dispositivo y tipo. Se resuelve automáticamente cuando una lectura vuelve al rango o el dispositivo se reconecta. Las desconexiones se detectan con una tarea periódica que compara `last_seen` con el umbral `offline_timeout_seconds` configurado en el panel.
 
 ```json
 {

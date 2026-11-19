@@ -1,5 +1,11 @@
 from app.schemas.alert import AlertOut
-from app.schemas.auth import AdminOut, LoginRequest, LoginResponse, ThemeUpdate
+from app.schemas.auth import (
+    AdminOut,
+    LoginRequest,
+    LoginResponse,
+    PasswordChangeRequest,
+    ThemeUpdate,
+)
 from app.schemas.common import MessageOut, Page
 from app.schemas.dashboard import (
     DashboardAlert,
@@ -42,6 +48,7 @@ __all__ = [
     "LoginResponse",
     "MessageOut",
     "Page",
+    "PasswordChangeRequest",
     "ReadingIngest",
     "ReadingOut",
     "RouteBrief",
