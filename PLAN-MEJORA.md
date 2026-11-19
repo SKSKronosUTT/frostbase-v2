@@ -14,7 +14,7 @@
 | Fases de trabajo | 4 (F1 · F2 · F3 · F4) |
 | Tareas totales | 39 |
 | Esfuerzo estimado | 132–164 h |
-| Estado global | ⬜ No iniciado |
+| Estado global | 🟨 F1 completada · F2–F4 pendientes |
 
 ---
 
@@ -1255,13 +1255,13 @@ try {
 
 | Tarea | Fase | Estado | Responsable | Commit | Fecha | Notas / bloqueos |
 |---|:--:|:--:|---|---|---|---|
-| T1.1 | F1 | ⬜ | — | — | — | — |
-| T1.2 | F1 | ⬜ | — | — | — | — |
-| T1.3 | F1 | ⬜ | — | — | — | — |
-| T1.4 | F1 | ⬜ | — | — | — | — |
-| T1.5 | F1 | ⬜ | — | — | — | — |
-| T1.6 | F1 | ⬜ | — | — | — | — |
-| T1.7 | F1 | ⬜ | — | — | — | — |
+| T1.1 | F1 | ✅ | OpenCode (agente IA) | `2eeae4c` | 2026-11-19 | Fail-fast verificado: sin `SECRET_KEY` y con `COOKIE_SECURE=false` en producción el import termina con exit 1; con `.env` válido `import app.main` OK. |
+| T1.2 | F1 | ✅ | OpenCode (agente IA) | `550322a` | 2026-11-19 | Renombrado a `compose.yml`; `docker compose config` falla sin `SECRET_KEY`/`DEVICE_KEY_PEPPER`/`ADMIN_PASSWORD`/`POSTGRES_PASSWORD`; healthcheck `/health` en estado healthy. |
+| T1.3 | F1 | ✅ | OpenCode (agente IA) | `a8a6877` | 2026-11-19 | `.env` respaldado fuera del repo y regenerado con secretos aleatorios; `DATABASE_URL` coherente; log de configuración efectiva sin secretos; `reset_admin.py` probado. |
+| T1.4 | F1 | ✅ | OpenCode (agente IA) | `acc5dd2` | 2026-11-19 | `scripts/migrate.py` con `pg_advisory_lock`; dos migraciones simultáneas exit 0; `alembic current == heads == 0002`; drill `create_all` + `stamp head` verificado. |
+| T1.5 | F1 | ✅ | OpenCode (agente IA) | `0ca9be0` | 2026-11-19 | Migración 0002 up/down probada en BD temporal; login con `must_change_password=true`; cambio de contraseña funcional; JWT previo → 401 y JWT nuevo → 200. |
+| T1.6 | F1 | ✅ | OpenCode (agente IA) | `47617ee` | 2026-11-19 | `frostbase_v4_pgdata` corregido; tabla de variables sincronizada; comandos PowerShell; `docs/security/evidence` eliminado; README enlaza plan y docs. |
+| T1.7 | F1 | ✅ | OpenCode (agente IA) | `211a2f8` | 2026-11-19 | `db-backups/` movido a `%USERPROFILE%\backups\frostbase`; `.gitignore` ampliado; restore drill medido: 0.79 s, conteos verificados; RPO 24 h / RTO 30 min documentados. |
 | T2.1 | F2 | ⬜ | — | — | — | — |
 | T2.2 | F2 | ⬜ | — | — | — | — |
 | T2.3 | F2 | ⬜ | — | — | — | — |
@@ -1299,7 +1299,7 @@ try {
 
 | Gate | Estado | Fecha | Evidencia |
 |---|:--:|---|---|
-| F1 cerrado | ⬜ | — | — |
+| F1 cerrado | ✅ | 2026-11-19 | 7/7 tareas ✅ · `import app.main` con `.env` válido · login + rotación/revocación probados · `alembic current == head` · restore drill 0.79 s · §10 pendiente de prueba manual con simulador |
 | F2 cerrado | ⬜ | — | — |
 | F3 cerrado | ⬜ | — | — |
 | F4A cerrado | ⬜ | — | — |
