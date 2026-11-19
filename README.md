@@ -83,3 +83,11 @@ El simulador envía una lectura cada 10 segundos, se desplaza sobre la geometrí
 - Las claves de dispositivo se almacenan hasheadas y se comparan de forma segura.
 - Los JWT se envían en cookies `HttpOnly`; en producción configure `COOKIE_SECURE=true` y use HTTPS.
 - No incluya `.env` ni claves reales en el repositorio.
+
+## Plan de mejora
+
+El repositorio tiene una auditoría técnica con un plan de remediación vigente en **[PLAN-MEJORA.md](PLAN-MEJORA.md)** (3 etapas, 4 fases, 39 tareas con criterios de aceptación y registro de progreso).
+
+Si vas a contribuir —o eres un agente de IA de desarrollo— lee ese documento antes de modificar código y trabaja únicamente sobre la etapa y tarea asignadas.
+
+> ⚠️ El estado actual arranca con secretos y credenciales por defecto. Antes de exponer la aplicación fuera de `localhost`, complete la **Fase 1** del plan.
