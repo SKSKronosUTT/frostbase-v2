@@ -14,7 +14,7 @@
 | Fases de trabajo | 4 (F1 · F2 · F3 · F4) |
 | Tareas totales | 39 |
 | Esfuerzo estimado | 132–164 h |
-| Estado global | 🟨 F1 completada · F2–F4 pendientes |
+| Estado global | 🟨 F1 tareas completadas · gate manual pendiente · F2–F4 pendientes |
 
 ---
 
@@ -1299,7 +1299,7 @@ try {
 
 | Gate | Estado | Fecha | Evidencia |
 |---|:--:|---|---|
-| F1 cerrado | ✅ | 2026-11-19 | 7/7 tareas ✅ · `import app.main` con `.env` válido · login + rotación/revocación probados · `alembic current == head` · restore drill 0.79 s · §10 pendiente de prueba manual con simulador |
+| F1 cerrado | 🟨 | 2026-11-19 | 7/7 tareas ✅ · `import app.main` con `.env` válido · login + rotación/revocación probados por API · `alembic current == head` · restore drill 0.79 s · **pendiente:** §10 manual en navegador con simulador 10 min (modal de cambio forzado y flujo del panel) |
 | F2 cerrado | ⬜ | — | — |
 | F3 cerrado | ⬜ | — | — |
 | F4A cerrado | ⬜ | — | — |

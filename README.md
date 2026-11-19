@@ -131,4 +131,4 @@ El repositorio tiene una auditoría técnica con un plan de remediación vigente
 
 Si vas a contribuir —o eres un agente de IA de desarrollo— lee ese documento antes de modificar código y trabaja únicamente sobre la etapa y tarea asignadas.
 
-> ✅ **Fase 1 completada:** configuración segura y fail-fast, `.env` regenerado, Alembic gobernando el esquema, política de contraseña con revocación de JWT e higiene de respaldos. Consulte el registro de progreso en `PLAN-MEJORA.md` §9 para el estado de las fases restantes.
+> ✅ **Tareas de la Fase 1 completadas:** configuración segura y fail-fast, `.env` regenerado, Alembic gobernando el esquema, política de contraseña con revocación de JWT e higiene de respaldos. Queda pendiente la regresión manual del gate F1 (navegador + simulador). Consulte el registro de progreso en `PLAN-MEJORA.md` §9 para el estado de las fases restantes.
