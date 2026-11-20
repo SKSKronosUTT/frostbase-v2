@@ -2,6 +2,8 @@
 
 PYTHON ?= backend/.venv/bin/python
 COMPOSE ?= docker compose
+TRUCKS ?= 3
+DEVICES ?= 2
 
 dev:
 	$(COMPOSE) up -d --build
