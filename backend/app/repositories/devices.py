@@ -59,8 +59,20 @@ def list_all_without_pagination(db: Session) -> list[Device]:
     return list(db.scalars(select(Device).options(selectinload(Device.truck))).unique())
 
 
-def create(db: Session, *, device_id: str, truck_id: int | None, key_hash: str) -> Device:
-    device = Device(device_id=device_id.strip(), truck_id=truck_id, key_hash=key_hash)
+def create(
+    db: Session,
+    *,
+    device_id: str,
+    truck_id: int | None,
+    key_hash: str,
+    key_scheme: str = "argon2",
+) -> Device:
+    device = Device(
+        device_id=device_id.strip(),
+        truck_id=truck_id,
+        key_hash=key_hash,
+        key_scheme=key_scheme,
+    )
     db.add(device)
     db.commit()
     db.refresh(device)

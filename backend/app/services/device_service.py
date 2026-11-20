@@ -1,8 +1,14 @@
 from sqlalchemy.orm import Session
 
+from app.core.config import settings
 from app.core.security import (
+    cache_device_fingerprint,
+    clear_device_cache,
+    device_fingerprint,
     generate_device_secret,
-    hash_device_secret,
+    get_cached_device_id,
+    verify_device_fingerprint,
+    verify_device_secret,
 )
 from app.models.device import Device
 from app.repositories import devices as devices_repo
@@ -98,7 +104,8 @@ def create_device(db: Session, payload: DeviceCreate) -> DeviceCreatedOut:
         db,
         device_id=identifier,
         truck_id=payload.truck_id,
-        key_hash=hash_device_secret(secret),
+        key_hash=device_fingerprint(secret),
+        key_scheme="hmac",
     )
     device = devices_repo.get(db, device.id) or device
     return _created_out(db, device, secret)
@@ -124,21 +131,33 @@ def rotate_key(db: Session, device_pk: int) -> DeviceCreatedOut:
     if device is None:
         raise DeviceNotFoundError("Dispositivo no encontrado")
     secret = generate_device_secret()
-    device.key_hash = hash_device_secret(secret)
+    device.key_hash = device_fingerprint(secret)
+    device.key_scheme = "hmac"
     db.add(device)
     db.commit()
+    clear_device_cache()
     device = devices_repo.get(db, device.id) or device
     return _created_out(db, device, secret)
 
 
 def authenticate_device(db: Session, device_id: str, secret: str) -> Device | None:
-    from app.core.security import verify_device_secret
-
     device = devices_repo.get_by_identifier(db, device_id)
     if device is None:
         return None
+
+    if device.key_scheme == "hmac":
+        if not verify_device_fingerprint(secret, device.key_hash):
+            return None
+        return device
+
+    # Dispositivos legacy con Argon2. El fast-path evita repetir el KDF en cada
+    # lectura; los fallos nunca se cachean.
+    if settings.device_key_fast_path and get_cached_device_id(secret) == device.id:
+        return device
     if not verify_device_secret(secret, device.key_hash):
         return None
+    if settings.device_key_fast_path:
+        cache_device_fingerprint(secret, device.id)
     return device
 
 

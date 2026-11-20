@@ -1,6 +1,8 @@
+import contextlib
 import logging
 from datetime import datetime, timedelta
 
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.models.alert import Alert
@@ -21,6 +23,38 @@ def _resolve(db: Session, alert: Alert, when: datetime) -> None:
     alert.status = "resuelta"
     alert.resolved_at = when
     db.add(alert)
+
+
+def _create_active_alert(db: Session, alert: Alert) -> Alert | None:
+    """Crea una alerta activa; si otra transacción ganó la carrera, la reutiliza.
+
+    El índice único parcial ``uq_alerts_active_device_type`` impide duplicados.
+    Se usa un savepoint para que un conflicto no invalide la transacción de la
+    lectura y se reintenta una vez.
+    """
+    for attempt in range(2):
+        try:
+            with db.begin_nested():
+                db.add(alert)
+                db.flush()
+            return alert
+        except IntegrityError:
+            with contextlib.suppress(Exception):
+                db.expunge(alert)
+            existing = alerts_repo.find_active(
+                db, alert.device_id, alert.alert_type
+            )
+            if existing is not None:
+                return existing
+            if attempt == 1:
+                logger.warning(
+                    "Conflicto de alerta activa sin fila visible "
+                    "device_id=%s type=%s",
+                    alert.device_id,
+                    alert.alert_type,
+                )
+                raise
+    return None
 
 
 def _evaluate_metric(
@@ -48,24 +82,23 @@ def _evaluate_metric(
                 truck_id=device.truck_id,
                 device_id=device.id,
                 alert_type=alert_type,
-                value=value,
-                min_value=minimum,
-                max_value=maximum,
-                message=message,
-                started_at=ensure_utc(reading.reading_timestamp) or utcnow(),
                 status="activa",
+                started_at=min(ensure_utc(reading.reading_timestamp) or utcnow(), utcnow()),
             )
-            alerts_repo.create(db, alert)
-        else:
-            active.value = value
-            active.message = message
-            active.truck_id = device.truck_id
-            db.add(active)
-            alert = active
-        return alert
+            active = _create_active_alert(db, alert)
+            if active is None:
+                return None
+        active.value = value
+        active.min_value = minimum
+        active.max_value = maximum
+        active.message = message
+        active.truck_id = device.truck_id
+        db.add(active)
+        return active
 
     if active is not None:
-        _resolve(db, active, ensure_utc(reading.reading_timestamp) or utcnow())
+        resolved_at = min(ensure_utc(reading.reading_timestamp) or utcnow(), utcnow())
+        _resolve(db, active, resolved_at)
     return None
 
 
@@ -107,9 +140,7 @@ def evaluate_reading(
     if humidity_alert:
         alerts.append(humidity_alert)
 
-    db.commit()
-    for alert in alerts:
-        db.refresh(alert)
+    db.flush()
     return alerts
 
 

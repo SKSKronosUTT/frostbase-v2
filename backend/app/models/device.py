@@ -24,6 +24,9 @@ class Device(Base):
         ForeignKey("trucks.id", ondelete="SET NULL"), unique=True, nullable=True
     )
     key_hash: Mapped[str] = mapped_column(String(255), nullable=False)
+    key_scheme: Mapped[str] = mapped_column(
+        String(16), default="argon2", server_default="argon2", nullable=False
+    )
     last_seen: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=utcnow, nullable=False

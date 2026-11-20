@@ -14,7 +14,7 @@
 | Fases de trabajo | 4 (F1 · F2 · F3 · F4) |
 | Tareas totales | 39 |
 | Esfuerzo estimado | 132–164 h |
-| Estado global | 🟨 F1 tareas completadas · gate manual pendiente · F2–F4 pendientes |
+| Estado global | 🟨 F1 y F2 tareas completadas · gates manuales pendientes · F3–F4 pendientes |
 
 ---
 
@@ -1262,14 +1262,14 @@ try {
 | T1.5 | F1 | ✅ | OpenCode (agente IA) | `0ca9be0` | 2026-11-19 | Migración 0002 up/down probada en BD temporal; login con `must_change_password=true`; cambio de contraseña funcional; JWT previo → 401 y JWT nuevo → 200. |
 | T1.6 | F1 | ✅ | OpenCode (agente IA) | `47617ee` | 2026-11-19 | `frostbase_v4_pgdata` corregido; tabla de variables sincronizada; comandos PowerShell; `docs/security/evidence` eliminado; README enlaza plan y docs. |
 | T1.7 | F1 | ✅ | OpenCode (agente IA) | `211a2f8` | 2026-11-19 | `db-backups/` movido a `%USERPROFILE%\backups\frostbase`; `.gitignore` ampliado; restore drill medido: 0.79 s, conteos verificados; RPO 24 h / RTO 30 min documentados. Cifrado no aplicado: requiere clave del responsable; procedimiento `age`/GPG documentado. |
-| T2.1 | F2 | ⬜ | — | — | — | — |
-| T2.2 | F2 | ⬜ | — | — | — | — |
-| T2.3 | F2 | ⬜ | — | — | — | — |
-| T2.4 | F2 | ⬜ | — | — | — | — |
-| T2.5 | F2 | ⬜ | — | — | — | — |
-| T2.6 | F2 | ⬜ | — | — | — | — |
-| T2.7 | F2 | ⬜ | — | — | — | — |
-| T2.8 | F2 | ⬜ | — | — | — | — |
+| T2.1 | F2 | ✅ | OpenCode (agente IA) | `8fedb11` | 2026-11-19 | Rate limit memory/redis; login 5/min IP + 10/15 min id; IoT 30/120; rotate-key 10/h. `loadcheck` real: 30×401 + 10×429, p95 143 ms. |
+| T2.2 | F2 | ✅ | OpenCode (agente IA) | `d9719ef` | 2026-11-19 | Hash dummy al importar, 401 genérico + `WWW-Authenticate`, lockout progresivo 60/300/900 s y logs sin contraseña. Medición real: diferencia usuario inexistente vs existente **0.2 %** (50 autenticaciones por caso). |
+| T2.3 | F2 | ✅ | OpenCode (agente IA) | `632fe63` | 2026-11-19 | Migración 0003 up/down; HMAC para claves nuevas/rotadas; Argon2 legacy con TTLCache 300 s/4096 y limpieza al rotar. El simulador existente sigue autenticando (200). |
+| T2.4 | F2 | ✅ | OpenCode (agente IA) | `e45c322` | 2026-11-19 | `TxSession` por petición; sin `commit()` en la ingesta; settings sin escritura en lectura; alertas con savepoint y reintento. Test: fallo de alertas deja 0 lecturas. |
+| T2.5 | F2 | ✅ | OpenCode (agente IA) | `e45c322` | 2026-11-19 | Migración 0004 (0 duplicados) + índice único; ventana −7 d/+5 min; `duplicate` y `reading_id`. Real: 3 envíos → 1 lectura; timestamp 2099 → 422. |
+| T2.6 | F2 | ✅ | OpenCode (agente IA) | `e45c322` | 2026-11-19 | Límites antes del hash; `Retry-After` + `X-RateLimit-*`; semántica 401/409/422/429. Prueba real 30×401 + 10×429. |
+| T2.7 | F2 | ✅ | OpenCode (agente IA) | `63332e4` | 2026-11-19 | `compose.test.yml`, `conftest.py` y tests de auth/IoT (incluye `/iot/config`). `pytest -q` → **11 passed**. Ampliado en `a5a76ec` con la recuperación de clave del simulador. |
+| T2.8 | F2 | ✅ | OpenCode (agente IA) | `c8868d4` | 2026-11-19 | `docs/API.md`, `docs/IOT-INTEGRATION.md`, `docs/INSTALLATION.md` y README actualizados: ventana de timestamp, `duplicate`, 429, cabeceras, backoff y rotación de claves. |
 | T3.1 | F3 | ⬜ | — | — | — | — |
 | T3.2 | F3 | ⬜ | — | — | — | — |
 | T3.3 | F3 | ⬜ | — | — | — | — |
@@ -1300,7 +1300,7 @@ try {
 | Gate | Estado | Fecha | Evidencia |
 |---|:--:|---|---|
 | F1 cerrado | 🟨 | 2026-11-19 | 7/7 tareas ✅ · `import app.main` con `.env` válido · login + rotación/revocación probados por API · `alembic current == head` · restore drill 0.79 s · **pendiente:** §10 manual en navegador con simulador 10 min (modal de cambio forzado y flujo del panel) |
-| F2 cerrado | ⬜ | — | — |
+| F2 cerrado | 🟨 | 2026-11-19 | 8/8 tareas ✅ · `pytest -q` 11 passed · loadcheck 30×401 + 10×429 · idempotencia real (3 envíos → 1 lectura) · migraciones 0003/0004 up/down · **pendiente:** §10 manual con simulador 10 min y revisión visual del panel |
 | F3 cerrado | ⬜ | — | — |
 | F4A cerrado | ⬜ | — | — |
 | F4B cerrado | ⬜ | — | — |

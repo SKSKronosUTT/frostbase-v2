@@ -48,6 +48,26 @@ def log(message: str) -> None:
     print(message, flush=True)
 
 
+def log_key_help() -> None:
+    log("[ERROR] 401 Unauthorized: la DEVICE_KEY no coincide con este DEVICE_ID.")
+    log("        DEVICE_KEY NO es la placa del camión (por ejemplo, ABC-123-A).")
+    log("        Es la cadena larga (~43 caracteres) que imprime el seed al crear")
+    log("        el dispositivo, o la que se genera al rotar su clave.")
+    log("        Si no la tiene, genere una nueva desde el panel (Flota →")
+    log("        dispositivo → Rotar clave) o ejecute:")
+    log(
+        "          docker compose exec app python -m scripts.rotate_device_key "
+        f"--device-id {DEVICE_ID}"
+    )
+    log("        Copie el valor en iot-simulator/.env y reinicie este simulador.")
+
+
+def sleep_running(seconds: float) -> None:
+    deadline = time.monotonic() + max(0.0, seconds)
+    while running and time.monotonic() < deadline:
+        time.sleep(min(0.5, deadline - time.monotonic()))
+
+
 def handle_stop(_signum, _frame) -> None:
     global running
     running = False
@@ -64,6 +84,21 @@ def fetch_config() -> dict | None:
                 headers={**HEADERS, "X-Device-Id": DEVICE_ID},
                 timeout=REQUEST_TIMEOUT,
             )
+            if response.status_code == 401:
+                log_key_help()
+                sleep_running(10)
+                continue
+            if response.status_code == 429:
+                retry_after = response.headers.get("Retry-After", "60")
+                log(
+                    "[WARN] Rate limit 429 al obtener la configuración. "
+                    f"Esperando {retry_after}s…"
+                )
+                try:
+                    sleep_running(min(float(retry_after), 60))
+                except ValueError:
+                    sleep_running(60)
+                continue
             response.raise_for_status()
             return response.json()
         except requests.RequestException as exc:
@@ -206,6 +241,20 @@ def send_reading(temperature: float, humidity: float, latitude: float, longitude
             headers=HEADERS,
             timeout=REQUEST_TIMEOUT,
         )
+        if response.status_code == 401:
+            log_key_help()
+            return None
+        if response.status_code == 429:
+            retry_after = response.headers.get("Retry-After", "60")
+            log(
+                "[WARN] Rate limit 429 al enviar la lectura. "
+                f"Esperando {retry_after}s…"
+            )
+            try:
+                sleep_running(min(float(retry_after), 60))
+            except ValueError:
+                sleep_running(60)
+            return None
         if response.status_code >= 400:
             log(f"[ERROR] API respondió {response.status_code}: {response.text[:200]}")
             return None
@@ -234,6 +283,8 @@ def print_reading(
     log(f"Humidity: {humidity:.1f} %")
     log(f"GPS: {latitude:.6f}, {longitude:.6f}")
     log(f"Status: {anomaly or 'NORMAL'}")
+    if result and result.get("duplicate"):
+        log("Duplicate: sí (mismo timestamp; no se creó otra lectura)")
     if result and result.get("alerts"):
         for alert in result["alerts"]:
             if alert.get("status") == "activa":

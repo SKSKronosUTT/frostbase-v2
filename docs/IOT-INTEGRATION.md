@@ -24,12 +24,33 @@ curl -s -X POST http://localhost:8050/api/v1/devices \
   -d '{"device_id":"ESP32-FROST-003","truck_id":1}'
 ```
 
-La respuesta incluye `device_key`. **Solo se muestra una vez**; el servidor guarda su hash Argon2. Si se pierde, rote la clave:
+La respuesta incluye `device_key`. **Solo se muestra una vez**. Las claves nuevas se
+guardan como HMAC-SHA256 con `DEVICE_KEY_PEPPER` (verificación O(1)); los
+dispositivos antiguos conservan Argon2 y usan un caché de aciertos de 300 s. Si se
+pierde la clave, rote:
+
+```bash
+# Rota un solo dispositivo e imprime la nueva clave una vez
+docker compose exec app python -m scripts.rotate_device_key \
+  --device-id ESP32-FROST-001
+```
+
+También puede rotarla desde el panel (Flota → dispositivo → Rotar clave) o con la
+API:
 
 ```bash
 curl -s -X POST http://localhost:8050/api/v1/devices/3/rotate-key \
   -b "frostbase_token=<cookie>"
 ```
+
+> ⚠️ **No confunda `DEVICE_KEY` con la placa del camión.** `ABC-123-A` es la
+> matrícula; la clave es una cadena larga (≈43 caracteres) generada por el
+> servidor. Copiar la placa en `iot-simulator/.env` produce `401 Unauthorized`.
+
+La clave anterior deja de funcionar inmediatamente. El endpoint de rotación está
+limitado a 10 solicitudes/hora por administrador. Para migrar todo el parque a
+HMAC: `python -m scripts.rotate_all_device_keys --dry-run` y luego `--yes` (con la
+aplicación detenida o reiniciándola después).
 
 El dispositivo debe tener un camión asignado; de lo contrario las lecturas se rechazan con `409`.
 
@@ -87,7 +108,7 @@ Content-Type: application/json
 | `humidity` | float | Sí | 0…100 % |
 | `latitude` | float | No | −90…90 |
 | `longitude` | float | No | −180…180 |
-| `timestamp` | ISO 8601 | No | Si falta se usa la hora del servidor |
+| `timestamp` | ISO 8601 | No | Si falta se usa la hora del servidor. Ventana: −7 días a +5 minutos; naive = UTC |
 
 Respuesta `200`:
 
@@ -96,22 +117,47 @@ Respuesta `200`:
   "success": true,
   "message": "Lectura registrada correctamente",
   "truck_id": 1,
-  "alerts": []
+  "alerts": [],
+  "duplicate": false,
+  "reading_id": 12345
 }
 ```
 
-Si la lectura genera una alerta, `alerts` incluye las alertas activas creadas o reutilizadas.
+Si la lectura genera una alerta, `alerts` incluye las alertas activas creadas o
+reutilizadas. La ingesta es idempotente por `(device_id, reading_timestamp)`:
+reenviar el mismo payload devuelve `duplicate: true`, el mismo `reading_id` y
+`alerts: []`. **Conserve el timestamp original al reintentar**; si lo regenera,
+se creará una lectura nueva.
 
 ### Códigos HTTP
 
 | Código | Causa | Acción sugerida |
 |---|---|---|
-| `200` | Lectura registrada | Continuar |
-| `401` | Falta `X-Device-Key` o no coincide | Revisar clave; no reintentar en bucle rápido |
-| `404` | `device_id` no registrado | Registrar el dispositivo |
+| `200` | Lectura registrada o duplicada | Continuar; revise `duplicate` |
+| `401` | Falta `X-Device-Key`, no coincide o el dispositivo no existe | Revisar clave; no reintentar en bucle rápido |
 | `409` | Dispositivo sin camión asignado | Asignar camión desde la UI/API |
-| `422` | JSON o valores fuera de rango físico | Corregir payload |
-| `5xx` | Error temporal del servidor | Reintentar con backoff |
+| `422` | JSON, valores físicos o timestamp fuera de ventana | Corregir payload; no reintentar igual |
+| `429` | Rate limit (30/min por dispositivo, 120/min por IP) | Esperar `Retry-After` y aplicar backoff |
+| `5xx` | Error temporal del servidor | Reintentar con backoff exponencial |
+
+### Rate limiting y backoff
+
+Las respuestas `429` incluyen:
+
+| Cabecera | Significado |
+|---|---|
+| `Retry-After` | Segundos que debe esperar antes de reintentar |
+| `X-RateLimit-Limit` | Límite de la ventana |
+| `X-RateLimit-Remaining` | Peticiones restantes |
+| `X-RateLimit-Reset` | Segundos hasta que se libere la ventana |
+
+Recomendación para el firmware:
+
+1. Ante `429`, espere `Retry-After` (o 60 s si no está presente) + jitter.
+2. Ante `5xx` o error de red, use backoff exponencial: 5, 10, 20, 40… hasta 60 s.
+3. Ante `401`/`422`, **no** reintente en bucle: corrija la clave o el payload.
+4. Envíe como máximo una lectura cada 10 s por dispositivo. El límite normal es
+   30/min, así que un simulador o ESP32 a 10 s nunca debería recibir `429`.
 
 ## 4. Ejemplo de firmware (Arduino, ESP32-S3)
 
@@ -199,8 +245,8 @@ void loop() {
 ## 5. Recomendaciones de producción
 
 - **HTTPS obligatorio.** Use un certificado válido; en el ESP32 configure `WiFiClientSecure` con la CA raíz o `setInsecure()` solo en pruebas.
-- **No reutilice claves** entre dispositivos. Rote la clave si el equipo se compromete.
-- **Backoff exponencial** ante `5xx` o fallos de red (por ejemplo, 5, 10, 20… hasta 60 s). Nunca bloquee el bucle principal.
+- **No reutilice claves** entre dispositivos. Rote la clave si el equipo se compromete. Las claves nuevas usan HMAC con `DEVICE_KEY_PEPPER`; rotar el pepper invalida todas las claves HMAC y exige rotar también las de los dispositivos.
+- **Backoff exponencial** ante `5xx`, `429` o fallos de red (por ejemplo, 5, 10, 20… hasta 60 s). Respete `Retry-After`. Nunca bloquee el bucle principal.
 - **Buffering local:** si no hay red, guarde lecturas en memoria/flash y envíelas al reconectar (con su `timestamp` original).
 - **Timestamp en UTC.** Sincronice por NTP; el servidor también registra `received_at`.
 - **GPS opcional:** si no hay fix, omita `latitude`/`longitude` en lugar de enviar ceros.
@@ -216,3 +262,9 @@ cd iot-simulator
 cp .env.example .env   # configure DEVICE_ID y DEVICE_KEY
 python simulator.py
 ```
+
+> Si el simulador muestra `401 Unauthorized`, la `DEVICE_KEY` no es válida. No es
+> la placa del camión: es la cadena larga que imprime el seed o la que se genera
+> al rotar la clave con
+> `docker compose exec app python -m scripts.rotate_device_key --device-id <ID>`.
+> Copie el valor en `.env` y reinicie el simulador.

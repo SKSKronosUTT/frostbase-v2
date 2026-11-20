@@ -30,6 +30,7 @@ class Settings(BaseSettings):
     # Los secretos son obligatorios: sin ellos el proceso no arranca.
     secret_key: str
     device_key_pepper: str
+    device_key_fast_path: bool = True
     access_token_expire_minutes: int = 720
     cookie_name: str = "frostbase_token"
     cookie_secure: bool = True

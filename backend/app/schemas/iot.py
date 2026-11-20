@@ -1,9 +1,13 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from app.schemas.alert import AlertOut
 from app.schemas.route import RouteBriefWithGeometry
+from app.utils.time import ensure_utc, utcnow
+
+TIMESTAMP_PAST_DAYS = 7
+TIMESTAMP_FUTURE_MINUTES = 5
 
 
 class ReadingIngest(BaseModel):
@@ -14,12 +18,34 @@ class ReadingIngest(BaseModel):
     longitude: float | None = Field(default=None, ge=-180, le=180)
     timestamp: datetime | None = None
 
+    @field_validator("timestamp")
+    @classmethod
+    def _validate_timestamp(cls, value: datetime | None) -> datetime | None:
+        if value is None:
+            return None
+        normalized = ensure_utc(value)
+        if normalized is None:
+            return None
+        now = utcnow()
+        if normalized > now + timedelta(minutes=TIMESTAMP_FUTURE_MINUTES):
+            raise ValueError(
+                f"timestamp no puede estar más de {TIMESTAMP_FUTURE_MINUTES} "
+                "minutos en el futuro"
+            )
+        if normalized < now - timedelta(days=TIMESTAMP_PAST_DAYS):
+            raise ValueError(
+                f"timestamp no puede ser anterior a {TIMESTAMP_PAST_DAYS} días"
+            )
+        return normalized
+
 
 class IoTReadingResponse(BaseModel):
     success: bool
     message: str
     truck_id: int | None = None
     alerts: list[AlertOut] = []
+    duplicate: bool = False
+    reading_id: int | None = None
 
 
 class IoTRouteConfig(BaseModel):

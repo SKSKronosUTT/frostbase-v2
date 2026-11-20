@@ -56,6 +56,7 @@ Variables que el código lee actualmente:
 |---|:--:|---|---|
 | `SECRET_KEY` | ✅ | — | Firma de JWT. ≥ 64 caracteres. |
 | `DEVICE_KEY_PEPPER` | ✅ | — | Secreto independiente para HMAC de dispositivos. |
+| `DEVICE_KEY_FAST_PATH` | — | `true` | Cachea 300 s el acierto Argon2 de dispositivos legacy. |
 | `ADMIN_PASSWORD` | ✅ | — | Contraseña inicial del administrador. ≥ 12 caracteres. |
 | `POSTGRES_DB` | — | `frostbase` | Nombre de la base. |
 | `POSTGRES_USER` | — | `frostbase` | Usuario de PostgreSQL. |
@@ -81,6 +82,10 @@ Variables que el código lee actualmente:
 Las variables `DEVICE_OFFLINE_SECONDS`, `WEATHER_CITY`, `WEATHER_LATITUDE` y
 `WEATHER_LONGITUDE` **ya no se documentan ni se inyectan**: el código no las lee.
 El umbral de desconexión se configura en el panel (`offline_timeout_seconds`).
+
+> Con `RATE_LIMIT_BACKEND=memory` y más de un worker, cada proceso mantiene su
+> propio contador: la protección es parcial. Para producción multi-worker use
+> `RATE_LIMIT_BACKEND=redis` con `REDIS_URL` o `limit_req` en el proxy inverso.
 
 > En Docker Compose, la `DATABASE_URL` del contenedor se construye automáticamente
 > con el host `db`. La variable del `.env` se usa para ejecución local.
@@ -143,6 +148,11 @@ Crea:
 El seed es idempotente para camiones/dispositivos por placa/ID, aunque crea una
 ruta nueva en cada ejecución (corregido en la Fase 4 del plan).
 
+> Las claves de dispositivo se imprimen **una sola vez** y son cadenas largas
+> (≈43 caracteres), no la placa del camión. Si las pierde, rótelas con
+> `docker compose exec app python -m scripts.rotate_device_key --device-id <ID>`
+> o desde el panel (Flota → dispositivo → Rotar clave).
+
 ## 6. Ejecución local
 
 Requisitos: PostgreSQL 16 en `localhost:5432` y base `frostbase`.
@@ -194,6 +204,32 @@ alembic downgrade -1
 El arranque en contenedor aplica las migraciones con
 `docker compose exec app python -m scripts.migrate`. Para respaldo, restauración
 probada, RPO y RTO consulte **[docs/ops/BACKUP-RESTORE.md](ops/BACKUP-RESTORE.md)**.
+
+## 7.1 Pruebas automatizadas
+
+Las pruebas usan un PostgreSQL 16 real (índices parciales y `ON CONFLICT` no
+existen en SQLite) y recrean el esquema con Alembic en cada ejecución.
+
+```bash
+# 1. Base de datos de test (puerto 55432)
+docker compose -f compose.test.yml up -d --wait
+
+# 2. Dependencias de desarrollo
+cd backend
+python -m venv .venv
+source .venv/bin/activate        # Windows: .\.venv\Scripts\Activate.ps1
+pip install -r requirements-dev.txt
+
+# 3. Ejecutar
+pytest -q
+
+# 4. Limpiar (opcional)
+docker compose -f compose.test.yml down
+```
+
+Si usa otra base, defina `TEST_DATABASE_URL` antes de `pytest`. La suite fija
+`SECRET_KEY`, `DEVICE_KEY_PEPPER` y `ADMIN_PASSWORD` de test antes de importar
+`app`.
 
 ## 8. Cambio de contraseña inicial
 
@@ -274,7 +310,7 @@ Invoke-RestMethod http://localhost:8050/api/v1/dashboard/summary -WebSession $se
 | `connection refused` al iniciar | PostgreSQL aún no listo | Compose espera el healthcheck; revise `docker compose logs db`. |
 | Login devuelve 401 | Contraseña distinta a la del seed | Use `scripts/reset_admin.py` (ver §9). |
 | Ruta sin geometría | OSRM no disponible | La ruta se guarda con advertencia; use “Recalcular” más tarde. |
-| Simulador con 401 | `DEVICE_KEY` incorrecta o dispositivo eliminado | Genere una nueva clave con `POST /devices/{id}/rotate-key`. |
+| Simulador con 401 | `DEVICE_KEY` es la placa (`ABC-123-A`), una clave antigua o el dispositivo no existe | Rote la clave con `docker compose exec app python -m scripts.rotate_device_key --device-id ESP32-FROST-001` y actualice `iot-simulator/.env`. |
 | Alertas de desconexión constantes | Umbral muy bajo | Ajuste `offline_timeout_seconds` en **Configuración**. |
 | Clima no disponible | Open-Meteo inaccesible | El panel muestra el estado no disponible; no bloquea el resto. |
 

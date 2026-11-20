@@ -1,7 +1,8 @@
-from fastapi import APIRouter, HTTPException, Response, status
+from fastapi import APIRouter, HTTPException, Request, Response, status
 
 from app.api.deps import CurrentAdmin, DbSession
 from app.core.config import settings
+from app.core.ratelimit import RateLimit, client_ip
 from app.core.security import create_access_token
 from app.models.admin import Admin
 from app.schemas.auth import (
@@ -14,6 +15,9 @@ from app.schemas.auth import (
 from app.services import auth_service
 
 router = APIRouter(prefix="/auth", tags=["Autenticación"])
+
+_login_ip_limiter = RateLimit("login:ip", limit=5, window_seconds=60)
+_login_identifier_limiter = RateLimit("login:identifier", limit=10, window_seconds=900)
 
 
 def _set_session_cookie(response: Response, admin: Admin) -> None:
@@ -30,14 +34,34 @@ def _set_session_cookie(response: Response, admin: Admin) -> None:
 
 
 @router.post("/login", response_model=LoginResponse)
-def login(payload: LoginRequest, response: Response, db: DbSession) -> LoginResponse:
-    try:
-        admin = auth_service.authenticate(db, payload.identifier, payload.password)
-    except auth_service.AuthenticationError as exc:
+def login(
+    payload: LoginRequest, request: Request, response: Response, db: DbSession
+) -> LoginResponse:
+    identifier = payload.identifier.strip().lower()
+    locked_for = auth_service.is_login_locked(identifier)
+    if locked_for:
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail=str(exc)
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Demasiados intentos fallidos. Inténtalo de nuevo más tarde.",
+            headers={"Retry-After": str(locked_for)},
+        )
+
+    _login_ip_limiter.check(request, response)
+    _login_identifier_limiter.check(request, response, extra=identifier)
+
+    try:
+        admin = auth_service.authenticate(
+            db, payload.identifier, payload.password, client_ip=client_ip(request)
+        )
+    except auth_service.AuthenticationError as exc:
+        auth_service.register_failed_login(identifier)
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=str(exc),
+            headers={"WWW-Authenticate": "Bearer"},
         ) from exc
 
+    auth_service.clear_login_failures(identifier)
     _set_session_cookie(response, admin)
     return LoginResponse(admin=AdminOut.model_validate(admin))
 
