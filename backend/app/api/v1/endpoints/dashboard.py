@@ -25,5 +25,5 @@ def alerts(db: DbSession, _: CurrentAdmin) -> list[DashboardAlert]:
 
 
 @router.get("/weather", response_model=WeatherOut)
-def weather(db: DbSession, _: CurrentAdmin) -> WeatherOut:
-    return weather_service.get_weather(db)
+async def weather(db: DbSession, _: CurrentAdmin) -> WeatherOut:
+    return await weather_service.get_weather(db)

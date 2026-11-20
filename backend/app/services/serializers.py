@@ -105,6 +105,7 @@ def serialize_route(route: Route, warning: str | None = None) -> RouteOut:
         created_at=ensure_utc(route.created_at),
         updated_at=ensure_utc(route.updated_at),
         warning=warning,
+        geometry_status=route.geometry_status,
     )
 
 

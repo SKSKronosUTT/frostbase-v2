@@ -73,6 +73,7 @@ class RouteOut(BaseModel):
     created_at: datetime
     updated_at: datetime
     warning: str | None = None
+    geometry_status: str = "ready"
 
 
 class RouteBriefWithGeometry(RouteBrief):

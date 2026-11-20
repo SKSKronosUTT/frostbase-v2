@@ -10,6 +10,7 @@ from fastapi.staticfiles import StaticFiles
 from app.api.v1.router import api_router
 from app.core.config import settings
 from app.core.database import SessionLocal
+from app.core.http import close_http_client
 from app.services import alert_service, settings_service
 from app.services.bootstrap import bootstrap_database, ensure_schema
 
@@ -60,6 +61,7 @@ async def lifespan(app: FastAPI):
             task.cancel()
             with contextlib.suppress(asyncio.CancelledError):
                 await task
+        await close_http_client()
         logger.info("FrostBase detenido")
 
 

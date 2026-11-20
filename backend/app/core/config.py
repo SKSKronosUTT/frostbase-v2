@@ -55,12 +55,15 @@ class Settings(BaseSettings):
     enable_inprocess_watcher: bool = False
 
     osrm_base_url: str = "https://router.project-osrm.org"
-    osrm_timeout_seconds: float = 15.0
+    osrm_timeout_seconds: float = 5.0
+    weather_timeout_seconds: float = 3.0
 
     weather_city: str = "Tijuana"
     weather_latitude: float = 32.5149
     weather_longitude: float = -117.0382
     weather_cache_seconds: int = 600
+
+    route_geometry_async: bool = False
 
     frontend_dir: str = ""
 
