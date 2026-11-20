@@ -86,6 +86,8 @@ services:
     entrypoint: ["python", "-m", "scripts.disconnect_watcher"]
     environment:
       <<: *app-environment
+    healthcheck:
+      disable: true
     deploy:
       resources:
         limits:
