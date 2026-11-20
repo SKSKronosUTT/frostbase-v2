@@ -52,6 +52,7 @@ class Settings(BaseSettings):
     device_offline_seconds: int = 60
     dashboard_fresh_minutes: int = 10
     disconnect_check_seconds: int = 30
+    enable_inprocess_watcher: bool = False
 
     osrm_base_url: str = "https://router.project-osrm.org"
     osrm_timeout_seconds: float = 15.0

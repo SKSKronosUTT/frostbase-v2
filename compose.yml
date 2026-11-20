@@ -1,3 +1,26 @@
+x-app-environment: &app-environment
+  DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-frostbase}:${POSTGRES_PASSWORD:?Define POSTGRES_PASSWORD en .env}@db:5432/${POSTGRES_DB:-frostbase}
+  SECRET_KEY: ${SECRET_KEY:?Define SECRET_KEY (>=64 chars) en .env}
+  DEVICE_KEY_PEPPER: ${DEVICE_KEY_PEPPER:?Define DEVICE_KEY_PEPPER (>=64 chars) en .env}
+  DEVICE_KEY_FAST_PATH: ${DEVICE_KEY_FAST_PATH:-true}
+  ENVIRONMENT: ${ENVIRONMENT:-production}
+  ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
+  ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@frostbase.local}
+  ADMIN_PASSWORD: ${ADMIN_PASSWORD:?Define ADMIN_PASSWORD (>=12 chars) en .env}
+  ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES:-720}
+  COOKIE_SECURE: ${COOKIE_SECURE:-true}
+  COOKIE_SAMESITE: ${COOKIE_SAMESITE:-lax}
+  DASHBOARD_FRESH_MINUTES: ${DASHBOARD_FRESH_MINUTES:-10}
+  DISCONNECT_CHECK_SECONDS: ${DISCONNECT_CHECK_SECONDS:-30}
+  ENABLE_INPROCESS_WATCHER: "false"
+  OSRM_BASE_URL: ${OSRM_BASE_URL:-https://router.project-osrm.org}
+  OSRM_TIMEOUT_SECONDS: ${OSRM_TIMEOUT_SECONDS:-5}
+  WEATHER_CACHE_SECONDS: ${WEATHER_CACHE_SECONDS:-600}
+  AUTO_CREATE_TABLES: "false"
+  RATE_LIMIT_BACKEND: ${RATE_LIMIT_BACKEND:-memory}
+  REDIS_URL: ${REDIS_URL:-}
+  CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:8050,http://127.0.0.1:8050,http://localhost:8060,http://127.0.0.1:8060,http://localhost:8070,http://127.0.0.1:8070}
+
 services:
   db:
     image: postgres:16
@@ -23,25 +46,7 @@ services:
       db:
         condition: service_healthy
     environment:
-      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-frostbase}:${POSTGRES_PASSWORD:?Define POSTGRES_PASSWORD en .env}@db:5432/${POSTGRES_DB:-frostbase}
-      SECRET_KEY: ${SECRET_KEY:?Define SECRET_KEY (>=64 chars) en .env}
-      DEVICE_KEY_PEPPER: ${DEVICE_KEY_PEPPER:?Define DEVICE_KEY_PEPPER (>=64 chars) en .env}
-      DEVICE_KEY_FAST_PATH: ${DEVICE_KEY_FAST_PATH:-true}
-      ENVIRONMENT: ${ENVIRONMENT:-production}
-      ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
-      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@frostbase.local}
-      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?Define ADMIN_PASSWORD (>=12 chars) en .env}
-      ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES:-720}
-      COOKIE_SECURE: ${COOKIE_SECURE:-true}
-      COOKIE_SAMESITE: ${COOKIE_SAMESITE:-lax}
-      DASHBOARD_FRESH_MINUTES: ${DASHBOARD_FRESH_MINUTES:-10}
-      DISCONNECT_CHECK_SECONDS: ${DISCONNECT_CHECK_SECONDS:-30}
-      OSRM_BASE_URL: ${OSRM_BASE_URL:-https://router.project-osrm.org}
-      WEATHER_CACHE_SECONDS: ${WEATHER_CACHE_SECONDS:-600}
-      AUTO_CREATE_TABLES: "false"
-      RATE_LIMIT_BACKEND: ${RATE_LIMIT_BACKEND:-memory}
-      REDIS_URL: ${REDIS_URL:-}
-      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:8050,http://127.0.0.1:8050,http://localhost:8060,http://127.0.0.1:8060,http://localhost:8070,http://127.0.0.1:8070}
+      <<: *app-environment
     ports:
       - "${APP_PORT:-8050}:8050"
     healthcheck:
@@ -56,6 +61,17 @@ services:
       timeout: 5s
       retries: 3
       start_period: 40s
+
+  watcher:
+    build: .
+    container_name: frostbase-v4-watcher
+    restart: unless-stopped
+    depends_on:
+      app:
+        condition: service_healthy
+    entrypoint: ["python", "-m", "scripts.disconnect_watcher"]
+    environment:
+      <<: *app-environment
 
 volumes:
   frostbase_v4_pgdata:

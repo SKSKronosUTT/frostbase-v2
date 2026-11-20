@@ -2,6 +2,8 @@ import contextlib
 import logging
 from datetime import datetime, timedelta
 
+from sqlalchemy import literal, select, text, update
+from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -145,36 +147,54 @@ def evaluate_reading(
 
 
 def check_disconnected_devices(db: Session, setting: Setting) -> int:
+    """Crea y resuelve alertas de desconexión en dos sentencias set-based."""
     now = utcnow()
     threshold = now - timedelta(seconds=setting.offline_timeout_seconds)
-    created = 0
 
-    for alert in alerts_repo.list_active(db):
-        if alert.alert_type != DISCONNECT_TYPE or alert.device is None:
-            continue
-        last_seen = ensure_utc(alert.device.last_seen)
-        if last_seen is not None and last_seen >= threshold:
-            _resolve(db, alert, now)
-
-    devices = alerts_repo.devices_without_recent_contact(db, threshold)
-    for device in devices:
-        active = alerts_repo.find_active(db, device.id, DISCONNECT_TYPE)
-        if active is not None:
-            continue
-        alert = Alert(
-            truck_id=device.truck_id,
-            device_id=device.id,
-            alert_type=DISCONNECT_TYPE,
-            message="El dispositivo dejó de enviar lecturas dentro del tiempo esperado.",
-            started_at=threshold,
-            status="activa",
+    source = select(
+        Device.truck_id.label("truck_id"),
+        Device.id.label("device_id"),
+        literal(DISCONNECT_TYPE).label("alert_type"),
+        literal(
+            "El dispositivo dejó de enviar lecturas dentro del tiempo esperado."
+        ).label("message"),
+        Device.last_seen.label("started_at"),
+        literal("activa").label("status"),
+    ).where(
+        Device.last_seen.is_not(None),
+        Device.last_seen < threshold,
+    )
+    insert_stmt = (
+        pg_insert(Alert)
+        .from_select(
+            ["truck_id", "device_id", "alert_type", "message", "started_at", "status"],
+            source,
         )
-        alerts_repo.create(db, alert)
-        created += 1
+        .on_conflict_do_nothing(
+            index_elements=["device_id", "alert_type"],
+            index_where=text("status = 'activa'"),
+        )
+    )
+    created = max(0, db.execute(insert_stmt).rowcount or 0)
+
+    resolve_stmt = (
+        update(Alert)
+        .where(
+            Alert.alert_type == DISCONNECT_TYPE,
+            Alert.status == "activa",
+            Alert.device_id.in_(
+                select(Device.id).where(Device.last_seen >= threshold)
+            ),
+        )
+        .values(status="resuelta", resolved_at=now)
+    )
+    resolved = max(0, db.execute(resolve_stmt).rowcount or 0)
 
     db.commit()
     if created:
         logger.info("Se generaron %s alertas de desconexión", created)
+    if resolved:
+        logger.info("Se resolvieron %s alertas de desconexión", resolved)
     return created
 
 

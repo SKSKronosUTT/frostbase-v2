@@ -47,14 +47,19 @@ async def lifespan(app: FastAPI):
     ensure_schema()
     with SessionLocal() as db:
         bootstrap_database(db)
-    task = asyncio.create_task(_disconnect_watcher())
+    task = (
+        asyncio.create_task(_disconnect_watcher())
+        if settings.enable_inprocess_watcher
+        else None
+    )
     logger.info("FrostBase iniciado en entorno '%s'", settings.environment)
     try:
         yield
     finally:
-        task.cancel()
-        with contextlib.suppress(asyncio.CancelledError):
-            await task
+        if task is not None:
+            task.cancel()
+            with contextlib.suppress(asyncio.CancelledError):
+                await task
         logger.info("FrostBase detenido")
 
 
