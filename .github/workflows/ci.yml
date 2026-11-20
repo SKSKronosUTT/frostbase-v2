@@ -1,0 +1,87 @@
+name: CI
+
+on:
+  push:
+    branches: [devolp, main]
+  pull_request:
+  schedule:
+    - cron: "0 3 * * 1"
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: frostbase_test
+          POSTGRES_USER: frostbase
+          POSTGRES_PASSWORD: test-password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U frostbase -d frostbase_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      TEST_DATABASE_URL: postgresql+psycopg://frostbase:test-password@localhost:5432/frostbase_test
+      SECRET_KEY: test-secret-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+      DEVICE_KEY_PEPPER: test-pepper-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+      ADMIN_PASSWORD: TestPassword123!
+      ENVIRONMENT: development
+      COOKIE_SECURE: "false"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Instalar dependencias
+        working-directory: backend
+        run: pip install -r requirements-dev.txt
+      - name: Ruff
+        working-directory: backend
+        run: |
+          ruff check .
+          ruff format --check .
+      - name: Mypy
+        working-directory: backend
+        run: mypy app
+      - name: Tests con cobertura
+        working-directory: backend
+        run: pytest --cov=app --cov-report=term-missing --cov-fail-under=70
+
+  frontend-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: ESLint
+        working-directory: frontend
+        run: npx --yes eslint@8 js
+      - name: Prettier
+        working-directory: frontend
+        run: npx --yes prettier@3 --check js
+
+  audit:
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Auditar dependencias
+        run: |
+          pip install pip-audit
+          pip-audit -r backend/requirements.lock
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build
+        run: docker build -f docker/Dockerfile .

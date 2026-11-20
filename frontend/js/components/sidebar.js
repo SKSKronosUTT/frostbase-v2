@@ -5,7 +5,12 @@ const NAV_ITEMS = [
   { page: "dashboard", label: "Inicio", href: "dashboard.html", icon: "fa-house" },
   { page: "trucks", label: "Flota", href: "trucks.html", icon: "fa-truck" },
   { page: "routes", label: "Rutas", href: "routes.html", icon: "fa-route" },
-  { page: "alerts", label: "Historial de alertas", href: "alerts.html", icon: "fa-bell" },
+  {
+    page: "alerts",
+    label: "Historial de alertas",
+    href: "alerts.html",
+    icon: "fa-bell",
+  },
   { page: "settings", label: "Configuración", href: "settings.html", icon: "fa-gear" },
 ];
 
@@ -59,7 +64,9 @@ function render(admin) {
   `;
 
   sidebar.querySelector("#logoutButton").addEventListener("click", logout);
-  sidebar.querySelector("#themeToggle").addEventListener("click", () => toggleTheme(admin));
+  sidebar
+    .querySelector("#themeToggle")
+    .addEventListener("click", () => toggleTheme(admin));
 
   if (!document.getElementById("sidebarMobileToggle")) {
     const toggle = document.createElement("button");
@@ -76,7 +83,9 @@ function render(admin) {
     document.body.appendChild(overlay);
 
     const close = () => document.body.classList.remove("sidebar-open");
-    toggle.addEventListener("click", () => document.body.classList.toggle("sidebar-open"));
+    toggle.addEventListener("click", () =>
+      document.body.classList.toggle("sidebar-open")
+    );
     overlay.addEventListener("click", close);
     sidebar.querySelectorAll(".nav-link").forEach((link) => {
       link.addEventListener("click", close);

@@ -5,10 +5,10 @@ El lock evita carreras cuando varias réplicas del servicio arrancan a la vez.
 
 from pathlib import Path
 
-from alembic import command
 from alembic.config import Config
 from sqlalchemy import text
 
+from alembic import command
 from app.core.config import settings
 from app.core.database import engine
 

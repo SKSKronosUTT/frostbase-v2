@@ -1,11 +1,10 @@
 from datetime import datetime
 
-from sqlalchemy import func, select
+from sqlalchemy import and_, func, or_, select
 from sqlalchemy.orm import Session, selectinload
 
 from app.models.alert import Alert
 from app.models.device import Device
-from app.models.truck import Truck
 
 
 def get(db: Session, alert_id: int) -> Alert | None:
@@ -26,6 +25,7 @@ def list_paginated(
     date_to: datetime | None = None,
     page: int = 1,
     page_size: int = 20,
+    cursor: tuple[datetime, int] | None = None,
 ) -> tuple[list[Alert], int]:
     stmt = select(Alert).options(selectinload(Alert.truck), selectinload(Alert.device))
     count_stmt = select(func.count(Alert.id))
@@ -43,9 +43,20 @@ def list_paginated(
     for condition in conditions:
         stmt = stmt.where(condition)
         count_stmt = count_stmt.where(condition)
+    if cursor is not None:
+        cursor_timestamp, cursor_id = cursor
+        stmt = stmt.where(
+            or_(
+                Alert.started_at < cursor_timestamp,
+                and_(
+                    Alert.started_at == cursor_timestamp,
+                    Alert.id < cursor_id,
+                ),
+            )
+        )
     total = db.scalar(count_stmt) or 0
     stmt = (
-        stmt.order_by(Alert.started_at.desc())
+        stmt.order_by(Alert.started_at.desc(), Alert.id.desc())
         .offset((page - 1) * page_size)
         .limit(page_size)
     )
@@ -64,9 +75,15 @@ def list_active(db: Session) -> list[Alert]:
 
 
 def count_active(db: Session) -> int:
+    return db.scalar(select(func.count(Alert.id)).where(Alert.status == "activa")) or 0
+
+
+def count_active_by_truck(db: Session, truck_id: int) -> int:
     return (
         db.scalar(
-            select(func.count(Alert.id)).where(Alert.status == "activa")
+            select(func.count(Alert.id)).where(
+                Alert.status == "activa", Alert.truck_id == truck_id
+            )
         )
         or 0
     )
@@ -83,9 +100,7 @@ def active_counts_by_truck(db: Session) -> dict[int, int]:
 
 def find_active(db: Session, device_id: int, alert_type: str) -> Alert | None:
     return db.scalar(
-        select(Alert)
-        .options(selectinload(Alert.truck), selectinload(Alert.device))
-        .where(
+        select(Alert).where(
             Alert.device_id == device_id,
             Alert.alert_type == alert_type,
             Alert.status == "activa",
@@ -99,23 +114,11 @@ def create(db: Session, alert: Alert) -> Alert:
     return alert
 
 
-def devices_without_recent_contact(
-    db: Session, threshold: datetime
-) -> list[Device]:
+def devices_without_recent_contact(db: Session, threshold: datetime) -> list[Device]:
     return list(
         db.scalars(
             select(Device)
             .options(selectinload(Device.truck))
             .where(Device.last_seen.is_not(None), Device.last_seen < threshold)
-        ).unique()
-    )
-
-
-def trucks_without_contact(db: Session, threshold: datetime) -> list[Truck]:
-    return list(
-        db.scalars(
-            select(Truck)
-            .options(selectinload(Truck.device))
-            .where(Truck.is_deleted.is_(False), Truck.device.has())
         ).unique()
     )

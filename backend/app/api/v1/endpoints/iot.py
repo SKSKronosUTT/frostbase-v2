@@ -2,9 +2,14 @@ from typing import Annotated
 
 from fastapi import APIRouter, Header, HTTPException, Request, Response, status
 
-from app.api.deps import TxSession, authenticate_device_or_401
+from app.api.deps import DbSession, authenticate_device_or_401
 from app.core.ratelimit import RateLimit
-from app.schemas.iot import IoTConfigResponse, IoTReadingResponse, ReadingIngest
+from app.schemas.iot import (
+    IoTConfigResponse,
+    IoTReadingResponse,
+    IoTRouteConfig,
+    ReadingIngest,
+)
 from app.services import reading_service, settings_service
 from app.services.serializers import serialize_alert
 
@@ -21,7 +26,7 @@ def receive_reading(
     payload: ReadingIngest,
     request: Request,
     response: Response,
-    db: TxSession,
+    db: DbSession,
     x_device_key: Annotated[str | None, Header(alias="X-Device-Key")] = None,
 ) -> IoTReadingResponse:
     # El límite se aplica antes de cualquier verificación de clave (KDF/HMAC).
@@ -30,6 +35,7 @@ def receive_reading(
     device = authenticate_device_or_401(
         db, device_id=payload.device_id, device_key=x_device_key
     )
+    request.state.device_id = device.device_id
     setting = settings_service.get_settings(db)
     try:
         reading, alerts, duplicate = reading_service.ingest_reading(
@@ -58,7 +64,7 @@ def receive_reading(
 def device_config(
     request: Request,
     response: Response,
-    db: TxSession,
+    db: DbSession,
     x_device_id: Annotated[str | None, Header(alias="X-Device-Id")] = None,
     x_device_key: Annotated[str | None, Header(alias="X-Device-Key")] = None,
 ) -> IoTConfigResponse:
@@ -77,6 +83,7 @@ def device_config(
     device = authenticate_device_or_401(
         db, device_id=x_device_id, device_key=x_device_key
     )
+    request.state.device_id = device.device_id
     setting = settings_service.get_settings(db)
     route = device.truck.route if device.truck else None
     return IoTConfigResponse(
@@ -84,7 +91,7 @@ def device_config(
         truck_id=device.truck_id,
         truck_plate=device.truck.plate if device.truck else None,
         route=(
-            {"name": route.name, "geometry": route.geometry} if route else None
+            IoTRouteConfig(name=route.name, geometry=route.geometry) if route else None
         ),
         temperature_min=setting.temperature_min,
         temperature_max=setting.temperature_max,

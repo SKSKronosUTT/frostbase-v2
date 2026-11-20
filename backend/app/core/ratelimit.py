@@ -7,8 +7,8 @@ import threading
 import time
 import uuid
 from collections import deque
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Callable
 
 from fastapi import HTTPException, Request, Response, status
 
@@ -19,7 +19,7 @@ logger = logging.getLogger("frostbase.ratelimit")
 KEY_PREFIX = "frostbase:rl:"
 
 # Si Redis falla, se usa este backend para no tumbar la autenticación.
-_fallback_backend: "MemoryBackend | None" = None
+_fallback_backend: MemoryBackend | None = None
 
 
 @dataclass(frozen=True)
@@ -216,7 +216,10 @@ class RateLimit:
         return f"{KEY_PREFIX}{self.scope}:{base}{suffix}"
 
     def hit(
-        self, request: Request, response: Response | None = None, extra: str | None = None
+        self,
+        request: Request,
+        response: Response | None = None,
+        extra: str | None = None,
     ) -> RateLimitDecision:
         decision = get_backend().hit(
             self.key(request, extra), self.limit, self.window_seconds
@@ -230,7 +233,10 @@ class RateLimit:
         return decision
 
     def check(
-        self, request: Request, response: Response | None = None, extra: str | None = None
+        self,
+        request: Request,
+        response: Response | None = None,
+        extra: str | None = None,
     ) -> RateLimitDecision:
         decision = self.hit(request, response, extra)
         if decision.allowed:

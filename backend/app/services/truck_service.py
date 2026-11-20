@@ -1,6 +1,7 @@
+from typing import cast
+
 from sqlalchemy.orm import Session
 
-from app.models.device import Device
 from app.models.truck import Truck
 from app.repositories import alerts as alerts_repo
 from app.repositories import devices as devices_repo
@@ -105,15 +106,16 @@ def get_truck_detail(db: Session, truck_id: int) -> TruckDetailOut:
     truck = _get_or_fail(db, truck_id)
     setting = settings_service.get_settings(db)
     latest = readings_repo.get_latest_for_truck(db, truck.id)
-    active = len(
-        [alert for alert in alerts_repo.list_active(db) if alert.truck_id == truck.id]
-    )
-    return serialize_truck(
-        truck,
-        latest_reading=latest,
-        setting=setting,
-        active_alerts=active,
-        detail=True,
+    active = alerts_repo.count_active_by_truck(db, truck.id)
+    return cast(
+        TruckDetailOut,
+        serialize_truck(
+            truck,
+            latest_reading=latest,
+            setting=setting,
+            active_alerts=active,
+            detail=True,
+        ),
     )
 
 
@@ -138,8 +140,7 @@ def create_truck(db: Session, payload: TruckCreate) -> TruckOut:
     if payload.device_id is not None:
         _assign_device(db, truck, payload.device_id)
 
-    db.commit()
-    db.refresh(truck)
+    db.flush()
     truck = _get_or_fail(db, truck.id)
     setting = settings_service.get_settings(db)
     latest = readings_repo.get_latest_for_truck(db, truck.id)
@@ -172,7 +173,7 @@ def update_truck(db: Session, truck_id: int, payload: TruckUpdate) -> TruckOut:
         _assign_device(db, truck, payload.device_id)
 
     db.add(truck)
-    db.commit()
+    db.flush()
     truck = _get_or_fail(db, truck.id)
     setting = settings_service.get_settings(db)
     latest = readings_repo.get_latest_for_truck(db, truck.id)
@@ -194,16 +195,5 @@ def delete_truck(db: Session, truck_id: int) -> None:
     truck.route_id = None
     truck.is_deleted = True
     db.add(truck)
-    db.commit()
+    db.flush()
     alert_service.resolve_truck_alerts(db, truck.id, "Camión eliminado del sistema")
-
-
-def assign_route_to_truck(db: Session, route_id: int, truck_id: int) -> TruckOut:
-    truck = _get_or_fail(db, truck_id)
-    _assign_route(db, truck, route_id)
-    db.add(truck)
-    db.commit()
-    truck = _get_or_fail(db, truck.id)
-    setting = settings_service.get_settings(db)
-    latest = readings_repo.get_latest_for_truck(db, truck.id)
-    return serialize_truck(truck, latest_reading=latest, setting=setting)

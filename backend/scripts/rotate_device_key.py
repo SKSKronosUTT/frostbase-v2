@@ -1,7 +1,8 @@
 """Rota la clave de un dispositivo y la imprime una sola vez.
 
 Uso (dentro del contenedor):
-    docker compose exec app python -m scripts.rotate_device_key --device-id ESP32-FROST-001
+    docker compose exec app python -m scripts.rotate_device_key \
+        --device-id ESP32-FROST-001
 
 La clave anterior deja de funcionar inmediatamente. Copie el valor impreso en
 ``iot-simulator/.env`` como ``DEVICE_KEY`` y reinicie el simulador o el firmware.
@@ -50,6 +51,7 @@ def main() -> int:
             return 1
 
         created = device_service.rotate_key(db, device.id)
+        db.commit()
 
     print(f"Dispositivo: {created.device_id}")
     print(f"DEVICE_KEY={created.device_key}")

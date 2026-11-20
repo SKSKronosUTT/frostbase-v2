@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import func, select
+from sqlalchemy import and_, func, or_, select
 from sqlalchemy.orm import Session
 
 from app.models.reading import Reading
@@ -8,8 +8,7 @@ from app.models.reading import Reading
 
 def create(db: Session, reading: Reading) -> Reading:
     db.add(reading)
-    db.commit()
-    db.refresh(reading)
+    db.flush()
     return reading
 
 
@@ -22,7 +21,9 @@ def get_latest_for_trucks(db: Session, truck_ids: list[int]) -> dict[int, Readin
         .distinct(Reading.truck_id)
         .order_by(Reading.truck_id, Reading.reading_timestamp.desc())
     )
-    return {reading.truck_id: reading for reading in db.scalars(stmt) if reading.truck_id}
+    return {
+        reading.truck_id: reading for reading in db.scalars(stmt) if reading.truck_id
+    }
 
 
 def get_latest_for_truck(db: Session, truck_id: int) -> Reading | None:
@@ -47,6 +48,7 @@ def list_paginated(
     date_to: datetime | None = None,
     page: int = 1,
     page_size: int = 50,
+    cursor: tuple[datetime, int] | None = None,
 ) -> tuple[list[Reading], int]:
     stmt = select(Reading)
     count_stmt = select(func.count(Reading.id))
@@ -62,9 +64,20 @@ def list_paginated(
     for condition in conditions:
         stmt = stmt.where(condition)
         count_stmt = count_stmt.where(condition)
+    if cursor is not None:
+        cursor_timestamp, cursor_id = cursor
+        stmt = stmt.where(
+            or_(
+                Reading.reading_timestamp < cursor_timestamp,
+                and_(
+                    Reading.reading_timestamp == cursor_timestamp,
+                    Reading.id < cursor_id,
+                ),
+            )
+        )
     total = db.scalar(count_stmt) or 0
     stmt = (
-        stmt.order_by(Reading.reading_timestamp.desc())
+        stmt.order_by(Reading.reading_timestamp.desc(), Reading.id.desc())
         .offset((page - 1) * page_size)
         .limit(page_size)
     )
@@ -79,26 +92,19 @@ def effectiveness_since(
     humidity_min: float,
     humidity_max: float,
 ) -> tuple[int, int]:
-    total = (
-        db.scalar(
-            select(func.count(Reading.id)).where(
-                Reading.reading_timestamp >= since, Reading.truck_id.is_not(None)
-            )
+    valid_condition = Reading.temperature.between(
+        temperature_min, temperature_max
+    ) & Reading.humidity.between(humidity_min, humidity_max)
+    row = db.execute(
+        select(
+            func.count(Reading.id).label("total"),
+            func.count(Reading.id).filter(valid_condition).label("valid"),
+        ).where(
+            Reading.reading_timestamp >= since,
+            Reading.truck_id.is_not(None),
         )
-        or 0
-    )
-    valid = (
-        db.scalar(
-            select(func.count(Reading.id)).where(
-                Reading.reading_timestamp >= since,
-                Reading.truck_id.is_not(None),
-                Reading.temperature.between(temperature_min, temperature_max),
-                Reading.humidity.between(humidity_min, humidity_max),
-            )
-        )
-        or 0
-    )
-    return valid, total
+    ).one()
+    return int(row.valid or 0), int(row.total or 0)
 
 
 def count_since(db: Session, since: datetime) -> int:

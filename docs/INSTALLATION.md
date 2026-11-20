@@ -65,18 +65,24 @@ Variables que el código lee actualmente:
 | `ENVIRONMENT` | — | `production` en Compose | Activa las validaciones de coherencia. |
 | `COOKIE_SECURE` | — | `true` | Obligatorio `true` en producción. |
 | `COOKIE_SAMESITE` | — | `lax` | `lax` o `strict` en producción. |
-| `ACCESS_TOKEN_EXPIRE_MINUTES` | — | `720` | Duración de la sesión. |
+| `ACCESS_TOKEN_EXPIRE_MINUTES` | — | `60` | Duración de la sesión; `/auth/refresh` la renueva. |
 | `ADMIN_USERNAME` / `ADMIN_EMAIL` | — | `admin` / `admin@frostbase.local` | Solo se usan si no existe ningún administrador. |
 | `APP_PORT` | — | `8050` | Puerto publicado del contenedor. |
+| `ALLOWED_HOSTS` | — | `localhost,127.0.0.1` | Hosts aceptados por `TrustedHostMiddleware`; añada su dominio o IP de LAN. |
+| `LOG_LEVEL` | — | `INFO` | Nivel del logging JSON. |
+| `WEB_CONCURRENCY` | — | `2` | Workers de Uvicorn. |
 | `AUTO_CREATE_TABLES` | — | `false` | Solo desarrollo/tests. En producción debe ser `false`. |
-| `RATE_LIMIT_BACKEND` | — | `memory` | Reservado para la Fase 2 (`memory` o `redis`). |
-| `REDIS_URL` | — | `""` | Reservado para la Fase 2. |
+| `RATE_LIMIT_BACKEND` | — | `memory` | `memory` o `redis` para rate limit y caché. |
+| `REDIS_URL` | — | `""` | Obligatoria si `RATE_LIMIT_BACKEND=redis`. |
 | `CORS_ORIGINS` | — | localhost 8050/8060/8070 | Orígenes permitidos, separados por coma. Sin `*`. |
 | `DASHBOARD_FRESH_MINUTES` | — | `10` | Ventana de vigencia del promedio del panel. |
-| `DISCONNECT_CHECK_SECONDS` | — | `30` | Frecuencia del detector de desconexiones. |
+| `DISCONNECT_CHECK_SECONDS` | — | `30` | Frecuencia del watcher de desconexiones. |
+| `ENABLE_INPROCESS_WATCHER` | — | `false` | `true` solo en desarrollo sin el servicio `watcher`. |
 | `OSRM_BASE_URL` | — | `https://router.project-osrm.org` | Servidor de ruteo. |
-| `OSRM_TIMEOUT_SECONDS` | — | `15` | Timeout de OSRM. |
+| `OSRM_TIMEOUT_SECONDS` | — | `5` | Timeout de OSRM. |
+| `WEATHER_TIMEOUT_SECONDS` | — | `3` | Timeout de Open-Meteo. |
 | `WEATHER_CACHE_SECONDS` | — | `600` | TTL de la caché de clima. |
+| `ROUTE_GEOMETRY_ASYNC` | — | `false` | `true` guarda la ruta y calcula la geometría en segundo plano. |
 | `FRONTEND_DIR` | — | autodetectado | Ruta alternativa del frontend. |
 
 Las variables `DEVICE_OFFLINE_SECONDS`, `WEATHER_CITY`, `WEATHER_LATITUDE` y
@@ -114,9 +120,17 @@ Secuencia de arranque:
    PostgreSQL y aplica `alembic upgrade head`. Varias réplicas pueden arrancar a
    la vez sin pisarse.
 3. Se crea el administrador si la tabla está vacía.
-4. Uvicorn escucha en el puerto `8050` interno, publicado como `APP_PORT`.
+4. Uvicorn escucha en el puerto `8050` interno, publicado como `APP_PORT`, con
+   `WEB_CONCURRENCY` workers.
 5. El frontend se sirve en `/`.
-6. El `healthcheck` del servicio consulta `/health`.
+6. El `healthcheck` del servicio consulta `/health/ready` (PostgreSQL + versión
+   de Alembic).
+7. El servicio `watcher` arranca tras `app` healthy, toma un *advisory lock* y
+   revisa desconexiones cada `DISCONNECT_CHECK_SECONDS`.
+
+> Para acceder desde otra máquina de la LAN o un dominio, añada ese host a
+> `ALLOWED_HOSTS` (por ejemplo `ALLOWED_HOSTS=localhost,127.0.0.1,192.168.1.10,frostbase.example.com`).
+> Si no lo hace, `TrustedHostMiddleware` responde `400`.
 
 Acceso: `http://localhost:${APP_PORT}`.
 
@@ -222,10 +236,18 @@ pip install -r requirements-dev.txt
 
 # 3. Ejecutar
 pytest -q
+pytest --cov=app --cov-report=term-missing --cov-fail-under=70
+ruff check .
+ruff format --check .
+mypy app
 
 # 4. Limpiar (opcional)
 docker compose -f compose.test.yml down
 ```
+
+Resultado actual: **47 passed** y cobertura **78 %**. El contenedor instala las
+dependencias desde `requirements.lock` (versiones y hashes fijados); para
+desarrollo se usa `requirements-dev.txt`.
 
 Si usa otra base, defina `TEST_DATABASE_URL` antes de `pytest`. La suite fija
 `SECRET_KEY`, `DEVICE_KEY_PEPPER` y `ADMIN_PASSWORD` de test antes de importar
@@ -309,18 +331,29 @@ Invoke-RestMethod http://localhost:8050/api/v1/dashboard/summary -WebSession $se
 | `port is already allocated` | Puerto ocupado | Cambie `APP_PORT` en `.env`. |
 | `connection refused` al iniciar | PostgreSQL aún no listo | Compose espera el healthcheck; revise `docker compose logs db`. |
 | Login devuelve 401 | Contraseña distinta a la del seed | Use `scripts/reset_admin.py` (ver §9). |
-| Ruta sin geometría | OSRM no disponible | La ruta se guarda con advertencia; use “Recalcular” más tarde. |
+| `400 Invalid host header` | El host no está en `ALLOWED_HOSTS` | Añada el dominio/IP a `ALLOWED_HOSTS` y reinicie. |
+| `/health/ready` devuelve 503 | PostgreSQL caído o esquema desactualizado | Revise `docker compose logs app` y `alembic current`. |
+| Ruta sin geometría | OSRM no disponible | La ruta se guarda con `warning`; use “Recalcular” más tarde. |
 | Simulador con 401 | `DEVICE_KEY` es la placa (`ABC-123-A`), una clave antigua o el dispositivo no existe | Rote la clave con `docker compose exec app python -m scripts.rotate_device_key --device-id ESP32-FROST-001` y actualice `iot-simulator/.env`. |
 | Alertas de desconexión constantes | Umbral muy bajo | Ajuste `offline_timeout_seconds` en **Configuración**. |
-| Clima no disponible | Open-Meteo inaccesible | El panel muestra el estado no disponible; no bloquea el resto. |
+| Clima no disponible | Open-Meteo inaccesible o circuit breaker abierto | El panel muestra el estado no disponible/stale; no bloquea el resto. |
 
 ## 12. Producción
 
 - Use HTTPS y mantenga `COOKIE_SECURE=true`, `COOKIE_SAMESITE=lax` (o `strict`) y
   `ENVIRONMENT=production`.
 - No use credenciales por defecto: el arranque las rechaza.
+- Configure `ALLOWED_HOSTS` con el dominio real.
+- El contenedor ejecuta la aplicación con `USER app` (no root) y healthcheck a
+  `/health/ready`.
+- Mantenga el servicio `watcher` activo; solo una instancia toma el advisory lock.
 - No exponga PostgreSQL fuera de la red interna.
 - Configure respaldos periódicos **fuera del repositorio** y cifrados
   (ver [docs/ops/BACKUP-RESTORE.md](ops/BACKUP-RESTORE.md)).
 - Coloque FrostBase detrás de un proxy inverso (Nginx, Caddy, Traefik) con TLS.
+  Hay una configuración de referencia en `deploy/nginx.conf` (TLS, `gzip` y
+  `limit_req` como segunda capa de rate limit).
+- Para varios workers con rate limit/caché compartidos, use el perfil `redis`:
+  `docker compose --profile redis up -d` y `RATE_LIMIT_BACKEND=redis`,
+  `REDIS_URL=redis://redis:6379/0`.
 - El esquema se migra solo con Alembic (`AUTO_CREATE_TABLES=false`).

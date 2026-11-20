@@ -85,10 +85,6 @@ def reset_login_throttle() -> None:
         _locked_until.clear()
 
 
-class PasswordPolicyError(Exception):
-    pass
-
-
 def ensure_initial_admin(db: Session) -> Admin | None:
     if admin_repo.count(db):
         return None
@@ -119,8 +115,7 @@ def authenticate(
         raise AuthenticationError("Usuario o contraseña incorrectos")
     admin.last_login = utcnow()
     db.add(admin)
-    db.commit()
-    db.refresh(admin)
+    db.flush()
     logger.info(
         "login_ok identifier=%s ip=%s result=allowed",
         admin.username,
@@ -135,9 +130,7 @@ def change_password(
     if not verify_password(current_password, admin.password_hash):
         raise AuthenticationError("La contraseña actual no es correcta")
     if new_password.lower() == current_password.lower():
-        raise PasswordPolicyError(
-            "La nueva contraseña debe ser distinta de la actual"
-        )
+        raise PasswordPolicyError("La nueva contraseña debe ser distinta de la actual")
     if admin.username.lower() in new_password.lower():
         raise PasswordPolicyError(
             "La nueva contraseña no puede contener el nombre de usuario"
@@ -147,8 +140,7 @@ def change_password(
     admin.must_change_password = False
     admin.token_version += 1
     db.add(admin)
-    db.commit()
-    db.refresh(admin)
+    db.flush()
     logger.info("Contraseña actualizada para el administrador %s", admin.username)
     return admin
 
@@ -160,6 +152,5 @@ def get_admin(db: Session, admin_id: int) -> Admin | None:
 def update_theme(db: Session, admin: Admin, theme: str) -> Admin:
     admin.theme = theme
     db.add(admin)
-    db.commit()
-    db.refresh(admin)
+    db.flush()
     return admin

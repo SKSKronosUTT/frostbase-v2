@@ -1,3 +1,5 @@
+import secrets
+
 from fastapi import APIRouter, HTTPException, Request, Response, status
 
 from app.api.deps import CurrentAdmin, DbSession
@@ -22,13 +24,23 @@ _login_identifier_limiter = RateLimit("login:identifier", limit=10, window_secon
 
 def _set_session_cookie(response: Response, admin: Admin) -> None:
     token = create_access_token(str(admin.id), token_version=admin.token_version)
+    max_age = settings.access_token_expire_minutes * 60
     response.set_cookie(
         key=settings.cookie_name,
         value=token,
         httponly=True,
         secure=settings.cookie_secure,
         samesite=settings.cookie_samesite,
-        max_age=settings.access_token_expire_minutes * 60,
+        max_age=max_age,
+        path="/",
+    )
+    response.set_cookie(
+        key=settings.csrf_cookie_name,
+        value=secrets.token_urlsafe(32),
+        httponly=False,
+        secure=settings.cookie_secure,
+        samesite=settings.cookie_samesite,
+        max_age=max_age,
         path="/",
     )
 
@@ -69,6 +81,13 @@ def login(
 @router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
 def logout(response: Response) -> None:
     response.delete_cookie(settings.cookie_name, path="/")
+    response.delete_cookie(settings.csrf_cookie_name, path="/")
+
+
+@router.post("/refresh", response_model=AdminOut)
+def refresh(response: Response, admin: CurrentAdmin) -> AdminOut:
+    _set_session_cookie(response, admin)
+    return AdminOut.model_validate(admin)
 
 
 @router.get("/me", response_model=AdminOut)

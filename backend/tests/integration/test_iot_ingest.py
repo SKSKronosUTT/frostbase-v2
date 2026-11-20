@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from sqlalchemy import func, select
 
@@ -9,7 +9,7 @@ from app.services import reading_service
 
 
 def _iso(value: datetime) -> str:
-    return value.astimezone(timezone.utc).isoformat().replace("+00:00", "Z")
+    return value.astimezone(UTC).isoformat().replace("+00:00", "Z")
 
 
 def _payload(
@@ -25,7 +25,7 @@ def _payload(
         "humidity": humidity,
         "latitude": 32.5149,
         "longitude": -117.0382,
-        "timestamp": _iso(timestamp or datetime.now(timezone.utc)),
+        "timestamp": _iso(timestamp or datetime.now(UTC)),
     }
 
 
@@ -85,11 +85,11 @@ def test_timestamp_outside_window_is_rejected(client, create_truck, create_devic
 
     future = _payload(
         device_id,
-        timestamp=datetime.now(timezone.utc) + timedelta(days=365),
+        timestamp=datetime.now(UTC) + timedelta(days=365),
     )
     past = _payload(
         device_id,
-        timestamp=datetime.now(timezone.utc) - timedelta(days=8),
+        timestamp=datetime.now(UTC) - timedelta(days=8),
     )
 
     assert (
@@ -134,13 +134,15 @@ def test_alert_failure_rolls_back_reading(
 
 
 def test_rotated_key_authenticates_and_old_key_fails(
-    client, login, create_truck, create_device
+    client, login, create_truck, create_device, csrf_headers
 ):
     assert login().status_code == 200
     truck_id = create_truck()
     device_pk, device_id, old_key = create_device(truck_id)
 
-    rotated = client.post(f"/api/v1/devices/{device_pk}/rotate-key")
+    rotated = client.post(
+        f"/api/v1/devices/{device_pk}/rotate-key", headers=csrf_headers()
+    )
     assert rotated.status_code == 200
     new_key = rotated.json()["device_key"]
     assert new_key != old_key
@@ -157,7 +159,7 @@ def test_rotated_key_authenticates_and_old_key_fails(
         headers={"X-Device-Key": new_key},
         json=_payload(
             device_id,
-            timestamp=datetime.now(timezone.utc) + timedelta(seconds=1),
+            timestamp=datetime.now(UTC) + timedelta(seconds=1),
         ),
     )
     assert new_response.status_code == 200
@@ -181,9 +183,23 @@ def test_iot_config_requires_valid_key(client, create_truck, create_device):
     assert accepted.json()["device_id"] == device_id
 
 
-def test_iot_rate_limit_applies_before_hash(
-    client, create_truck, create_device
+def test_csrf_is_required_for_cookie_mutations(
+    client, login, create_truck, create_device, csrf_headers
 ):
+    assert login().status_code == 200
+    device_pk, _, _ = create_device(create_truck())
+
+    denied = client.post(f"/api/v1/devices/{device_pk}/rotate-key")
+    assert denied.status_code == 403
+    assert "CSRF" in denied.json()["detail"]
+
+    allowed = client.post(
+        f"/api/v1/devices/{device_pk}/rotate-key", headers=csrf_headers()
+    )
+    assert allowed.status_code == 200
+
+
+def test_iot_rate_limit_applies_before_hash(client, create_truck, create_device):
     truck_id = create_truck()
     _, device_id, _ = create_device(truck_id)
     payload = _payload(device_id)

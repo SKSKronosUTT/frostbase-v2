@@ -1,4 +1,5 @@
 const API_BASE = "/api/v1";
+const MUTATING_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
 
 export class ApiError extends Error {
   constructor(message, status, payload = null) {
@@ -7,6 +8,12 @@ export class ApiError extends Error {
     this.status = status;
     this.payload = payload;
   }
+}
+
+function readCookie(name) {
+  const prefix = `${name}=`;
+  const item = document.cookie.split("; ").find((row) => row.startsWith(prefix));
+  return item ? decodeURIComponent(item.slice(prefix.length)) : "";
 }
 
 function extractDetail(payload, fallback) {
@@ -24,21 +31,28 @@ function extractDetail(payload, fallback) {
   return fallback;
 }
 
-async function request(path, { method = "GET", body, headers = {} } = {}) {
-  const options = {
-    method,
-    credentials: "same-origin",
-    headers: { Accept: "application/json", ...headers },
-  };
-
+async function request(
+  path,
+  { method = "GET", body, headers = {} } = {},
+  retried = false
+) {
+  const requestHeaders = { Accept: "application/json", ...headers };
   if (body !== undefined) {
-    options.headers["Content-Type"] = "application/json";
-    options.body = JSON.stringify(body);
+    requestHeaders["Content-Type"] = "application/json";
+  }
+  if (MUTATING_METHODS.has(method)) {
+    const csrfToken = readCookie("frostbase_csrf");
+    if (csrfToken) requestHeaders["X-CSRF-Token"] = csrfToken;
   }
 
   let response;
   try {
-    response = await fetch(`${API_BASE}${path}`, options);
+    response = await fetch(`${API_BASE}${path}`, {
+      method,
+      credentials: "same-origin",
+      headers: requestHeaders,
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+    });
   } catch (error) {
     throw new ApiError(
       "No se pudo conectar con el servidor. Verifica tu conexión.",
@@ -54,6 +68,20 @@ async function request(path, { method = "GET", body, headers = {} } = {}) {
       payload = await response.json().catch(() => null);
     } else {
       payload = await response.text().catch(() => null);
+    }
+  }
+
+  if (
+    response.status === 401 &&
+    !retried &&
+    path !== "/auth/login" &&
+    path !== "/auth/refresh"
+  ) {
+    try {
+      await request("/auth/refresh", { method: "POST" }, true);
+      return request(path, { method, body, headers }, true);
+    } catch (refreshError) {
+      /* La sesión no se pudo renovar; se propaga el 401 original. */
     }
   }
 

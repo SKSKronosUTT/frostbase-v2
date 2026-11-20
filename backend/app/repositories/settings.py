@@ -26,13 +26,11 @@ def ensure_default(db: Session) -> Setting:
     if setting is None:
         setting = Setting(id=1)
         db.add(setting)
-        db.commit()
-        db.refresh(setting)
+        db.flush()
     return setting
 
 
-def commit(db: Session, setting: Setting) -> Setting:
+def save(db: Session, setting: Setting) -> Setting:
     db.add(setting)
-    db.commit()
-    db.refresh(setting)
+    db.flush()
     return setting

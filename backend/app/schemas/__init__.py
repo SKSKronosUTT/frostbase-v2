@@ -6,7 +6,7 @@ from app.schemas.auth import (
     PasswordChangeRequest,
     ThemeUpdate,
 )
-from app.schemas.common import MessageOut, Page
+from app.schemas.common import Page
 from app.schemas.dashboard import (
     DashboardAlert,
     DashboardSummary,
@@ -46,7 +46,6 @@ __all__ = [
     "IoTReadingResponse",
     "LoginRequest",
     "LoginResponse",
-    "MessageOut",
     "Page",
     "PasswordChangeRequest",
     "ReadingIngest",

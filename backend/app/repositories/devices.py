@@ -2,14 +2,12 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session, selectinload
 
 from app.models.device import Device
-from app.models.truck import Truck
+from app.utils.search import escape_like
 
 
 def get(db: Session, device_pk: int) -> Device | None:
     return db.scalar(
-        select(Device)
-        .options(selectinload(Device.truck))
-        .where(Device.id == device_pk)
+        select(Device).options(selectinload(Device.truck)).where(Device.id == device_pk)
     )
 
 
@@ -40,9 +38,9 @@ def list_all(
     stmt = select(Device).options(selectinload(Device.truck))
     count_stmt = select(func.count(Device.id))
     if search:
-        pattern = f"%{search.strip()}%"
-        stmt = stmt.where(Device.device_id.ilike(pattern))
-        count_stmt = count_stmt.where(Device.device_id.ilike(pattern))
+        pattern = f"%{escape_like(search.strip())}%"
+        stmt = stmt.where(Device.device_id.ilike(pattern, escape="\\"))
+        count_stmt = count_stmt.where(Device.device_id.ilike(pattern, escape="\\"))
     if unassigned_only:
         stmt = stmt.where(Device.truck_id.is_(None))
         count_stmt = count_stmt.where(Device.truck_id.is_(None))
@@ -74,27 +72,16 @@ def create(
         key_scheme=key_scheme,
     )
     db.add(device)
-    db.commit()
-    db.refresh(device)
+    db.flush()
     return device
 
 
-def commit(db: Session, device: Device) -> Device:
+def save(db: Session, device: Device) -> Device:
     db.add(device)
-    db.commit()
-    db.refresh(device)
+    db.flush()
     return device
 
 
 def delete(db: Session, device: Device) -> None:
     db.delete(device)
-    db.commit()
-
-
-def truck_exists(db: Session, truck_id: int) -> bool:
-    return (
-        db.scalar(
-            select(Truck.id).where(Truck.id == truck_id, Truck.is_deleted.is_(False))
-        )
-        is not None
-    )
+    db.flush()

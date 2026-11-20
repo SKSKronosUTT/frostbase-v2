@@ -16,7 +16,7 @@ def list_devices(
     db: DbSession,
     _: CurrentAdmin,
     search: str | None = Query(default=None, max_length=100),
-    page: int = Query(default=1, ge=1),
+    page: int = Query(default=1, ge=1, le=10000),
     page_size: int = Query(default=20, ge=1, le=100),
 ) -> Page[DeviceOut]:
     return device_service.list_devices(
@@ -41,7 +41,9 @@ def create_device(
     try:
         return device_service.create_device(db, payload)
     except device_service.DeviceConflictError as exc:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT, detail=str(exc)
+        ) from exc
     except device_service.DeviceValidationError as exc:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc)
@@ -53,7 +55,9 @@ def get_device(device_pk: int, db: DbSession, _: CurrentAdmin) -> DeviceOut:
     try:
         return device_service.get_device(db, device_pk)
     except device_service.DeviceNotFoundError as exc:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)
+        ) from exc
 
 
 @router.put("/{device_pk}", response_model=DeviceOut)
@@ -63,7 +67,9 @@ def update_device(
     try:
         return device_service.update_device(db, device_pk, payload)
     except device_service.DeviceNotFoundError as exc:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)
+        ) from exc
     except device_service.DeviceValidationError as exc:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc)
@@ -82,4 +88,6 @@ def rotate_key(
     try:
         return device_service.rotate_key(db, device_pk)
     except device_service.DeviceNotFoundError as exc:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)
+        ) from exc

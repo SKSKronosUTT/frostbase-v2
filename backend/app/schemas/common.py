@@ -1,16 +1,9 @@
-from typing import Generic, TypeVar
-
 from pydantic import BaseModel
 
-T = TypeVar("T")
 
-
-class Page(BaseModel, Generic[T]):
+class Page[T](BaseModel):
     items: list[T]
     total: int
     page: int
     page_size: int
-
-
-class MessageOut(BaseModel):
-    message: str
+    next_cursor: str | None = None

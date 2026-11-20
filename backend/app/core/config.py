@@ -31,10 +31,11 @@ class Settings(BaseSettings):
     secret_key: str
     device_key_pepper: str
     device_key_fast_path: bool = True
-    access_token_expire_minutes: int = 720
+    access_token_expire_minutes: int = 60
     cookie_name: str = "frostbase_token"
+    csrf_cookie_name: str = "frostbase_csrf"
     cookie_secure: bool = True
-    cookie_samesite: str = "lax"
+    cookie_samesite: Literal["lax", "strict", "none"] = "lax"
 
     admin_username: str = "admin"
     admin_email: str = "admin@frostbase.local"
@@ -43,23 +44,25 @@ class Settings(BaseSettings):
     rate_limit_backend: Literal["memory", "redis"] = "memory"
     redis_url: str = ""
 
+    allowed_hosts: str = "localhost,127.0.0.1,testserver"
+    log_level: str = "INFO"
+
     cors_origins: str = (
         "http://localhost:8050,http://127.0.0.1:8050,"
         "http://localhost:8060,http://127.0.0.1:8060,"
         "http://localhost:8070,http://127.0.0.1:8070"
     )
 
-    device_offline_seconds: int = 60
     dashboard_fresh_minutes: int = 10
     disconnect_check_seconds: int = 30
+    enable_inprocess_watcher: bool = False
 
     osrm_base_url: str = "https://router.project-osrm.org"
-    osrm_timeout_seconds: float = 15.0
-
-    weather_city: str = "Tijuana"
-    weather_latitude: float = 32.5149
-    weather_longitude: float = -117.0382
+    osrm_timeout_seconds: float = 5.0
+    weather_timeout_seconds: float = 3.0
     weather_cache_seconds: int = 600
+
+    route_geometry_async: bool = False
 
     frontend_dir: str = ""
 
@@ -81,8 +84,7 @@ class Settings(BaseSettings):
     def _strong_admin_password(cls, value: str) -> str:
         if len(value) < MIN_ADMIN_PASSWORD_LENGTH:
             raise ValueError(
-                "debe tener al menos "
-                f"{MIN_ADMIN_PASSWORD_LENGTH} caracteres"
+                f"debe tener al menos {MIN_ADMIN_PASSWORD_LENGTH} caracteres"
             )
         if value == "ChangeMe123!":
             raise ValueError("no puede ser la contraseña por defecto del proyecto")
@@ -111,7 +113,13 @@ class Settings(BaseSettings):
 
     @property
     def cors_origin_list(self) -> list[str]:
-        return [origin.strip() for origin in self.cors_origins.split(",") if origin.strip()]
+        return [
+            origin.strip() for origin in self.cors_origins.split(",") if origin.strip()
+        ]
+
+    @property
+    def allowed_host_list(self) -> list[str]:
+        return [host.strip() for host in self.allowed_hosts.split(",") if host.strip()]
 
     @property
     def is_production(self) -> bool:
@@ -120,7 +128,7 @@ class Settings(BaseSettings):
 
 @lru_cache
 def get_settings() -> Settings:
-    return Settings()
+    return Settings()  # type: ignore[call-arg]
 
 
 settings = get_settings()

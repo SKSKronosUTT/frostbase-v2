@@ -100,8 +100,10 @@ function validate(payload) {
   if (payload.humidityIdeal + payload.humidityTolerance > 100) {
     return "El límite máximo de humedad no puede superar 100 %.";
   }
-  if (payload.temperatureTolerance <= 0) return "La tolerancia de temperatura debe ser mayor que 0.";
-  if (payload.humidityTolerance <= 0) return "La tolerancia de humedad debe ser mayor que 0.";
+  if (payload.temperatureTolerance <= 0)
+    return "La tolerancia de temperatura debe ser mayor que 0.";
+  if (payload.humidityTolerance <= 0)
+    return "La tolerancia de humedad debe ser mayor que 0.";
   if (payload.offlineTimeout < 10 || payload.offlineTimeout > 86400) {
     return "El tiempo de desconexión debe estar entre 10 y 86400 segundos.";
   }

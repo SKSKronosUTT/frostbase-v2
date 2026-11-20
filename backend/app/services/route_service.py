@@ -1,3 +1,5 @@
+import logging
+
 from sqlalchemy.orm import Session
 
 from app.models.route import DeliveryPoint, Route
@@ -7,6 +9,8 @@ from app.schemas.common import Page
 from app.schemas.route import DeliveryPointIn, RouteCreate, RouteOut, RouteUpdate
 from app.services import routing
 from app.services.serializers import serialize_route
+
+logger = logging.getLogger("frostbase.routes")
 
 
 class RouteNotFoundError(Exception):
@@ -51,6 +55,12 @@ def _get_or_fail(db: Session, route_id: int) -> Route:
     return route
 
 
+def _geometry_status(geometry: list | None, warning: str | None) -> str:
+    if geometry:
+        return "ready"
+    return "failed" if warning else "pending"
+
+
 def list_routes(
     db: Session,
     *,
@@ -74,13 +84,30 @@ def get_route(db: Session, route_id: int) -> RouteOut:
     return serialize_route(_get_or_fail(db, route_id))
 
 
-def create_route(db: Session, payload: RouteCreate) -> RouteOut:
-    geometry, warning = _calculate(payload.points)
+def get_route_points(db: Session, route_id: int) -> list[tuple[float, float]]:
+    route = _get_or_fail(db, route_id)
+    return [(point.latitude, point.longitude) for point in route.points]
+
+
+def create_route(
+    db: Session,
+    payload: RouteCreate,
+    *,
+    geometry: list | None = None,
+    warning: str | None = None,
+    defer_geometry: bool = False,
+) -> RouteOut:
+    if defer_geometry:
+        geometry, warning = None, None
+    elif geometry is None and warning is None:
+        geometry, warning = _calculate(payload.points)
+
     route = Route(
         name=_route_name(payload.points),
         description=payload.description,
         status=payload.status,
         geometry=geometry,
+        geometry_status=_geometry_status(geometry, warning),
     )
     route.points = _build_points(payload.points)
     routes_repo.create(db, route)
@@ -88,34 +115,78 @@ def create_route(db: Session, payload: RouteCreate) -> RouteOut:
     return serialize_route(route, warning=warning)
 
 
-def update_route(db: Session, route_id: int, payload: RouteUpdate) -> RouteOut:
+def update_route(
+    db: Session,
+    route_id: int,
+    payload: RouteUpdate,
+    *,
+    geometry: list | None = None,
+    warning: str | None = None,
+    defer_geometry: bool = False,
+) -> RouteOut:
     route = _get_or_fail(db, route_id)
-    geometry, warning = _calculate(payload.points)
+    if defer_geometry:
+        geometry, warning = None, None
+    elif geometry is None and warning is None:
+        geometry, warning = _calculate(payload.points)
+
     route.name = _route_name(payload.points)
     route.description = payload.description
     if payload.status is not None:
         route.status = payload.status
     route.geometry = geometry
+    route.geometry_status = _geometry_status(geometry, warning)
     routes_repo.replace_points(db, route, _build_points(payload.points))
-    routes_repo.commit(db, route)
+    routes_repo.save(db, route)
     route = _get_or_fail(db, route.id)
     return serialize_route(route, warning=warning)
 
 
-def calculate_route(db: Session, route_id: int) -> RouteOut:
+def calculate_route(
+    db: Session, route_id: int, *, geometry: list | None = None
+) -> RouteOut:
     route = _get_or_fail(db, route_id)
     if len(route.points) < 2:
         raise RouteValidationError("La ruta necesita al menos dos puntos")
-    try:
-        geometry = routing.calculate_geometry(
-            [(point.latitude, point.longitude) for point in route.points]
-        )
-    except routing.RoutingUnavailableError as exc:
-        raise RouteValidationError(str(exc)) from exc
+    if geometry is None:
+        try:
+            geometry = routing.calculate_geometry(
+                [(point.latitude, point.longitude) for point in route.points]
+            )
+        except routing.RoutingUnavailableError as exc:
+            route.geometry_status = "failed"
+            routes_repo.save(db, route)
+            raise RouteValidationError(str(exc)) from exc
     route.geometry = geometry
-    routes_repo.commit(db, route)
+    route.geometry_status = "ready"
+    routes_repo.save(db, route)
     route = _get_or_fail(db, route.id)
     return serialize_route(route)
+
+
+async def calculate_geometry_background(route_id: int) -> None:
+    """Calcula la geometría de una ruta en segundo plano (flag asíncrono)."""
+    from app.core.database import SessionLocal
+
+    try:
+        with SessionLocal() as db:
+            points = get_route_points(db, route_id)
+        geometry = await routing.calculate_geometry_async(points)
+    except (RouteNotFoundError, routing.RoutingUnavailableError) as exc:
+        logger.warning(
+            "No se pudo calcular la geometría de la ruta %s: %s", route_id, exc
+        )
+        with SessionLocal() as db, db.begin():
+            route = routes_repo.get(db, route_id)
+            if route is not None:
+                route.geometry_status = "failed"
+        return
+
+    with SessionLocal() as db, db.begin():
+        route = routes_repo.get(db, route_id)
+        if route is not None:
+            route.geometry = geometry
+            route.geometry_status = "ready"
 
 
 def delete_route(db: Session, route_id: int) -> None:
@@ -137,6 +208,6 @@ def assign_route(db: Session, route_id: int, truck_id: int) -> RouteOut:
         db.add(other)
     truck.route_id = route.id
     db.add(truck)
-    db.commit()
+    db.flush()
     route = _get_or_fail(db, route.id)
     return serialize_route(route)

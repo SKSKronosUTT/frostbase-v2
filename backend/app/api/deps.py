@@ -1,27 +1,16 @@
-from collections.abc import Generator
 from typing import Annotated
 
 from fastapi import Depends, Header, HTTPException, Request, status
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
-from app.core.database import SessionLocal, get_db
+from app.core.database import get_db
 from app.core.security import decode_access_token
 from app.models.admin import Admin
 from app.repositories import admin as admin_repo
 from app.services import device_service
 
 DbSession = Annotated[Session, Depends(get_db)]
-
-
-def get_tx_db() -> Generator[Session, None, None]:
-    """Sesión con una transacción por petición para la API IoT."""
-    with SessionLocal() as db:
-        with db.begin():
-            yield db
-
-
-TxSession = Annotated[Session, Depends(get_tx_db)]
 
 
 def _token_from_request(request: Request) -> str | None:
@@ -60,15 +49,14 @@ def get_current_admin(request: Request, db: DbSession) -> Admin:
             detail="Sesión inválida o expirada",
             headers={"WWW-Authenticate": "Bearer"},
         )
+    request.state.admin_id = admin.id
     return admin
 
 
 CurrentAdmin = Annotated[Admin, Depends(get_current_admin)]
 
 
-def authenticate_device_or_401(
-    db: Session, *, device_id: str, device_key: str | None
-):
+def authenticate_device_or_401(db: Session, *, device_id: str, device_key: str | None):
     if not device_key:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

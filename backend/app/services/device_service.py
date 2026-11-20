@@ -32,14 +32,21 @@ class DeviceValidationError(Exception):
     pass
 
 
+def _device_out(device: Device, timeout_seconds: int) -> DeviceOut:
+    serialized = serialize_device(device, timeout_seconds)
+    if serialized is None:
+        raise DeviceNotFoundError("Dispositivo no encontrado")
+    return serialized
+
+
 def _to_out(db: Session, device: Device) -> DeviceOut:
     setting = settings_service.get_settings(db)
-    return serialize_device(device, setting.offline_timeout_seconds)
+    return _device_out(device, setting.offline_timeout_seconds)
 
 
 def _created_out(db: Session, device: Device, secret: str) -> DeviceCreatedOut:
     setting = settings_service.get_settings(db)
-    base = serialize_device(device, setting.offline_timeout_seconds)
+    base = _device_out(device, setting.offline_timeout_seconds)
     return DeviceCreatedOut(**base.model_dump(), device_key=secret)
 
 
@@ -50,7 +57,9 @@ def _validate_truck(db: Session, truck_id: int):
     return truck
 
 
-def _detach_truck_devices(db: Session, truck_id: int, except_device_id: int | None = None):
+def _detach_truck_devices(
+    db: Session, truck_id: int, except_device_id: int | None = None
+):
     current = devices_repo.get_by_truck(db, truck_id)
     if current is not None and current.id != except_device_id:
         current.truck_id = None
@@ -64,24 +73,22 @@ def list_devices(
     devices, total = devices_repo.list_all(
         db, search=search, page=page, page_size=page_size
     )
-    items = [serialize_device(device, setting.offline_timeout_seconds) for device in devices]
+    items = [_device_out(device, setting.offline_timeout_seconds) for device in devices]
     return Page(items=items, total=total, page=page, page_size=page_size)
 
 
 def list_all_devices(db: Session) -> list[DeviceOut]:
     setting = settings_service.get_settings(db)
     return [
-        serialize_device(device, setting.offline_timeout_seconds)
+        _device_out(device, setting.offline_timeout_seconds)
         for device in devices_repo.list_all_without_pagination(db)
     ]
 
 
 def list_unassigned_devices(db: Session) -> list[DeviceOut]:
     setting = settings_service.get_settings(db)
-    devices, _ = devices_repo.list_all(
-        db, page=1, page_size=500, unassigned_only=True
-    )
-    return [serialize_device(device, setting.offline_timeout_seconds) for device in devices]
+    devices, _ = devices_repo.list_all(db, page=1, page_size=500, unassigned_only=True)
+    return [_device_out(device, setting.offline_timeout_seconds) for device in devices]
 
 
 def get_device(db: Session, device_pk: int) -> DeviceOut:
@@ -121,7 +128,7 @@ def update_device(db: Session, device_pk: int, payload: DeviceUpdate) -> DeviceO
             _detach_truck_devices(db, payload.truck_id, except_device_id=device.id)
         device.truck_id = payload.truck_id
         db.add(device)
-        db.commit()
+        db.flush()
         device = devices_repo.get(db, device.id) or device
     return _to_out(db, device)
 
@@ -134,7 +141,7 @@ def rotate_key(db: Session, device_pk: int) -> DeviceCreatedOut:
     device.key_hash = device_fingerprint(secret)
     device.key_scheme = "hmac"
     db.add(device)
-    db.commit()
+    db.flush()
     clear_device_cache()
     device = devices_repo.get(db, device.id) or device
     return _created_out(db, device, secret)
@@ -164,6 +171,5 @@ def authenticate_device(db: Session, device_id: str, secret: str) -> Device | No
 def touch_device(db: Session, device: Device) -> Device:
     device.last_seen = utcnow()
     db.add(device)
-    db.commit()
-    db.refresh(device)
+    db.flush()
     return device

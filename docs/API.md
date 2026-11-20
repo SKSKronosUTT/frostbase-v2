@@ -9,10 +9,12 @@ Documentación interactiva: `/docs` (Swagger UI), `/redoc` (ReDoc), `/openapi.js
 ### Administradores
 
 1. `POST /auth/login` con `identifier` (usuario o correo) y `password`.
-2. El servidor responde con el perfil y establece la cookie `frostbase_token` (`HttpOnly`, `SameSite=Lax`, expiración configurable).
+2. El servidor responde con el perfil y establece la cookie `frostbase_token` (`HttpOnly`, `SameSite=Lax`, 60 min) y la cookie legible `frostbase_csrf`.
 3. Todas las rutas administrativas aceptan la cookie o `Authorization: Bearer <token>`.
-4. `POST /auth/logout` elimina la cookie.
-5. `POST /auth/change-password` exige la contraseña actual y una nueva de al menos 12 caracteres. Al cambiarla se incrementa `token_version` y **todos los JWT emitidos antes dejan de ser válidos** (la sesión que hace el cambio recibe una cookie nueva).
+4. Las peticiones mutantes autenticadas por cookie (`POST`/`PUT`/`PATCH`/`DELETE`) deben enviar `X-CSRF-Token` con el valor de `frostbase_csrf`; si falta o no coincide → `403`.
+5. `POST /auth/refresh` renueva la sesión sin cambiar el estado del panel.
+6. `POST /auth/logout` elimina ambas cookies.
+7. `POST /auth/change-password` exige la contraseña actual y una nueva de al menos 12 caracteres. Al cambiarla se incrementa `token_version` y **todos los JWT emitidos antes dejan de ser válidos** (la sesión que hace el cambio recibe una cookie nueva).
 
 Si `must_change_password` es `true`, el panel bloquea la navegación con un modal
 obligatorio hasta definir la nueva contraseña.
@@ -43,7 +45,21 @@ Las listas paginadas responden:
 }
 ```
 
-Parámetros comunes: `page` (≥ 1) y `page_size` (1–100; lecturas hasta 500).
+Parámetros comunes: `page` (≥ 1, máximo `10000`) y `page_size` (1–100; lecturas hasta 500).
+
+### Paginación keyset
+
+`GET /readings` y `GET /alerts` aceptan `cursor` (opaco, devuelto en
+`next_cursor`). El orden es estable:
+
+- Lecturas: `reading_timestamp DESC, id DESC`.
+- Alertas: `started_at DESC, id DESC`.
+
+La respuesta incluye `next_cursor` cuando hay más páginas. Para la siguiente
+página envíe `?cursor=<next_cursor>`; no combine `cursor` con `page` > 1.
+
+La búsqueda (`search`) escapa `%`, `_` y `\` para que se traten como texto
+literal.
 
 ## Errores
 
@@ -53,11 +69,27 @@ FastAPI devuelve `{"detail": "mensaje"}`. Códigos usados:
 |---|---|
 | `400` | Petición inválida |
 | `401` | No autenticado / clave de dispositivo inválida |
+| `403` | CSRF ausente o inválido en una mutación autenticada por cookie |
 | `404` | Recurso no encontrado |
 | `409` | Conflicto (placa o dispositivo duplicado, dispositivo sin camión) |
 | `422` | Validación de datos |
 | `429` | Rate limit o bloqueo temporal por intentos fallidos |
-| `503` | Servicio externo no disponible (OSRM) |
+| `503` | Servicio externo no disponible (OSRM) o `/health/ready` no listo |
+
+---
+
+## Sistema y salud
+
+| Método | Ruta | Descripción |
+|---|---|---|
+| `GET` | `/health/live` | Proceso vivo |
+| `GET` | `/health/ready` | PostgreSQL disponible y `alembic_version == head`; si no, `503` |
+| `GET` | `/health` | Alias de compatibilidad de `live` |
+
+Todas las respuestas incluyen `X-Request-ID`. El backend añade
+`X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`,
+`Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy` y CSP
+en `Report-Only`.
 
 ---
 
@@ -67,6 +99,7 @@ FastAPI devuelve `{"detail": "mensaje"}`. Códigos usados:
 |---|---|---|
 | `POST` | `/auth/login` | Inicia sesión |
 | `POST` | `/auth/logout` | Cierra sesión (`204`) |
+| `POST` | `/auth/refresh` | Renueva la cookie de sesión |
 | `GET` | `/auth/me` | Perfil del administrador actual |
 | `PUT` | `/auth/preferences` | Actualiza preferencia de tema (`light`/`dark`) |
 | `POST` | `/auth/change-password` | Cambia la contraseña y revoca los JWT anteriores |
@@ -219,7 +252,13 @@ Respuesta (`201`):
 }
 ```
 
-La geometría se devuelve como lista de pares `[latitud, longitud]`. Si OSRM falla, la ruta se guarda con `geometry: null` y un campo `warning`.
+La geometría se devuelve como lista de pares `[latitud, longitud]`. Si OSRM falla, la ruta se guarda con `geometry: null`, `geometry_status: "failed"` y un campo `warning`.
+
+Con `ROUTE_GEOMETRY_ASYNC=true`, `POST/PUT /routes` responde de inmediato con
+`geometry_status: "pending"` y calcula la geometría en segundo plano; consulte
+`GET /routes/{id}` para ver si pasó a `ready` o `failed`. El dashboard usa una
+geometría simplificada (máx. 400 puntos); `GET /routes/{id}` y `/iot/config`
+devuelven la geometría completa.
 
 ### Asignar ruta
 

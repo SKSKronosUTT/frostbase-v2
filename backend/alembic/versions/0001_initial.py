@@ -5,15 +5,17 @@ Revises:
 Create Date: 2026-11-16
 
 """
-from typing import Sequence, Union
+
+from collections.abc import Sequence
 
 import sqlalchemy as sa
+
 from alembic import op
 
 revision: str = "0001_initial"
-down_revision: Union[str, None] = None
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+down_revision: str | None = None
+branch_labels: str | Sequence[str] | None = None
+depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
@@ -23,7 +25,9 @@ def upgrade() -> None:
         sa.Column("username", sa.String(length=80), nullable=False),
         sa.Column("email", sa.String(length=255), nullable=False),
         sa.Column("password_hash", sa.String(length=255), nullable=False),
-        sa.Column("theme", sa.String(length=10), nullable=False, server_default="light"),
+        sa.Column(
+            "theme", sa.String(length=10), nullable=False, server_default="light"
+        ),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("last_login", sa.DateTime(timezone=True), nullable=True),
     )
@@ -36,7 +40,9 @@ def upgrade() -> None:
         sa.Column("name", sa.String(length=255), nullable=False),
         sa.Column("description", sa.Text(), nullable=True),
         sa.Column("geometry", sa.JSON(), nullable=True),
-        sa.Column("status", sa.String(length=20), nullable=False, server_default="activa"),
+        sa.Column(
+            "status", sa.String(length=20), nullable=False, server_default="activa"
+        ),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
     )
@@ -45,15 +51,26 @@ def upgrade() -> None:
         "settings",
         sa.Column("id", sa.Integer(), primary_key=True),
         sa.Column("temperature_ideal", sa.Float(), nullable=False, server_default="-2"),
-        sa.Column("temperature_tolerance", sa.Float(), nullable=False, server_default="3"),
+        sa.Column(
+            "temperature_tolerance", sa.Float(), nullable=False, server_default="3"
+        ),
         sa.Column("humidity_ideal", sa.Float(), nullable=False, server_default="80"),
         sa.Column("humidity_tolerance", sa.Float(), nullable=False, server_default="5"),
         sa.Column(
             "offline_timeout_seconds", sa.Integer(), nullable=False, server_default="60"
         ),
-        sa.Column("weather_city", sa.String(length=120), nullable=False, server_default="Tijuana"),
-        sa.Column("weather_latitude", sa.Float(), nullable=False, server_default="32.5149"),
-        sa.Column("weather_longitude", sa.Float(), nullable=False, server_default="-117.0382"),
+        sa.Column(
+            "weather_city",
+            sa.String(length=120),
+            nullable=False,
+            server_default="Tijuana",
+        ),
+        sa.Column(
+            "weather_latitude", sa.Float(), nullable=False, server_default="32.5149"
+        ),
+        sa.Column(
+            "weather_longitude", sa.Float(), nullable=False, server_default="-117.0382"
+        ),
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
     )
 
@@ -65,9 +82,13 @@ def upgrade() -> None:
         sa.Column("year", sa.Integer(), nullable=False),
         sa.Column("plate", sa.String(length=40), nullable=False),
         sa.Column("description", sa.Text(), nullable=True),
-        sa.Column("status", sa.String(length=20), nullable=False, server_default="disponible"),
+        sa.Column(
+            "status", sa.String(length=20), nullable=False, server_default="disponible"
+        ),
         sa.Column("route_id", sa.Integer(), nullable=True),
-        sa.Column("is_deleted", sa.Boolean(), nullable=False, server_default=sa.false()),
+        sa.Column(
+            "is_deleted", sa.Boolean(), nullable=False, server_default=sa.false()
+        ),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
         sa.ForeignKeyConstraint(["route_id"], ["routes.id"], ondelete="SET NULL"),
@@ -117,8 +138,12 @@ def upgrade() -> None:
     )
     op.create_index("ix_readings_device_id", "readings", ["device_id"])
     op.create_index("ix_readings_truck_id", "readings", ["truck_id"])
-    op.create_index("ix_readings_truck_time", "readings", ["truck_id", "reading_timestamp"])
-    op.create_index("ix_readings_device_time", "readings", ["device_id", "reading_timestamp"])
+    op.create_index(
+        "ix_readings_truck_time", "readings", ["truck_id", "reading_timestamp"]
+    )
+    op.create_index(
+        "ix_readings_device_time", "readings", ["device_id", "reading_timestamp"]
+    )
 
     op.create_table(
         "alerts",
@@ -132,7 +157,9 @@ def upgrade() -> None:
         sa.Column("message", sa.String(length=500), nullable=True),
         sa.Column("started_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("resolved_at", sa.DateTime(timezone=True), nullable=True),
-        sa.Column("status", sa.String(length=20), nullable=False, server_default="activa"),
+        sa.Column(
+            "status", sa.String(length=20), nullable=False, server_default="activa"
+        ),
         sa.ForeignKeyConstraint(["truck_id"], ["trucks.id"], ondelete="SET NULL"),
         sa.ForeignKeyConstraint(["device_id"], ["devices.id"], ondelete="SET NULL"),
     )

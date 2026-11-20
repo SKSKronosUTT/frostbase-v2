@@ -3,7 +3,6 @@ from datetime import datetime, timedelta
 from pydantic import BaseModel, Field, field_validator
 
 from app.schemas.alert import AlertOut
-from app.schemas.route import RouteBriefWithGeometry
 from app.utils.time import ensure_utc, utcnow
 
 TIMESTAMP_PAST_DAYS = 7

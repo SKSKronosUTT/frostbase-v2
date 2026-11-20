@@ -74,9 +74,10 @@ function renderSummary() {
   } registrado${summary.total_trucks === 1 ? "" : "s"}`;
   qs("#kpiTemperature").textContent =
     summary.avg_temperature === null ? "—" : formatTemp(summary.avg_temperature);
-  qs("#kpiTemperatureMeta").textContent = summary.avg_temperature === null
-    ? "sin lecturas recientes"
-    : "lecturas de los últimos 10 min";
+  qs("#kpiTemperatureMeta").textContent =
+    summary.avg_temperature === null
+      ? "sin lecturas recientes"
+      : "lecturas de los últimos 10 min";
   qs("#kpiEffectiveness").textContent = formatPercent(summary.effectiveness);
   qs("#kpiEffectivenessMeta").textContent = `${
     summary.readings_24h
@@ -136,8 +137,8 @@ function renderTemperatureCarousel() {
         truck.reading_status === "alerta"
           ? "badge--danger"
           : truck.reading_status === "normal"
-          ? "badge--success"
-          : "badge--muted";
+            ? "badge--success"
+            : "badge--muted";
       return `
         <article class="temp-card ${
           truck.reading_status === "alerta" ? "temp-card--alert" : ""
@@ -352,8 +353,8 @@ function renderStatus() {
   const value = isDisconnect
     ? "Sin comunicación"
     : alert.alert_type === "temperatura"
-    ? formatTemp(alert.value)
-    : formatHum(alert.value);
+      ? formatTemp(alert.value)
+      : formatHum(alert.value);
   const range =
     alert.min_value !== null && alert.max_value !== null
       ? formatRange(
@@ -366,8 +367,8 @@ function renderStatus() {
     alert.alert_type === "temperatura"
       ? "Temperatura fuera de rango"
       : alert.alert_type === "humedad"
-      ? "Humedad fuera de rango"
-      : "Dispositivo desconectado";
+        ? "Humedad fuera de rango"
+        : "Dispositivo desconectado";
 
   statusPanel.innerHTML = `
     <div class="status-panel__hero status-panel__hero--alert">

@@ -1,10 +1,10 @@
 import logging
 from pathlib import Path
 
-from alembic import command
 from alembic.config import Config
 from sqlalchemy.orm import Session
 
+from alembic import command
 from app.core.config import settings
 from app.core.database import Base, engine
 from app.services import auth_service, settings_service
@@ -43,4 +43,5 @@ def ensure_schema() -> None:
 def bootstrap_database(db: Session) -> None:
     settings_service.ensure_settings(db)
     auth_service.ensure_initial_admin(db)
+    db.commit()
     logger.info("Base de datos inicializada correctamente")

@@ -96,7 +96,8 @@ export function formatPercent(value) {
 }
 
 export function formatRange(min, max, unit = "") {
-  if (min === null || min === undefined || max === null || max === undefined) return "—";
+  if (min === null || min === undefined || max === null || max === undefined)
+    return "—";
   return `${Number(min).toFixed(1)} a ${Number(max).toFixed(1)}${unit}`;
 }
 

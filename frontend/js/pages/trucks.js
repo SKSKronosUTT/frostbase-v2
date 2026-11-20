@@ -68,12 +68,12 @@ function renderPagination(container, page, total, pageSize, onChange) {
     <span class="pagination__info">Mostrando ${start}–${end} de ${total}</span>
     <div class="pagination__controls">
       <button class="icon-button" type="button" data-page="${page - 1}" ${
-    page <= 1 ? "disabled" : ""
-  } aria-label="Página anterior"><i class="fa-solid fa-chevron-left"></i></button>
+        page <= 1 ? "disabled" : ""
+      } aria-label="Página anterior"><i class="fa-solid fa-chevron-left"></i></button>
       <span class="pagination__page">Página ${page} de ${totalPages}</span>
       <button class="icon-button" type="button" data-page="${page + 1}" ${
-    page >= totalPages ? "disabled" : ""
-  } aria-label="Página siguiente"><i class="fa-solid fa-chevron-right"></i></button>
+        page >= totalPages ? "disabled" : ""
+      } aria-label="Página siguiente"><i class="fa-solid fa-chevron-right"></i></button>
     </div>
   `;
   container.querySelectorAll("[data-page]").forEach((button) => {
@@ -188,10 +188,16 @@ async function loadTrucks() {
     qs("#trucksCount").textContent = `${data.total} resultado${
       data.total === 1 ? "" : "s"
     }`;
-    renderPagination(trucksPagination, state.page, data.total, state.pageSize, (page) => {
-      state.page = page;
-      loadTrucks();
-    });
+    renderPagination(
+      trucksPagination,
+      state.page,
+      data.total,
+      state.pageSize,
+      (page) => {
+        state.page = page;
+        loadTrucks();
+      }
+    );
     updateFleetTotals();
   } catch (error) {
     trucksBody.innerHTML = tableError(8, error.message);
@@ -213,8 +219,8 @@ function deviceRows(items) {
           }</td>
           <td>
             <span class="status-dot ${online ? "is-online" : "is-offline"}">${
-        online ? "En línea" : "Desconectado"
-      }</span>
+              online ? "En línea" : "Desconectado"
+            }</span>
           </td>
           <td class="cell-muted">${
             device.last_seen ? timeAgo(device.last_seen) : "Nunca"
@@ -316,12 +322,10 @@ async function openTruckModal(truckId = null) {
       '<option value="">Sin ruta</option>' +
       references.routes
         .map((route) => {
-          const assigned = route.truck
-            ? ` · asignada a ${route.truck.plate}`
-            : "";
-          return `<option value="${route.id}">${escapeHtml(route.name)}${escapeHtml(
-            assigned
-          )}</option>`;
+          const assigned = route.truck ? ` · asignada a ${route.truck.plate}` : "";
+          return `<option value="${route.id}" data-assigned-plate="${
+            route.truck ? escapeHtml(route.truck.plate) : ""
+          }">${escapeHtml(route.name)}${escapeHtml(assigned)}</option>`;
         })
         .join("");
 
@@ -383,6 +387,20 @@ async function submitTruck(event) {
   };
 
   const button = qs("#truckSubmit");
+  const routeSelect = qs("#truckRoute");
+  const selectedRoute = routeSelect.selectedOptions[0];
+  const assignedPlate = selectedRoute?.dataset.assignedPlate || "";
+  const currentPlate = payload.plate;
+  if (payload.route_id && assignedPlate && assignedPlate !== currentPlate) {
+    const accepted = await confirmDialog({
+      title: "Reasignar ruta",
+      message: `La ruta está asignada al camión ${assignedPlate}. Si continúas, ese camión quedará sin ruta y se asignará a ${currentPlate}.`,
+      confirmText: "Reasignar",
+      danger: false,
+    });
+    if (!accepted) return;
+  }
+
   setButtonLoading(button, true, "Guardando…");
   try {
     if (id) {
@@ -459,9 +477,7 @@ async function submitDevice(event) {
   event.preventDefault();
   if (!deviceForm.reportValidity()) return;
   const id = qs("#devicePk").value;
-  const truckId = qs("#deviceTruck").value
-    ? Number(qs("#deviceTruck").value)
-    : null;
+  const truckId = qs("#deviceTruck").value ? Number(qs("#deviceTruck").value) : null;
   const button = qs("#deviceSubmit");
   setButtonLoading(button, true, "Guardando…");
   try {

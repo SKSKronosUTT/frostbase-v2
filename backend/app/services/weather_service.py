@@ -1,11 +1,14 @@
 import logging
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
+from typing import Any
 
 import httpx
 from sqlalchemy.orm import Session
+from starlette.concurrency import run_in_threadpool
 
 from app.core.config import settings as app_settings
+from app.core.http import CircuitBreaker, get_http_client
 from app.schemas.dashboard import WeatherOut
 from app.services import settings_service
 from app.utils.time import utcnow
@@ -13,6 +16,7 @@ from app.utils.time import utcnow
 logger = logging.getLogger("frostbase.weather")
 
 _cache: dict[tuple, tuple[float, dict]] = {}
+_breaker = CircuitBreaker("open-meteo", failure_threshold=3, recovery_seconds=60.0)
 
 WEATHER_CODES = {
     0: ("Despejado", "fa-sun"),
@@ -56,12 +60,12 @@ def _parse_time(value: str | None) -> datetime:
     except ValueError:
         return utcnow()
     if parsed.tzinfo is None:
-        return parsed.replace(tzinfo=timezone.utc)
-    return parsed.astimezone(timezone.utc)
+        return parsed.replace(tzinfo=UTC)
+    return parsed.astimezone(UTC)
 
 
-def get_weather(db: Session) -> WeatherOut:
-    setting = settings_service.get_settings(db)
+async def get_weather(db: Session) -> WeatherOut:
+    setting = await run_in_threadpool(settings_service.get_settings, db)
     key = (
         round(setting.weather_latitude, 4),
         round(setting.weather_longitude, 4),
@@ -74,21 +78,35 @@ def get_weather(db: Session) -> WeatherOut:
     if cached and now - cached[0] < ttl:
         return WeatherOut(**{**cached[1], "stale": False})
 
+    if not _breaker.allow():
+        if cached:
+            return WeatherOut(**{**cached[1], "stale": True})
+        return WeatherOut(
+            available=False,
+            city=setting.weather_city,
+            stale=True,
+            error="El proveedor de clima no está disponible temporalmente",
+        )
+
     url = "https://api.open-meteo.com/v1/forecast"
-    params = {
+    params: dict[str, str | float] = {
         "latitude": setting.weather_latitude,
         "longitude": setting.weather_longitude,
         "current": "temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m",
         "timezone": "UTC",
     }
     try:
-        with httpx.Client(timeout=10.0) as client:
-            response = client.get(url, params=params)
+        client = get_http_client()
+        response = await client.get(
+            url,
+            params=params,
+            timeout=app_settings.weather_timeout_seconds,
+        )
         response.raise_for_status()
         payload = response.json()
         current = payload.get("current") or {}
         condition, icon = _describe(current.get("weather_code"))
-        data = {
+        data: dict[str, Any] = {
             "available": True,
             "city": setting.weather_city,
             "temperature": current.get("temperature_2m"),
@@ -100,8 +118,10 @@ def get_weather(db: Session) -> WeatherOut:
             "error": None,
         }
         _cache[key] = (now, data)
+        _breaker.record_success()
         return WeatherOut(**data)
     except (httpx.HTTPError, ValueError, KeyError) as exc:
+        _breaker.record_failure()
         logger.warning("No se pudo consultar Open-Meteo: %s", exc)
         if cached:
             return WeatherOut(**{**cached[1], "stale": True})

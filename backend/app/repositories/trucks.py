@@ -2,6 +2,7 @@ from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session, selectinload
 
 from app.models.truck import Truck
+from app.utils.search import escape_like
 
 
 def _with_relations():
@@ -19,7 +20,12 @@ def get(db: Session, truck_id: int, *, include_deleted: bool = False) -> Truck |
 
 
 def get_by_plate(db: Session, plate: str) -> Truck | None:
-    return db.scalar(select(Truck).where(Truck.plate == plate.strip().upper()))
+    return db.scalar(
+        select(Truck).where(
+            Truck.plate == plate.strip().upper(),
+            Truck.is_deleted.is_(False),
+        )
+    )
 
 
 def list_paginated(
@@ -33,11 +39,11 @@ def list_paginated(
     stmt = select(Truck).options(*_with_relations()).where(Truck.is_deleted.is_(False))
     count_stmt = select(func.count(Truck.id)).where(Truck.is_deleted.is_(False))
     if search:
-        pattern = f"%{search.strip()}%"
+        pattern = f"%{escape_like(search.strip())}%"
         condition = or_(
-            Truck.plate.ilike(pattern),
-            Truck.brand.ilike(pattern),
-            Truck.model.ilike(pattern),
+            Truck.plate.ilike(pattern, escape="\\"),
+            Truck.brand.ilike(pattern, escape="\\"),
+            Truck.model.ilike(pattern, escape="\\"),
         )
         stmt = stmt.where(condition)
         count_stmt = count_stmt.where(condition)
@@ -45,11 +51,7 @@ def list_paginated(
         stmt = stmt.where(Truck.status == status)
         count_stmt = count_stmt.where(Truck.status == status)
     total = db.scalar(count_stmt) or 0
-    stmt = (
-        stmt.order_by(Truck.plate)
-        .offset((page - 1) * page_size)
-        .limit(page_size)
-    )
+    stmt = stmt.order_by(Truck.plate).offset((page - 1) * page_size).limit(page_size)
     return list(db.scalars(stmt).unique()), total
 
 
@@ -75,19 +77,19 @@ def count_by_status(db: Session) -> dict[str, int]:
 
 def create(db: Session, truck: Truck) -> Truck:
     db.add(truck)
-    db.commit()
-    db.refresh(truck)
+    db.flush()
     return truck
 
 
-def commit(db: Session, truck: Truck) -> Truck:
+def save(db: Session, truck: Truck) -> Truck:
     db.add(truck)
-    db.commit()
-    db.refresh(truck)
+    db.flush()
     return truck
 
 
-def trucks_using_route(db: Session, route_id: int, except_id: int | None = None) -> list[Truck]:
+def trucks_using_route(
+    db: Session, route_id: int, except_id: int | None = None
+) -> list[Truck]:
     stmt = select(Truck).where(Truck.route_id == route_id, Truck.is_deleted.is_(False))
     if except_id is not None:
         stmt = stmt.where(Truck.id != except_id)

@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import DateTime, Float, ForeignKey, Index, String
+from sqlalchemy import DateTime, Float, ForeignKey, Index
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
@@ -17,6 +17,11 @@ class Reading(Base):
     __table_args__ = (
         Index("ix_readings_truck_time", "truck_id", "reading_timestamp"),
         Index("ix_readings_device_time", "device_id", "reading_timestamp"),
+        Index(
+            "ix_readings_received_at",
+            "received_at",
+            postgresql_ops={"received_at": "DESC"},
+        ),
     )
 
     id: Mapped[int] = mapped_column(primary_key=True)

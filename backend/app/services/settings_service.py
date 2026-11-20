@@ -1,5 +1,6 @@
 from sqlalchemy.orm import Session
 
+from app.core.cache import cache_delete
 from app.models.setting import Setting
 from app.repositories import settings as settings_repo
 from app.schemas.setting import SettingsOut, SettingsUpdate
@@ -46,5 +47,6 @@ def update_settings(db: Session, payload: SettingsUpdate) -> SettingsOut:
     setting.weather_city = payload.weather_city
     setting.weather_latitude = payload.weather_latitude
     setting.weather_longitude = payload.weather_longitude
-    settings_repo.commit(db, setting)
+    settings_repo.save(db, setting)
+    cache_delete("dashboard:summary")
     return serialize_settings(setting)

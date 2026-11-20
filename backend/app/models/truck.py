@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy import Boolean, DateTime, ForeignKey, Index, Integer, String, Text, text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
@@ -16,14 +16,24 @@ if TYPE_CHECKING:
 
 class Truck(Base):
     __tablename__ = "trucks"
+    __table_args__ = (
+        Index(
+            "uq_trucks_plate_active",
+            "plate",
+            unique=True,
+            postgresql_where=text("is_deleted = false"),
+        ),
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True)
     brand: Mapped[str] = mapped_column(String(100), nullable=False)
     model: Mapped[str] = mapped_column(String(100), nullable=False)
     year: Mapped[int] = mapped_column(Integer, nullable=False)
-    plate: Mapped[str] = mapped_column(String(40), unique=True, index=True, nullable=False)
+    plate: Mapped[str] = mapped_column(String(40), nullable=False)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
-    status: Mapped[str] = mapped_column(String(20), default="disponible", nullable=False)
+    status: Mapped[str] = mapped_column(
+        String(20), default="disponible", nullable=False
+    )
     route_id: Mapped[int | None] = mapped_column(
         ForeignKey("routes.id", ondelete="SET NULL"), unique=True, nullable=True
     )
