@@ -96,8 +96,13 @@ def test_weather_circuit_breaker_returns_stale(monkeypatch):
         round(setting.weather_longitude, 4),
         setting.weather_city,
     )
+    expired_at = (
+        weather_service.time.monotonic()
+        - weather_service.app_settings.weather_cache_seconds
+        - 1
+    )
     weather_service._cache[key] = (
-        0.0,
+        expired_at,
         {
             "available": True,
             "city": setting.weather_city,
