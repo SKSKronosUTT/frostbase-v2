@@ -11,7 +11,3 @@ class Page(BaseModel, Generic[T]):
     page: int
     page_size: int
     next_cursor: str | None = None
-
-
-class MessageOut(BaseModel):
-    message: str

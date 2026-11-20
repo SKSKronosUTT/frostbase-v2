@@ -169,7 +169,3 @@ def serialize_truck(
             humidity_max=setting.humidity_max,
         )
     return TruckOut(**base, route=serialize_route_brief(truck.route))
-
-
-def freshness_threshold(setting: Setting, minutes: int) -> datetime:
-    return utcnow() - timedelta(minutes=minutes)

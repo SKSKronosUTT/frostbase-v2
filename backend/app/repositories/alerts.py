@@ -5,7 +5,6 @@ from sqlalchemy.orm import Session, selectinload
 
 from app.models.alert import Alert
 from app.models.device import Device
-from app.models.truck import Truck
 
 
 def get(db: Session, alert_id: int) -> Alert | None:
@@ -128,15 +127,5 @@ def devices_without_recent_contact(
             select(Device)
             .options(selectinload(Device.truck))
             .where(Device.last_seen.is_not(None), Device.last_seen < threshold)
-        ).unique()
-    )
-
-
-def trucks_without_contact(db: Session, threshold: datetime) -> list[Truck]:
-    return list(
-        db.scalars(
-            select(Truck)
-            .options(selectinload(Truck.device))
-            .where(Truck.is_deleted.is_(False), Truck.device.has())
         ).unique()
     )

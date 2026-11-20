@@ -193,14 +193,3 @@ def delete_truck(db: Session, truck_id: int) -> None:
     db.add(truck)
     db.flush()
     alert_service.resolve_truck_alerts(db, truck.id, "Camión eliminado del sistema")
-
-
-def assign_route_to_truck(db: Session, route_id: int, truck_id: int) -> TruckOut:
-    truck = _get_or_fail(db, truck_id)
-    _assign_route(db, truck, route_id)
-    db.add(truck)
-    db.flush()
-    truck = _get_or_fail(db, truck.id)
-    setting = settings_service.get_settings(db)
-    latest = readings_repo.get_latest_for_truck(db, truck.id)
-    return serialize_truck(truck, latest_reading=latest, setting=setting)

@@ -2,7 +2,6 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session, selectinload
 
 from app.models.device import Device
-from app.models.truck import Truck
 from app.utils.search import escape_like
 
 
@@ -88,12 +87,3 @@ def save(db: Session, device: Device) -> Device:
 def delete(db: Session, device: Device) -> None:
     db.delete(device)
     db.flush()
-
-
-def truck_exists(db: Session, truck_id: int) -> bool:
-    return (
-        db.scalar(
-            select(Truck.id).where(Truck.id == truck_id, Truck.is_deleted.is_(False))
-        )
-        is not None
-    )

@@ -2,7 +2,6 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session, selectinload
 
 from app.models.route import DeliveryPoint, Route
-from app.models.truck import Truck
 from app.utils.search import escape_like
 
 
@@ -73,13 +72,4 @@ def replace_points(db: Session, route: Route, points: list[DeliveryPoint]) -> No
         point.order_index = index
         point.route_id = route.id
         route.points.append(point)
-    db.flush()
-
-
-def unassign_truck(db: Session, route_id: int, except_truck_id: int | None = None) -> None:
-    stmt = select(Truck).where(Truck.route_id == route_id)
-    if except_truck_id is not None:
-        stmt = stmt.where(Truck.id != except_truck_id)
-    for truck in db.scalars(stmt):
-        truck.route_id = None
     db.flush()
