@@ -1303,7 +1303,7 @@ try {
 | F2 cerrado | 🟨 | 2026-11-19 | 8/8 tareas ✅ · `pytest -q` 11 passed · loadcheck 30×401 + 10×429 · idempotencia real (3 envíos → 1 lectura) · migraciones 0003/0004 up/down · **pendiente:** §10 manual con simulador 10 min y revisión visual del panel |
 | F3 cerrado | 🟨 | 2026-11-20 | 12/12 tareas ✅ · `ruff`/`mypy` limpios · 47 tests y cobertura 78 % · contenedor no-root healthy · migraciones 0005/0006/0007 aplicadas · baseline de rendimiento archivado · **pendiente:** §10 manual con simulador 10 min y revisión visual |
 | F4A cerrado | ✅ | 2026-11-20 | 4/4 tareas ✅ · cero violaciones CSP en 5 páginas · E2E de login y recuperación · rutas paginadas y 250 alcanzables · `check-css`/`check-innerhtml` en CI |
-| F4B cerrado | 🟨 | 2026-11-20 | 8/8 tareas ✅ · axe-core 12/12 sin serious/critical · build hasheado 531 KB y caché inmutable · retención y runbook · E2E 18/18 · **pendiente:** validar Lighthouse ≥90 y p95 de 50 dispositivos en Linux (Nightly) y §10 manual |
+| F4B cerrado | 🟨 | 2026-11-20 | 8/8 tareas ✅ · axe-core 12/12 sin serious/critical · build hasheado 531 KB y caché inmutable · retención y runbook · E2E 18/18 · **pendiente:** revisión visual con capturas, Lighthouse ≥90, p95 de 50 dispositivos en Linux (Nightly) y §10 manual |
 
 ---
 
