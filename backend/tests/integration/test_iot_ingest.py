@@ -163,6 +163,24 @@ def test_rotated_key_authenticates_and_old_key_fails(
     assert new_response.status_code == 200
 
 
+def test_iot_config_requires_valid_key(client, create_truck, create_device):
+    truck_id = create_truck()
+    _, device_id, device_key = create_device(truck_id)
+
+    rejected = client.get(
+        "/api/v1/iot/config",
+        headers={"X-Device-Id": device_id, "X-Device-Key": "clave-incorrecta"},
+    )
+    assert rejected.status_code == 401
+
+    accepted = client.get(
+        "/api/v1/iot/config",
+        headers={"X-Device-Id": device_id, "X-Device-Key": device_key},
+    )
+    assert accepted.status_code == 200
+    assert accepted.json()["device_id"] == device_id
+
+
 def test_iot_rate_limit_applies_before_hash(
     client, create_truck, create_device
 ):

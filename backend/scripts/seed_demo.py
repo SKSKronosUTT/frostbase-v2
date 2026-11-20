@@ -126,7 +126,15 @@ def main() -> None:
         print("\nClaves de dispositivos (guárdelas, no se mostrarán de nuevo):")
         for device_id, secret in created_devices:
             print(f"  {device_id}: {secret}")
-        print("\nUse la primera clave en iot-simulator/.env como DEVICE_KEY.")
+        print(
+            "\nCopie la clave en iot-simulator/.env como DEVICE_KEY. "
+            "NO es la placa del camión (ABC-123-A): es la cadena larga anterior."
+        )
+        print(
+            "Si la pierde, rótela con: "
+            "docker compose exec app python -m scripts.rotate_device_key "
+            "--device-id <DEVICE_ID>"
+        )
     print()
 
 
