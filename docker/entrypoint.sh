@@ -12,4 +12,5 @@ python -m scripts.migrate
 exec uvicorn app.main:app \
   --host 0.0.0.0 \
   --port "${APP_INTERNAL_PORT:-8050}" \
+  --workers "${WEB_CONCURRENCY:-2}" \
   --proxy-headers

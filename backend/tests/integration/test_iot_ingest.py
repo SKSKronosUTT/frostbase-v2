@@ -134,13 +134,15 @@ def test_alert_failure_rolls_back_reading(
 
 
 def test_rotated_key_authenticates_and_old_key_fails(
-    client, login, create_truck, create_device
+    client, login, create_truck, create_device, csrf_headers
 ):
     assert login().status_code == 200
     truck_id = create_truck()
     device_pk, device_id, old_key = create_device(truck_id)
 
-    rotated = client.post(f"/api/v1/devices/{device_pk}/rotate-key")
+    rotated = client.post(
+        f"/api/v1/devices/{device_pk}/rotate-key", headers=csrf_headers()
+    )
     assert rotated.status_code == 200
     new_key = rotated.json()["device_key"]
     assert new_key != old_key
@@ -179,6 +181,22 @@ def test_iot_config_requires_valid_key(client, create_truck, create_device):
     )
     assert accepted.status_code == 200
     assert accepted.json()["device_id"] == device_id
+
+
+def test_csrf_is_required_for_cookie_mutations(
+    client, login, create_truck, create_device, csrf_headers
+):
+    assert login().status_code == 200
+    device_pk, _, _ = create_device(create_truck())
+
+    denied = client.post(f"/api/v1/devices/{device_pk}/rotate-key")
+    assert denied.status_code == 403
+    assert "CSRF" in denied.json()["detail"]
+
+    allowed = client.post(
+        f"/api/v1/devices/{device_pk}/rotate-key", headers=csrf_headers()
+    )
+    assert allowed.status_code == 200
 
 
 def test_iot_rate_limit_applies_before_hash(

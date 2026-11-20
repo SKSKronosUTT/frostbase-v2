@@ -121,6 +121,15 @@ def login(client, admin_credentials):
 
 
 @pytest.fixture
+def csrf_headers(client):
+    def _headers() -> dict[str, str]:
+        token = client.cookies.get("frostbase_csrf")
+        return {"X-CSRF-Token": token} if token else {}
+
+    return _headers
+
+
+@pytest.fixture
 def create_truck():
     def _create(plate: str = "TEST-001", status: str = "disponible") -> int:
         with SessionLocal() as db:

@@ -31,8 +31,9 @@ class Settings(BaseSettings):
     secret_key: str
     device_key_pepper: str
     device_key_fast_path: bool = True
-    access_token_expire_minutes: int = 720
+    access_token_expire_minutes: int = 60
     cookie_name: str = "frostbase_token"
+    csrf_cookie_name: str = "frostbase_csrf"
     cookie_secure: bool = True
     cookie_samesite: str = "lax"
 
@@ -42,6 +43,9 @@ class Settings(BaseSettings):
 
     rate_limit_backend: Literal["memory", "redis"] = "memory"
     redis_url: str = ""
+
+    allowed_hosts: str = "localhost,127.0.0.1,testserver"
+    log_level: str = "INFO"
 
     cors_origins: str = (
         "http://localhost:8050,http://127.0.0.1:8050,"
@@ -116,6 +120,10 @@ class Settings(BaseSettings):
     @property
     def cors_origin_list(self) -> list[str]:
         return [origin.strip() for origin in self.cors_origins.split(",") if origin.strip()]
+
+    @property
+    def allowed_host_list(self) -> list[str]:
+        return [host.strip() for host in self.allowed_hosts.split(",") if host.strip()]
 
     @property
     def is_production(self) -> bool:
