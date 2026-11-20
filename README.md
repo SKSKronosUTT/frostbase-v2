@@ -208,7 +208,23 @@ El simulador envía una lectura cada 10 segundos y mueve un camión sobre la rut
 
 **Requisitos:** Python 3.12 o superior y los datos de demostración cargados (Paso 5).
 
-### Windows (PowerShell)
+> ⚠️ **`DEVICE_KEY` no es la placa del camión.** `ABC-123-A` es la matrícula. La clave es una cadena larga (≈43 caracteres) que el seed imprime **una sola vez** al crear el dispositivo.
+
+### 1. Obtener la clave del dispositivo
+
+- Si acabas de ejecutar el seed, busca la línea `ESP32-FROST-001: ...` en su salida y copia la cadena larga.
+- Si no tienes la clave o perdiste la salida del seed, genera una nueva:
+
+  ```bash
+  docker compose exec app python -m scripts.rotate_device_key --device-id ESP32-FROST-001
+  ```
+
+  El comando imprime una línea `DEVICE_KEY=...` **una sola vez**. La clave anterior deja de funcionar.
+- También puedes rotarla desde el panel: **Flota → dispositivo → Rotar clave**.
+
+### 2. Configurar y arrancar
+
+#### Windows (PowerShell)
 
 ```powershell
 cd iot-simulator
@@ -226,7 +242,7 @@ Si PowerShell bloquea la activación del entorno virtual, ejecuta una vez:
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 ```
 
-### macOS / Linux
+#### macOS / Linux
 
 ```bash
 cd iot-simulator
@@ -243,11 +259,29 @@ python simulator.py
 ```env
 FROSTBASE_API_URL=http://localhost:8050/api/v1
 DEVICE_ID=ESP32-FROST-001
-DEVICE_KEY=<la clave que imprimió el seed>
+DEVICE_KEY=<cadena larga de ~43 caracteres; NO es la placa ABC-123-A>
 ```
 
 - Si cambiaste `APP_PORT`, actualiza también `FROSTBASE_API_URL` (por ejemplo, `http://localhost:8060/api/v1`).
-- Si perdiste la clave del dispositivo, genera una nueva desde el panel (Flota → dispositivo → rotar clave) o con `POST /api/v1/devices/{id}/rotate-key`.
+- Si perdiste la clave del dispositivo, usa el comando de rotación de arriba.
+
+### Si el simulador muestra `401 Unauthorized`
+
+Significa que `DEVICE_KEY` no corresponde a `DEVICE_ID` (por ejemplo, porque se copió la placa `ABC-123-A` o una clave antigua). Para corregirlo:
+
+1. Rota la clave con el comando de la sección 1.
+2. Copia el valor de `DEVICE_KEY=...` en `iot-simulator/.env`.
+3. Detén y vuelve a arrancar `python simulator.py`; el `.env` se lee al iniciar.
+
+Comprobación rápida en macOS/Linux:
+
+```bash
+curl -s -o /dev/null -w "%{http_code}\n" http://localhost:8050/api/v1/iot/config \
+  -H "X-Device-Id: ESP32-FROST-001" \
+  -H "X-Device-Key: <tu clave>"
+```
+
+Debe responder `200`. En Windows usa `curl.exe` (PowerShell puede interpretar `curl` como alias).
 
 Cuando el simulador arranque, verás una lectura cada 10 segundos y el camión aparecerá en el mapa. Para detenerlo, `Ctrl+C`.
 
@@ -267,7 +301,7 @@ pip install -r requirements-dev.txt
 pytest -q
 ```
 
-Resultado esperado: `10 passed` en menos de 60 segundos. Para limpiar la base de pruebas:
+Resultado esperado: `11 passed` en menos de 60 segundos. Para limpiar la base de pruebas:
 
 ```bash
 docker compose -f compose.test.yml down
@@ -286,6 +320,7 @@ docker compose -f compose.test.yml down
 | Actualizar desde Git | `git pull` y luego `docker compose up -d --build` |
 | Ver el estado | `docker compose ps` |
 | Restablecer la contraseña del admin | `docker compose exec app python -m scripts.reset_admin` |
+| Rotar la clave de un dispositivo | `docker compose exec app python -m scripts.rotate_device_key --device-id ESP32-FROST-001` |
 | Respaldar la base de datos | Ver [docs/ops/BACKUP-RESTORE.md](docs/ops/BACKUP-RESTORE.md) |
 
 > ⚠️ **Borrar todos los datos** (camiones, lecturas, alertas y usuarios) es destructivo:
@@ -344,9 +379,9 @@ No olvides actualizar `FROSTBASE_API_URL` en `iot-simulator/.env` si usas el sim
 | Login devuelve error 401 | La contraseña no coincide con la del administrador existente | Ejecuta `docker compose exec app python -m scripts.reset_admin`. |
 | `password authentication failed for user "frostbase"` | Cambiaste `POSTGRES_PASSWORD` después del primer arranque | Vuelve a poner la contraseña anterior en `.env` o rota la contraseña dentro de PostgreSQL (ver abajo). |
 | El login “funciona” pero luego vuelve al login | Estás accediendo por una IP de red con HTTP y `COOKIE_SECURE=true` | Usa `http://localhost` o, solo para pruebas en red, pon `COOKIE_SECURE=false` y reinicia. En producción usa HTTPS. |
-| El simulador recibe 401 | `DEVICE_KEY` incorrecta o dispositivo eliminado | Rota la clave del dispositivo desde el panel y actualiza `iot-simulator/.env`. |
+| El simulador recibe 401 | `DEVICE_KEY` es la placa (`ABC-123-A`), una clave antigua o el dispositivo no existe | Rota la clave: `docker compose exec app python -m scripts.rotate_device_key --device-id ESP32-FROST-001`; copia el valor en `iot-simulator/.env` y reinicia. |
 | El simulador no conecta | Puerto distinto o API URL incorrecta | Revisa `FROSTBASE_API_URL` en `iot-simulator/.env`. |
-| El seed no imprime claves | Los dispositivos ya existían | Rota la clave desde el panel; el seed solo imprime claves al crearlas. |
+| El seed no imprime claves | Los dispositivos ya existían | Rota la clave con `scripts.rotate_device_key` o desde el panel. |
 
 ### Si cambiaste la contraseña de PostgreSQL después del primer arranque
 

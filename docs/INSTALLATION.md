@@ -148,6 +148,11 @@ Crea:
 El seed es idempotente para camiones/dispositivos por placa/ID, aunque crea una
 ruta nueva en cada ejecución (corregido en la Fase 4 del plan).
 
+> Las claves de dispositivo se imprimen **una sola vez** y son cadenas largas
+> (≈43 caracteres), no la placa del camión. Si las pierde, rótelas con
+> `docker compose exec app python -m scripts.rotate_device_key --device-id <ID>`
+> o desde el panel (Flota → dispositivo → Rotar clave).
+
 ## 6. Ejecución local
 
 Requisitos: PostgreSQL 16 en `localhost:5432` y base `frostbase`.
@@ -305,7 +310,7 @@ Invoke-RestMethod http://localhost:8050/api/v1/dashboard/summary -WebSession $se
 | `connection refused` al iniciar | PostgreSQL aún no listo | Compose espera el healthcheck; revise `docker compose logs db`. |
 | Login devuelve 401 | Contraseña distinta a la del seed | Use `scripts/reset_admin.py` (ver §9). |
 | Ruta sin geometría | OSRM no disponible | La ruta se guarda con advertencia; use “Recalcular” más tarde. |
-| Simulador con 401 | `DEVICE_KEY` incorrecta o dispositivo eliminado | Genere una nueva clave con `POST /devices/{id}/rotate-key`. |
+| Simulador con 401 | `DEVICE_KEY` es la placa (`ABC-123-A`), una clave antigua o el dispositivo no existe | Rote la clave con `docker compose exec app python -m scripts.rotate_device_key --device-id ESP32-FROST-001` y actualice `iot-simulator/.env`. |
 | Alertas de desconexión constantes | Umbral muy bajo | Ajuste `offline_timeout_seconds` en **Configuración**. |
 | Clima no disponible | Open-Meteo inaccesible | El panel muestra el estado no disponible; no bloquea el resto. |
 

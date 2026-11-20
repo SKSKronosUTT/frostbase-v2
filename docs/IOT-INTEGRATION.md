@@ -30,9 +30,22 @@ dispositivos antiguos conservan Argon2 y usan un caché de aciertos de 300 s. Si
 pierde la clave, rote:
 
 ```bash
+# Rota un solo dispositivo e imprime la nueva clave una vez
+docker compose exec app python -m scripts.rotate_device_key \
+  --device-id ESP32-FROST-001
+```
+
+También puede rotarla desde el panel (Flota → dispositivo → Rotar clave) o con la
+API:
+
+```bash
 curl -s -X POST http://localhost:8050/api/v1/devices/3/rotate-key \
   -b "frostbase_token=<cookie>"
 ```
+
+> ⚠️ **No confunda `DEVICE_KEY` con la placa del camión.** `ABC-123-A` es la
+> matrícula; la clave es una cadena larga (≈43 caracteres) generada por el
+> servidor. Copiar la placa en `iot-simulator/.env` produce `401 Unauthorized`.
 
 La clave anterior deja de funcionar inmediatamente. El endpoint de rotación está
 limitado a 10 solicitudes/hora por administrador. Para migrar todo el parque a
@@ -249,3 +262,9 @@ cd iot-simulator
 cp .env.example .env   # configure DEVICE_ID y DEVICE_KEY
 python simulator.py
 ```
+
+> Si el simulador muestra `401 Unauthorized`, la `DEVICE_KEY` no es válida. No es
+> la placa del camión: es la cadena larga que imprime el seed o la que se genera
+> al rotar la clave con
+> `docker compose exec app python -m scripts.rotate_device_key --device-id <ID>`.
+> Copie el valor en `.env` y reinicie el simulador.

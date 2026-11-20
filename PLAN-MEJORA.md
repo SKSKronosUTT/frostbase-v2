@@ -1268,7 +1268,7 @@ try {
 | T2.4 | F2 | ✅ | OpenCode (agente IA) | `e45c322` | 2026-11-19 | `TxSession` por petición; sin `commit()` en la ingesta; settings sin escritura en lectura; alertas con savepoint y reintento. Test: fallo de alertas deja 0 lecturas. |
 | T2.5 | F2 | ✅ | OpenCode (agente IA) | `e45c322` | 2026-11-19 | Migración 0004 (0 duplicados) + índice único; ventana −7 d/+5 min; `duplicate` y `reading_id`. Real: 3 envíos → 1 lectura; timestamp 2099 → 422. |
 | T2.6 | F2 | ✅ | OpenCode (agente IA) | `e45c322` | 2026-11-19 | Límites antes del hash; `Retry-After` + `X-RateLimit-*`; semántica 401/409/422/429. Prueba real 30×401 + 10×429. |
-| T2.7 | F2 | ✅ | OpenCode (agente IA) | `63332e4` | 2026-11-19 | `compose.test.yml`, `conftest.py` y tests de auth/IoT. `pytest -q` → **10 passed en 7.94 s** contra PostgreSQL 16 real. |
+| T2.7 | F2 | ✅ | OpenCode (agente IA) | `63332e4` | 2026-11-19 | `compose.test.yml`, `conftest.py` y tests de auth/IoT (incluye `/iot/config`). `pytest -q` → **11 passed**. |
 | T2.8 | F2 | ✅ | OpenCode (agente IA) | `c8868d4` | 2026-11-19 | `docs/API.md`, `docs/IOT-INTEGRATION.md`, `docs/INSTALLATION.md` y README actualizados: ventana de timestamp, `duplicate`, 429, cabeceras, backoff y rotación de claves. |
 | T3.1 | F3 | ⬜ | — | — | — | — |
 | T3.2 | F3 | ⬜ | — | — | — | — |
@@ -1300,7 +1300,7 @@ try {
 | Gate | Estado | Fecha | Evidencia |
 |---|:--:|---|---|
 | F1 cerrado | 🟨 | 2026-11-19 | 7/7 tareas ✅ · `import app.main` con `.env` válido · login + rotación/revocación probados por API · `alembic current == head` · restore drill 0.79 s · **pendiente:** §10 manual en navegador con simulador 10 min (modal de cambio forzado y flujo del panel) |
-| F2 cerrado | 🟨 | 2026-11-19 | 8/8 tareas ✅ · `pytest -q` 10 passed en 7.94 s · loadcheck 30×401 + 10×429 · idempotencia real (3 envíos → 1 lectura) · migraciones 0003/0004 up/down · **pendiente:** §10 manual con simulador 10 min y revisión visual del panel |
+| F2 cerrado | 🟨 | 2026-11-19 | 8/8 tareas ✅ · `pytest -q` 11 passed · loadcheck 30×401 + 10×429 · idempotencia real (3 envíos → 1 lectura) · migraciones 0003/0004 up/down · **pendiente:** §10 manual con simulador 10 min y revisión visual del panel |
 | F3 cerrado | ⬜ | — | — |
 | F4A cerrado | ⬜ | — | — |
 | F4B cerrado | ⬜ | — | — |
