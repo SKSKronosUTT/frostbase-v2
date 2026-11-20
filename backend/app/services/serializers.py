@@ -17,6 +17,7 @@ from app.schemas.route import (
     RouteOut,
 )
 from app.schemas.truck import TruckDetailOut, TruckOut
+from app.utils.geo import simplify_polyline
 from app.utils.time import ensure_utc, utcnow
 
 
@@ -78,7 +79,10 @@ def serialize_route_brief_geometry(route: Route | None) -> RouteBriefWithGeometr
     if route is None:
         return None
     return RouteBriefWithGeometry(
-        id=route.id, name=route.name, status=route.status, geometry=route.geometry
+        id=route.id,
+        name=route.name,
+        status=route.status,
+        geometry=simplify_polyline(route.geometry) if route.geometry else None,
     )
 
 

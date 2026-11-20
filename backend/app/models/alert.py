@@ -23,6 +23,7 @@ class Alert(Base):
             postgresql_where=text("status = 'activa'"),
         ),
         Index("ix_alerts_status_started", "status", "started_at"),
+        Index("ix_alerts_truck_status", "truck_id", "status"),
     )
 
     id: Mapped[int] = mapped_column(primary_key=True)

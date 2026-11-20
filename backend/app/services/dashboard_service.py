@@ -2,6 +2,7 @@ from datetime import timedelta
 
 from sqlalchemy.orm import Session
 
+from app.core.cache import cache_get, cache_set
 from app.core.config import settings as app_settings
 from app.repositories import alerts as alerts_repo
 from app.repositories import readings as readings_repo
@@ -19,8 +20,18 @@ from app.services.serializers import (
 )
 from app.utils.time import ensure_utc, utcnow
 
+SUMMARY_CACHE_KEY = "dashboard:summary"
+SUMMARY_CACHE_SECONDS = 10
+
 
 def get_summary(db: Session) -> DashboardSummary:
+    cached = cache_get(SUMMARY_CACHE_KEY)
+    if cached:
+        try:
+            return DashboardSummary.model_validate_json(cached)
+        except ValueError:
+            pass
+
     setting = settings_service.get_settings(db)
     status_counts = trucks_repo.count_by_status(db)
     total_trucks = sum(status_counts.values())
@@ -52,7 +63,7 @@ def get_summary(db: Session) -> DashboardSummary:
     )
     effectiveness = round(valid / total * 100, 1) if total else None
 
-    return DashboardSummary(
+    summary = DashboardSummary(
         total_trucks=total_trucks,
         active_trucks=active_trucks,
         avg_temperature=avg_temperature,
@@ -67,6 +78,12 @@ def get_summary(db: Session) -> DashboardSummary:
         last_update=ensure_utc(readings_repo.get_latest_received_at(db)),
         generated_at=utcnow(),
     )
+    cache_set(
+        SUMMARY_CACHE_KEY,
+        summary.model_dump_json(),
+        SUMMARY_CACHE_SECONDS,
+    )
+    return summary
 
 
 def get_trucks(db: Session) -> list[DashboardTruck]:

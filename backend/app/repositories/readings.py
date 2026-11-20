@@ -79,26 +79,19 @@ def effectiveness_since(
     humidity_min: float,
     humidity_max: float,
 ) -> tuple[int, int]:
-    total = (
-        db.scalar(
-            select(func.count(Reading.id)).where(
-                Reading.reading_timestamp >= since, Reading.truck_id.is_not(None)
-            )
+    valid_condition = Reading.temperature.between(
+        temperature_min, temperature_max
+    ) & Reading.humidity.between(humidity_min, humidity_max)
+    row = db.execute(
+        select(
+            func.count(Reading.id).label("total"),
+            func.count(Reading.id).filter(valid_condition).label("valid"),
+        ).where(
+            Reading.reading_timestamp >= since,
+            Reading.truck_id.is_not(None),
         )
-        or 0
-    )
-    valid = (
-        db.scalar(
-            select(func.count(Reading.id)).where(
-                Reading.reading_timestamp >= since,
-                Reading.truck_id.is_not(None),
-                Reading.temperature.between(temperature_min, temperature_max),
-                Reading.humidity.between(humidity_min, humidity_max),
-            )
-        )
-        or 0
-    )
-    return valid, total
+    ).one()
+    return int(row.valid or 0), int(row.total or 0)
 
 
 def count_since(db: Session, since: datetime) -> int:
