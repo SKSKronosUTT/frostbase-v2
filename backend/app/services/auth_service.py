@@ -85,10 +85,6 @@ def reset_login_throttle() -> None:
         _locked_until.clear()
 
 
-class PasswordPolicyError(Exception):
-    pass
-
-
 def ensure_initial_admin(db: Session) -> Admin | None:
     if admin_repo.count(db):
         return None
@@ -134,9 +130,7 @@ def change_password(
     if not verify_password(current_password, admin.password_hash):
         raise AuthenticationError("La contraseña actual no es correcta")
     if new_password.lower() == current_password.lower():
-        raise PasswordPolicyError(
-            "La nueva contraseña debe ser distinta de la actual"
-        )
+        raise PasswordPolicyError("La nueva contraseña debe ser distinta de la actual")
     if admin.username.lower() in new_password.lower():
         raise PasswordPolicyError(
             "La nueva contraseña no puede contener el nombre de usuario"

@@ -40,9 +40,7 @@ def main() -> int:
 
     logger.info("Watcher de desconexiones iniciando…")
     with engine.connect() as connection:
-        connection.execute(
-            text("SELECT pg_advisory_lock(:key)"), {"key": LOCK_KEY}
-        )
+        connection.execute(text("SELECT pg_advisory_lock(:key)"), {"key": LOCK_KEY})
         logger.info("Advisory lock adquirido; esta instancia es la activa")
         try:
             while not stopping:
@@ -53,9 +51,7 @@ def main() -> int:
                         db.commit()
                 except Exception:
                     logger.exception("Error en el ciclo de desconexiones")
-                deadline = time.monotonic() + max(
-                    1, settings.disconnect_check_seconds
-                )
+                deadline = time.monotonic() + max(1, settings.disconnect_check_seconds)
                 while not stopping and time.monotonic() < deadline:
                     time.sleep(min(0.5, deadline - time.monotonic()))
         finally:

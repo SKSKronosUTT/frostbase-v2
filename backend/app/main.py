@@ -162,8 +162,8 @@ async def csrf_middleware(request: Request, call_next):
         )
         if not is_exempt:
             has_session_cookie = bool(request.cookies.get(settings.cookie_name))
-            uses_bearer = request.headers.get("Authorization", "").lower().startswith(
-                "bearer "
+            uses_bearer = (
+                request.headers.get("Authorization", "").lower().startswith("bearer ")
             )
             if has_session_cookie and not uses_bearer:
                 cookie_token = request.cookies.get(settings.csrf_cookie_name, "")
@@ -187,9 +187,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-app.add_middleware(
-    TrustedHostMiddleware, allowed_hosts=settings.allowed_host_list
-)
+app.add_middleware(TrustedHostMiddleware, allowed_hosts=settings.allowed_host_list)
 
 app.include_router(api_router, prefix=settings.api_v1_prefix)
 
@@ -233,6 +231,8 @@ def ready() -> dict[str, str]:
 
 frontend_path = settings.frontend_path
 if frontend_path.exists():
-    app.mount("/", StaticFiles(directory=str(frontend_path), html=True), name="frontend")
+    app.mount(
+        "/", StaticFiles(directory=str(frontend_path), html=True), name="frontend"
+    )
 else:
     logger.warning("No se encontró el directorio frontend en %s", frontend_path)

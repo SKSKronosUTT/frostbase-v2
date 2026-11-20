@@ -31,12 +31,13 @@ os.environ.update(
 )
 
 import pytest  # noqa: E402
-from alembic import command  # noqa: E402
 from alembic.config import Config  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402
 from sqlalchemy import text  # noqa: E402
 from sqlalchemy.exc import OperationalError  # noqa: E402
 
+from alembic import command  # noqa: E402
+from app.core.cache import reset_cache  # noqa: E402
 from app.core.database import SessionLocal, engine  # noqa: E402
 from app.core.ratelimit import reset_rate_limits  # noqa: E402
 from app.core.security import clear_device_cache  # noqa: E402
@@ -93,6 +94,7 @@ def _clean_database():
     reset_rate_limits()
     auth_service.reset_login_throttle()
     clear_device_cache()
+    reset_cache()
     yield
 
 

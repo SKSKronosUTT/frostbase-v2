@@ -43,15 +43,15 @@ def _create_active_alert(db: Session, alert: Alert) -> Alert | None:
         except IntegrityError:
             with contextlib.suppress(Exception):
                 db.expunge(alert)
-            existing = alerts_repo.find_active(
-                db, alert.device_id, alert.alert_type
-            )
+            device_id = alert.device_id
+            if device_id is None:
+                return None
+            existing = alerts_repo.find_active(db, device_id, alert.alert_type)
             if existing is not None:
                 return existing
             if attempt == 1:
                 logger.warning(
-                    "Conflicto de alerta activa sin fila visible "
-                    "device_id=%s type=%s",
+                    "Conflicto de alerta activa sin fila visible device_id=%s type=%s",
                     alert.device_id,
                     alert.alert_type,
                 )
@@ -85,7 +85,9 @@ def _evaluate_metric(
                 device_id=device.id,
                 alert_type=alert_type,
                 status="activa",
-                started_at=min(ensure_utc(reading.reading_timestamp) or utcnow(), utcnow()),
+                started_at=min(
+                    ensure_utc(reading.reading_timestamp) or utcnow(), utcnow()
+                ),
             )
             active = _create_active_alert(db, alert)
             if active is None:
@@ -175,20 +177,18 @@ def check_disconnected_devices(db: Session, setting: Setting) -> int:
             index_where=text("status = 'activa'"),
         )
     )
-    created = max(0, db.execute(insert_stmt).rowcount or 0)
+    created = max(0, getattr(db.execute(insert_stmt), "rowcount", 0) or 0)
 
     resolve_stmt = (
         update(Alert)
         .where(
             Alert.alert_type == DISCONNECT_TYPE,
             Alert.status == "activa",
-            Alert.device_id.in_(
-                select(Device.id).where(Device.last_seen >= threshold)
-            ),
+            Alert.device_id.in_(select(Device.id).where(Device.last_seen >= threshold)),
         )
         .values(status="resuelta", resolved_at=now)
     )
-    resolved = max(0, db.execute(resolve_stmt).rowcount or 0)
+    resolved = max(0, getattr(db.execute(resolve_stmt), "rowcount", 0) or 0)
 
     db.flush()
     if created:
@@ -200,7 +200,11 @@ def check_disconnected_devices(db: Session, setting: Setting) -> int:
 
 def resolve_truck_alerts(db: Session, truck_id: int, reason: str) -> None:
     now = utcnow()
-    rows = db.query(Alert).filter(Alert.truck_id == truck_id, Alert.status == "activa").all()
+    rows = (
+        db.query(Alert)
+        .filter(Alert.truck_id == truck_id, Alert.status == "activa")
+        .all()
+    )
     for alert in rows:
         alert.status = "resuelta"
         alert.resolved_at = now

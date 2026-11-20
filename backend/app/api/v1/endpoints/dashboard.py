@@ -1,7 +1,12 @@
 from fastapi import APIRouter
 
 from app.api.deps import CurrentAdmin, DbSession
-from app.schemas.dashboard import DashboardAlert, DashboardSummary, DashboardTruck, WeatherOut
+from app.schemas.dashboard import (
+    DashboardAlert,
+    DashboardSummary,
+    DashboardTruck,
+    WeatherOut,
+)
 from app.services import dashboard_service, weather_service
 
 router = APIRouter(prefix="/dashboard", tags=["Dashboard"])

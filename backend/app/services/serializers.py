@@ -1,4 +1,5 @@
-from datetime import datetime, timedelta, timezone
+from datetime import timedelta
+from typing import Any
 
 from app.models.alert import Alert
 from app.models.device import Device
@@ -75,7 +76,9 @@ def serialize_route_brief(route: Route | None) -> RouteBrief | None:
     return RouteBrief(id=route.id, name=route.name, status=route.status)
 
 
-def serialize_route_brief_geometry(route: Route | None) -> RouteBriefWithGeometry | None:
+def serialize_route_brief_geometry(
+    route: Route | None,
+) -> RouteBriefWithGeometry | None:
     if route is None:
         return None
     return RouteBriefWithGeometry(
@@ -94,7 +97,10 @@ def serialize_route(route: Route, warning: str | None = None) -> RouteOut:
         description=route.description,
         status=route.status,
         geometry=route.geometry,
-        points=[serialize_point(point) for point in sorted(route.points, key=lambda p: p.order_index)],
+        points=[
+            serialize_point(point)
+            for point in sorted(route.points, key=lambda p: p.order_index)
+        ],
         truck=(
             AssignedTruckOut(
                 id=truck.id, plate=truck.plate, brand=truck.brand, model=truck.model
@@ -130,9 +136,15 @@ def serialize_alert(alert: Alert) -> AlertOut:
 def reading_status(reading: Reading | None, setting: Setting) -> str:
     if reading is None:
         return "sin_lectura"
-    if reading.temperature < setting.temperature_min or reading.temperature > setting.temperature_max:
+    if (
+        reading.temperature < setting.temperature_min
+        or reading.temperature > setting.temperature_max
+    ):
         return "alerta"
-    if reading.humidity < setting.humidity_min or reading.humidity > setting.humidity_max:
+    if (
+        reading.humidity < setting.humidity_min
+        or reading.humidity > setting.humidity_max
+    ):
         return "alerta"
     return "normal"
 
@@ -146,7 +158,7 @@ def serialize_truck(
     detail: bool = False,
 ) -> TruckOut:
     device = serialize_device(truck.device, setting.offline_timeout_seconds)
-    base = dict(
+    base: dict[str, Any] = dict(
         id=truck.id,
         brand=truck.brand,
         model=truck.model,

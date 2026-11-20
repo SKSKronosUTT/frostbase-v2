@@ -7,9 +7,7 @@ from app.utils.search import escape_like
 
 def get(db: Session, device_pk: int) -> Device | None:
     return db.scalar(
-        select(Device)
-        .options(selectinload(Device.truck))
-        .where(Device.id == device_pk)
+        select(Device).options(selectinload(Device.truck)).where(Device.id == device_pk)
     )
 
 

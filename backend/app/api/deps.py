@@ -55,9 +55,7 @@ def get_current_admin(request: Request, db: DbSession) -> Admin:
 CurrentAdmin = Annotated[Admin, Depends(get_current_admin)]
 
 
-def authenticate_device_or_401(
-    db: Session, *, device_id: str, device_key: str | None
-):
+def authenticate_device_or_401(db: Session, *, device_id: str, device_key: str | None):
     if not device_key:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

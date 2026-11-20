@@ -1,6 +1,7 @@
+from typing import cast
+
 from sqlalchemy.orm import Session
 
-from app.models.device import Device
 from app.models.truck import Truck
 from app.repositories import alerts as alerts_repo
 from app.repositories import devices as devices_repo
@@ -106,12 +107,15 @@ def get_truck_detail(db: Session, truck_id: int) -> TruckDetailOut:
     setting = settings_service.get_settings(db)
     latest = readings_repo.get_latest_for_truck(db, truck.id)
     active = alerts_repo.count_active_by_truck(db, truck.id)
-    return serialize_truck(
-        truck,
-        latest_reading=latest,
-        setting=setting,
-        active_alerts=active,
-        detail=True,
+    return cast(
+        TruckDetailOut,
+        serialize_truck(
+            truck,
+            latest_reading=latest,
+            setting=setting,
+            active_alerts=active,
+            detail=True,
+        ),
     )
 
 

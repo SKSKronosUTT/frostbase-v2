@@ -27,7 +27,9 @@ class Device(Base):
     key_scheme: Mapped[str] = mapped_column(
         String(16), default="argon2", server_default="argon2", nullable=False
     )
-    last_seen: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    last_seen: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=utcnow, nullable=False
     )

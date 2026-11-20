@@ -1,4 +1,4 @@
-from typing import Iterable
+from collections.abc import Iterable
 
 import httpx
 
@@ -36,7 +36,9 @@ def _parse_payload(payload: dict) -> list[list[float]]:
     return [[latitude, longitude] for longitude, latitude in raw_coordinates]
 
 
-def _validate_coordinates(points: Iterable[tuple[float, float]]) -> list[tuple[float, float]]:
+def _validate_coordinates(
+    points: Iterable[tuple[float, float]],
+) -> list[tuple[float, float]]:
     coordinates = list(points)
     if len(coordinates) < 2:
         raise RoutingUnavailableError(

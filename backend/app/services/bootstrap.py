@@ -1,10 +1,10 @@
 import logging
 from pathlib import Path
 
-from alembic import command
 from alembic.config import Config
 from sqlalchemy.orm import Session
 
+from alembic import command
 from app.core.config import settings
 from app.core.database import Base, engine
 from app.services import auth_service, settings_service

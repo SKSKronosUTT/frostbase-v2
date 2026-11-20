@@ -4,7 +4,12 @@ from fastapi import APIRouter, Header, HTTPException, Request, Response, status
 
 from app.api.deps import DbSession, authenticate_device_or_401
 from app.core.ratelimit import RateLimit
-from app.schemas.iot import IoTConfigResponse, IoTReadingResponse, ReadingIngest
+from app.schemas.iot import (
+    IoTConfigResponse,
+    IoTReadingResponse,
+    IoTRouteConfig,
+    ReadingIngest,
+)
 from app.services import reading_service, settings_service
 from app.services.serializers import serialize_alert
 
@@ -84,7 +89,7 @@ def device_config(
         truck_id=device.truck_id,
         truck_plate=device.truck.plate if device.truck else None,
         route=(
-            {"name": route.name, "geometry": route.geometry} if route else None
+            IoTRouteConfig(name=route.name, geometry=route.geometry) if route else None
         ),
         temperature_min=setting.temperature_min,
         temperature_max=setting.temperature_max,

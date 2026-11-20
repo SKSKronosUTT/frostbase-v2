@@ -173,7 +173,9 @@ async def calculate_geometry_background(route_id: int) -> None:
             points = get_route_points(db, route_id)
         geometry = await routing.calculate_geometry_async(points)
     except (RouteNotFoundError, routing.RoutingUnavailableError) as exc:
-        logger.warning("No se pudo calcular la geometría de la ruta %s: %s", route_id, exc)
+        logger.warning(
+            "No se pudo calcular la geometría de la ruta %s: %s", route_id, exc
+        )
         with SessionLocal() as db, db.begin():
             route = routes_repo.get(db, route_id)
             if route is not None:

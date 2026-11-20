@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import math
-from typing import Iterable
+from collections.abc import Iterable
 
 Point = list[float] | tuple[float, float]
 
@@ -63,7 +63,9 @@ def simplify_polyline(
             stack.append((start, index))
             stack.append((index, end))
 
-    simplified = [point for point, selected in zip(coordinates, keep) if selected]
+    simplified = [
+        point for point, selected in zip(coordinates, keep, strict=False) if selected
+    ]
     if len(simplified) > max_points > 2:
         step = (len(simplified) - 1) / (max_points - 1)
         simplified = [

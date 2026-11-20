@@ -21,7 +21,9 @@ def get_latest_for_trucks(db: Session, truck_ids: list[int]) -> dict[int, Readin
         .distinct(Reading.truck_id)
         .order_by(Reading.truck_id, Reading.reading_timestamp.desc())
     )
-    return {reading.truck_id: reading for reading in db.scalars(stmt) if reading.truck_id}
+    return {
+        reading.truck_id: reading for reading in db.scalars(stmt) if reading.truck_id
+    }
 
 
 def get_latest_for_truck(db: Session, truck_id: int) -> Reading | None:

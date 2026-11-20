@@ -13,7 +13,9 @@ def _with_relations():
 
 
 def get(db: Session, route_id: int) -> Route | None:
-    return db.scalar(select(Route).options(*_with_relations()).where(Route.id == route_id))
+    return db.scalar(
+        select(Route).options(*_with_relations()).where(Route.id == route_id)
+    )
 
 
 def list_paginated(
@@ -44,7 +46,9 @@ def list_paginated(
 
 def list_all(db: Session) -> list[Route]:
     return list(
-        db.scalars(select(Route).options(*_with_relations()).order_by(Route.name)).unique()
+        db.scalars(
+            select(Route).options(*_with_relations()).order_by(Route.name)
+        ).unique()
     )
 
 

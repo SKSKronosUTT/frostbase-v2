@@ -35,7 +35,7 @@ class Settings(BaseSettings):
     cookie_name: str = "frostbase_token"
     csrf_cookie_name: str = "frostbase_csrf"
     cookie_secure: bool = True
-    cookie_samesite: str = "lax"
+    cookie_samesite: Literal["lax", "strict", "none"] = "lax"
 
     admin_username: str = "admin"
     admin_email: str = "admin@frostbase.local"
@@ -84,8 +84,7 @@ class Settings(BaseSettings):
     def _strong_admin_password(cls, value: str) -> str:
         if len(value) < MIN_ADMIN_PASSWORD_LENGTH:
             raise ValueError(
-                "debe tener al menos "
-                f"{MIN_ADMIN_PASSWORD_LENGTH} caracteres"
+                f"debe tener al menos {MIN_ADMIN_PASSWORD_LENGTH} caracteres"
             )
         if value == "ChangeMe123!":
             raise ValueError("no puede ser la contraseña por defecto del proyecto")
@@ -114,7 +113,9 @@ class Settings(BaseSettings):
 
     @property
     def cors_origin_list(self) -> list[str]:
-        return [origin.strip() for origin in self.cors_origins.split(",") if origin.strip()]
+        return [
+            origin.strip() for origin in self.cors_origins.split(",") if origin.strip()
+        ]
 
     @property
     def allowed_host_list(self) -> list[str]:
@@ -127,7 +128,7 @@ class Settings(BaseSettings):
 
 @lru_cache
 def get_settings() -> Settings:
-    return Settings()
+    return Settings()  # type: ignore[call-arg]
 
 
 settings = get_settings()

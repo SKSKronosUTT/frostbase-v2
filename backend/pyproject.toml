@@ -2,3 +2,45 @@
 testpaths = ["tests"]
 pythonpath = ["."]
 addopts = "-ra"
+
+[tool.ruff]
+line-length = 88
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+ignore = ["B008"]
+
+[tool.ruff.format]
+quote-style = "double"
+
+[tool.mypy]
+python_version = "3.12"
+check_untyped_defs = false
+disallow_untyped_defs = false
+ignore_missing_imports = true
+warn_unused_ignores = true
+warn_redundant_casts = true
+show_error_codes = true
+
+[[tool.mypy.overrides]]
+module = [
+    "app.core.cache",
+    "app.core.http",
+    "app.core.logging",
+    "app.core.ratelimit",
+    "app.utils.geo",
+    "app.utils.pagination",
+    "app.utils.search",
+    "app.utils.time",
+]
+disallow_untyped_defs = true
+check_untyped_defs = true
+
+[tool.coverage.run]
+branch = false
+source = ["app"]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true

@@ -56,7 +56,8 @@ class RedisTTLCache:
         )
 
     def get(self, key: str) -> str | None:
-        return self._client.get(key)
+        value = self._client.get(key)
+        return value if isinstance(value, str) else None
 
     def set(self, key: str, value: str, ttl_seconds: int) -> None:
         self._client.setex(key, max(1, ttl_seconds), value)

@@ -51,11 +51,7 @@ def list_paginated(
         stmt = stmt.where(Truck.status == status)
         count_stmt = count_stmt.where(Truck.status == status)
     total = db.scalar(count_stmt) or 0
-    stmt = (
-        stmt.order_by(Truck.plate)
-        .offset((page - 1) * page_size)
-        .limit(page_size)
-    )
+    stmt = stmt.order_by(Truck.plate).offset((page - 1) * page_size).limit(page_size)
     return list(db.scalars(stmt).unique()), total
 
 
@@ -91,7 +87,9 @@ def save(db: Session, truck: Truck) -> Truck:
     return truck
 
 
-def trucks_using_route(db: Session, route_id: int, except_id: int | None = None) -> list[Truck]:
+def trucks_using_route(
+    db: Session, route_id: int, except_id: int | None = None
+) -> list[Truck]:
     stmt = select(Truck).where(Truck.route_id == route_id, Truck.is_deleted.is_(False))
     if except_id is not None:
         stmt = stmt.where(Truck.id != except_id)

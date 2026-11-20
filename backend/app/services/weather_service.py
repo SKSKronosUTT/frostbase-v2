@@ -1,6 +1,7 @@
 import logging
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
+from typing import Any
 
 import httpx
 from sqlalchemy.orm import Session
@@ -59,8 +60,8 @@ def _parse_time(value: str | None) -> datetime:
     except ValueError:
         return utcnow()
     if parsed.tzinfo is None:
-        return parsed.replace(tzinfo=timezone.utc)
-    return parsed.astimezone(timezone.utc)
+        return parsed.replace(tzinfo=UTC)
+    return parsed.astimezone(UTC)
 
 
 async def get_weather(db: Session) -> WeatherOut:
@@ -88,7 +89,7 @@ async def get_weather(db: Session) -> WeatherOut:
         )
 
     url = "https://api.open-meteo.com/v1/forecast"
-    params = {
+    params: dict[str, str | float] = {
         "latitude": setting.weather_latitude,
         "longitude": setting.weather_longitude,
         "current": "temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m",
@@ -105,7 +106,7 @@ async def get_weather(db: Session) -> WeatherOut:
         payload = response.json()
         current = payload.get("current") or {}
         condition, icon = _describe(current.get("weather_code"))
-        data = {
+        data: dict[str, Any] = {
             "available": True,
             "city": setting.weather_city,
             "temperature": current.get("temperature_2m"),

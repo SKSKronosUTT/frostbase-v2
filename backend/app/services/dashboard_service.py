@@ -40,12 +40,11 @@ def get_summary(db: Session) -> DashboardSummary:
     trucks = trucks_repo.list_active(db)
     latest = readings_repo.get_latest_for_trucks(db, [truck.id for truck in trucks])
     fresh_threshold = utcnow() - timedelta(minutes=app_settings.dashboard_fresh_minutes)
-    fresh_temperatures = [
-        reading.temperature
-        for reading in latest.values()
-        if ensure_utc(reading.received_at) is not None
-        and ensure_utc(reading.received_at) >= fresh_threshold
-    ]
+    fresh_temperatures: list[float] = []
+    for reading in latest.values():
+        received_at = ensure_utc(reading.received_at)
+        if received_at is not None and received_at >= fresh_threshold:
+            fresh_temperatures.append(reading.temperature)
     avg_temperature = (
         round(sum(fresh_temperatures) / len(fresh_temperatures), 1)
         if fresh_temperatures
@@ -106,7 +105,9 @@ def get_trucks(db: Session) -> list[DashboardTruck]:
             last_update=ensure_utc(latest[truck.id].received_at)
             if truck.id in latest
             else None,
-            device_online=is_device_online(truck.device, setting.offline_timeout_seconds),
+            device_online=is_device_online(
+                truck.device, setting.offline_timeout_seconds
+            ),
             reading_status=reading_status(latest.get(truck.id), setting),
             route=serialize_route_brief_geometry(truck.route),
             active_alerts=active_counts.get(truck.id, 0),

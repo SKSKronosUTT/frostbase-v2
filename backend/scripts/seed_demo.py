@@ -6,6 +6,7 @@ Uso (desde backend/):
 Crea camiones, una ruta, dispositivos IoT y muestra sus claves una sola vez.
 No se ejecuta automáticamente en producción.
 """
+
 from __future__ import annotations
 
 import logging
@@ -105,7 +106,11 @@ def main() -> None:
             db.flush()
 
             if data["device_id"]:
-                if db.query(Device).filter(Device.device_id == data["device_id"]).first():
+                if (
+                    db.query(Device)
+                    .filter(Device.device_id == data["device_id"])
+                    .first()
+                ):
                     continue
                 secret = generate_device_secret()
                 db.add(

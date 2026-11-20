@@ -32,7 +32,9 @@ class SettingsUpdate(BaseModel):
     @model_validator(mode="after")
     def validate_ranges(self) -> "SettingsUpdate":
         if self.temperature_ideal - self.temperature_tolerance < -80:
-            raise ValueError("El límite mínimo de temperatura no puede ser menor a -80 °C")
+            raise ValueError(
+                "El límite mínimo de temperatura no puede ser menor a -80 °C"
+            )
         if self.temperature_ideal + self.temperature_tolerance > 60:
             raise ValueError("El límite máximo de temperatura no puede superar 60 °C")
         if self.humidity_ideal - self.humidity_tolerance < 0:

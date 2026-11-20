@@ -46,5 +46,9 @@ class Alert(Base):
     )
     status: Mapped[str] = mapped_column(String(20), default="activa", nullable=False)
 
-    truck: Mapped["Truck | None"] = relationship(back_populates="alerts", lazy="selectin")
-    device: Mapped["Device | None"] = relationship(back_populates="alerts", lazy="selectin")
+    truck: Mapped["Truck | None"] = relationship(
+        back_populates="alerts", lazy="selectin"
+    )
+    device: Mapped["Device | None"] = relationship(
+        back_populates="alerts", lazy="selectin"
+    )

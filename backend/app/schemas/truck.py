@@ -51,7 +51,7 @@ class TruckOut(BaseModel):
 
 
 class TruckDetailOut(TruckOut):
-    route: RouteOut | None = None
+    route: RouteOut | None = None  # type: ignore[assignment]
     temperature_min: float | None = None
     temperature_max: float | None = None
     humidity_min: float | None = None

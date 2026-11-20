@@ -32,7 +32,8 @@ def ingest_reading(
     """
     if device.truck_id is None:
         raise DeviceNotAssignedError(
-            "El dispositivo no está asociado a un camión. Asígnelo antes de enviar lecturas."
+            "El dispositivo no está asociado a un camión. "
+            "Asígnelo antes de enviar lecturas."
         )
 
     truck = db.get(Truck, device.truck_id)
@@ -55,9 +56,7 @@ def ingest_reading(
             received_at=now,
             reading_timestamp=timestamp,
         )
-        .on_conflict_do_nothing(
-            index_elements=["device_id", "reading_timestamp"]
-        )
+        .on_conflict_do_nothing(index_elements=["device_id", "reading_timestamp"])
         .returning(Reading)
     )
     reading = db.scalars(stmt).first()
@@ -110,8 +109,13 @@ def list_readings(
     if readings and len(readings) == page_size:
         last = readings[-1]
         next_cursor = encode_cursor(last.reading_timestamp, last.id)
+    items: list[ReadingOut] = []
+    for reading in readings:
+        serialized = serialize_reading(reading)
+        if serialized is not None:
+            items.append(serialized)
     return Page(
-        items=[serialize_reading(reading) for reading in readings],
+        items=items,
         total=total,
         page=page,
         page_size=page_size,

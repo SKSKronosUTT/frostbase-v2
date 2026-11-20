@@ -31,7 +31,9 @@ class Truck(Base):
     year: Mapped[int] = mapped_column(Integer, nullable=False)
     plate: Mapped[str] = mapped_column(String(40), nullable=False)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
-    status: Mapped[str] = mapped_column(String(20), default="disponible", nullable=False)
+    status: Mapped[str] = mapped_column(
+        String(20), default="disponible", nullable=False
+    )
     route_id: Mapped[int | None] = mapped_column(
         ForeignKey("routes.id", ondelete="SET NULL"), unique=True, nullable=True
     )

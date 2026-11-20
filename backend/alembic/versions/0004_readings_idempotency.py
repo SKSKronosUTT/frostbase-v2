@@ -11,15 +11,16 @@ ingesta. Antes de aplicarla en producción, haga un respaldo y ejecute
 """
 
 import logging
-from typing import Sequence, Union
+from collections.abc import Sequence
 
 import sqlalchemy as sa
+
 from alembic import op
 
 revision: str = "0004_readings_idempotency"
-down_revision: Union[str, None] = "0003_device_key_scheme"
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+down_revision: str | None = "0003_device_key_scheme"
+branch_labels: str | Sequence[str] | None = None
+depends_on: str | Sequence[str] | None = None
 
 logger = logging.getLogger("alembic.runtime.migration")
 

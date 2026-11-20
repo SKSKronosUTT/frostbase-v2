@@ -6,7 +6,13 @@ from starlette.concurrency import run_in_threadpool
 from app.api.deps import CurrentAdmin, DbSession
 from app.core.config import settings
 from app.schemas.common import Page
-from app.schemas.route import AssignTruckIn, DeliveryPointIn, RouteCreate, RouteOut, RouteUpdate
+from app.schemas.route import (
+    AssignTruckIn,
+    DeliveryPointIn,
+    RouteCreate,
+    RouteOut,
+    RouteUpdate,
+)
 from app.services import route_service, routing
 
 router = APIRouter(prefix="/routes", tags=["Rutas"])
@@ -51,9 +57,7 @@ async def create_route(
         route = await run_in_threadpool(
             route_service.create_route, db, payload, defer_geometry=True
         )
-        background_tasks.add_task(
-            route_service.calculate_geometry_background, route.id
-        )
+        background_tasks.add_task(route_service.calculate_geometry_background, route.id)
         return route
 
     geometry, warning = await _calculate_async(payload.points)
@@ -71,7 +75,9 @@ def get_route(route_id: int, db: DbSession, _: CurrentAdmin) -> RouteOut:
     try:
         return route_service.get_route(db, route_id)
     except route_service.RouteNotFoundError as exc:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)
+        ) from exc
 
 
 @router.put("/{route_id}", response_model=RouteOut)
@@ -95,9 +101,7 @@ async def update_route(
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)
             ) from exc
-        background_tasks.add_task(
-            route_service.calculate_geometry_background, route.id
-        )
+        background_tasks.add_task(route_service.calculate_geometry_background, route.id)
         return route
 
     geometry, warning = await _calculate_async(payload.points)
@@ -121,17 +125,15 @@ def delete_route(route_id: int, db: DbSession, _: CurrentAdmin) -> None:
     try:
         route_service.delete_route(db, route_id)
     except route_service.RouteNotFoundError as exc:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)
+        ) from exc
 
 
 @router.post("/{route_id}/calculate", response_model=RouteOut)
-async def calculate_route(
-    route_id: int, db: DbSession, _: CurrentAdmin
-) -> RouteOut:
+async def calculate_route(route_id: int, db: DbSession, _: CurrentAdmin) -> RouteOut:
     try:
-        points = await run_in_threadpool(
-            route_service.get_route_points, db, route_id
-        )
+        points = await run_in_threadpool(route_service.get_route_points, db, route_id)
     except route_service.RouteNotFoundError as exc:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)
@@ -165,7 +167,9 @@ def assign_route(
     try:
         return route_service.assign_route(db, route_id, payload.truck_id)
     except route_service.RouteNotFoundError as exc:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)
+        ) from exc
     except route_service.RouteValidationError as exc:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc)

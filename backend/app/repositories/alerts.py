@@ -75,12 +75,7 @@ def list_active(db: Session) -> list[Alert]:
 
 
 def count_active(db: Session) -> int:
-    return (
-        db.scalar(
-            select(func.count(Alert.id)).where(Alert.status == "activa")
-        )
-        or 0
-    )
+    return db.scalar(select(func.count(Alert.id)).where(Alert.status == "activa")) or 0
 
 
 def count_active_by_truck(db: Session, truck_id: int) -> int:
@@ -119,9 +114,7 @@ def create(db: Session, alert: Alert) -> Alert:
     return alert
 
 
-def devices_without_recent_contact(
-    db: Session, threshold: datetime
-) -> list[Device]:
+def devices_without_recent_contact(db: Session, threshold: datetime) -> list[Device]:
     return list(
         db.scalars(
             select(Device)

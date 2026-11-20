@@ -4,8 +4,8 @@ ENV PIP_NO_CACHE_DIR=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1
 
 WORKDIR /app/backend
-COPY backend/requirements.txt ./requirements.txt
-RUN pip install --no-cache-dir --prefix=/install -r requirements.txt
+COPY backend/requirements.lock ./requirements.lock
+RUN pip install --no-cache-dir --prefix=/install --require-hashes -r requirements.lock
 
 
 FROM python:3.12.8-slim AS runtime
