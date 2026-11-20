@@ -72,6 +72,17 @@ def count_active(db: Session) -> int:
     )
 
 
+def count_active_by_truck(db: Session, truck_id: int) -> int:
+    return (
+        db.scalar(
+            select(func.count(Alert.id)).where(
+                Alert.status == "activa", Alert.truck_id == truck_id
+            )
+        )
+        or 0
+    )
+
+
 def active_counts_by_truck(db: Session) -> dict[int, int]:
     rows = db.execute(
         select(Alert.truck_id, func.count(Alert.id))
@@ -83,9 +94,7 @@ def active_counts_by_truck(db: Session) -> dict[int, int]:
 
 def find_active(db: Session, device_id: int, alert_type: str) -> Alert | None:
     return db.scalar(
-        select(Alert)
-        .options(selectinload(Alert.truck), selectinload(Alert.device))
-        .where(
+        select(Alert).where(
             Alert.device_id == device_id,
             Alert.alert_type == alert_type,
             Alert.status == "activa",

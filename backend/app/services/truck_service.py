@@ -105,9 +105,7 @@ def get_truck_detail(db: Session, truck_id: int) -> TruckDetailOut:
     truck = _get_or_fail(db, truck_id)
     setting = settings_service.get_settings(db)
     latest = readings_repo.get_latest_for_truck(db, truck.id)
-    active = len(
-        [alert for alert in alerts_repo.list_active(db) if alert.truck_id == truck.id]
-    )
+    active = alerts_repo.count_active_by_truck(db, truck.id)
     return serialize_truck(
         truck,
         latest_reading=latest,
