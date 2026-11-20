@@ -10,11 +10,16 @@ import {
   routeStyle,
   toLatLngs,
 } from "../components/map.js";
+import { renderPagination } from "../components/pagination.js";
+import { listSkeleton, panelState, renderTableState } from "../components/feedback.js";
 
 const state = {
   routes: [],
   trucks: [],
   search: "",
+  page: 1,
+  pageSize: 12,
+  total: 0,
   mode: "empty",
   routeId: null,
   points: [],
@@ -49,7 +54,6 @@ function routeName() {
 function syncRouteInList(route) {
   const index = state.routes.findIndex((item) => item.id === route.id);
   if (index >= 0) state.routes[index] = route;
-  else state.routes.unshift(route);
   renderRoutesList();
 }
 
@@ -107,12 +111,7 @@ function updateAssignOptions() {
   select.innerHTML =
     '<option value="">Sin camión asignado</option>' +
     state.trucks
-      .map(
-        (truck) =>
-          `<option value="${truck.id}">${escapeHtml(truck.plate)} · ${escapeHtml(
-            truck.brand
-          )} ${escapeHtml(truck.model)}</option>`
-      )
+      .map((truck) => `<option value="${truck.id}">${escapeHtml(truck.label)}</option>`)
       .join("");
   select.value = currentValue;
 }
@@ -241,23 +240,35 @@ function showEmptyEditor() {
 }
 
 function renderRoutesList() {
-  const search = state.search.toLowerCase();
-  const filtered = state.routes.filter((route) =>
-    route.name.toLowerCase().includes(search)
-  );
-  qs("#routesCount").textContent = `${state.routes.length}`;
-  if (!filtered.length) {
-    qs("#routesList").innerHTML = `
-      <div class="empty-state" style="padding: 30px 18px;">
-        <div class="empty-state__icon"><i class="fa-solid fa-route"></i></div>
-        <strong>${state.routes.length ? "Sin coincidencias" : "Sin rutas registradas"}</strong>
-        <p>${state.routes.length ? "Prueba con otro nombre de ruta." : "Crea una ruta para comenzar a planificar entregas."}</p>
-      </div>
-    `;
+  qs("#routesCount").textContent = state.total
+    ? `${state.routes.length} de ${state.total}`
+    : "0";
+  if (!state.routes.length) {
+    const empty = panelState(
+      {
+        icon: "fa-route",
+        title: state.search ? "Sin coincidencias" : "Sin rutas registradas",
+        description: state.search
+          ? "Prueba con otro nombre de ruta."
+          : "Crea una ruta para comenzar a planificar entregas.",
+      },
+      { retryLabel: "" }
+    );
+    renderTableState(qs("#routesList"), empty);
+    renderPagination(qs("#routesPagination"), {
+      page: state.page,
+      total: state.total,
+      pageSize: state.pageSize,
+      itemLabel: "rutas",
+      onChange: (page) => {
+        state.page = page;
+        loadRoutes();
+      },
+    });
     return;
   }
 
-  qs("#routesList").innerHTML = filtered
+  qs("#routesList").innerHTML = state.routes
     .map((route) => {
       const status =
         route.status === "activa"
@@ -283,6 +294,17 @@ function renderRoutesList() {
       `;
     })
     .join("");
+
+  renderPagination(qs("#routesPagination"), {
+    page: state.page,
+    total: state.total,
+    pageSize: state.pageSize,
+    itemLabel: "rutas",
+    onChange: (page) => {
+      state.page = page;
+      loadRoutes();
+    },
+  });
 }
 
 function applyRoute(route, { fit = true } = {}) {
@@ -417,6 +439,12 @@ async function saveRoute() {
       state.mode === "new"
         ? await api.post("/routes", payload)
         : await api.put(`/routes/${state.routeId}`, payload);
+    if (state.mode === "new") {
+      state.page = 1;
+      state.search = "";
+      const searchInput = qs("#routeSearch");
+      if (searchInput) searchInput.value = "";
+    }
     await loadRoutes();
     applyRoute(route);
     syncRouteInList(route);
@@ -531,23 +559,38 @@ async function deleteRoute() {
 
 async function loadRoutes() {
   try {
-    const data = await api.get("/routes?page=1&page_size=100");
+    listSkeleton(qs("#routesList"), 4, 2);
+    const params = new URLSearchParams({
+      page: state.page,
+      page_size: state.pageSize,
+    });
+    if (state.search) params.set("search", state.search);
+    const data = await api.get(`/routes?${params.toString()}`);
+    state.total = data.total;
     state.routes = data.items;
+    const totalPages = Math.max(1, Math.ceil(data.total / state.pageSize));
+    if (state.page > totalPages) {
+      state.page = totalPages;
+      return loadRoutes();
+    }
     renderRoutesList();
   } catch (error) {
-    qs("#routesList").innerHTML = `<div class="empty-state" style="padding: 30px 18px;">
-      <div class="empty-state__icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
-      <strong>No se pudieron cargar las rutas</strong>
-      <p>${escapeHtml(error.message)}</p>
-    </div>`;
+    renderTableState(
+      qs("#routesList"),
+      panelState({
+        icon: "fa-triangle-exclamation",
+        title: "No se pudieron cargar las rutas",
+        description: error.message,
+      }),
+      { onRetry: loadRoutes }
+    );
     notify.error(error.message, { title: "Error al cargar rutas" });
   }
 }
 
 async function loadTrucks() {
   try {
-    const data = await api.get("/trucks?page=1&page_size=100");
-    state.trucks = data.items;
+    state.trucks = await api.get("/trucks/options");
     updateAssignOptions();
   } catch (error) {
     notify.error(error.message, { title: "No se pudieron cargar los camiones" });
@@ -571,8 +614,9 @@ function wireEvents() {
     "input",
     debounce((event) => {
       state.search = event.target.value.trim();
-      renderRoutesList();
-    }, 180)
+      state.page = 1;
+      loadRoutes();
+    }, 280)
   );
 
   qs("#routesList").addEventListener("click", (event) => {

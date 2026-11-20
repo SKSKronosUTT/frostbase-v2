@@ -3,38 +3,22 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow" />
   <title>FrostBase</title>
   <link rel="icon" href="assets/logo.png" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="css/variables.css" />
-  <link rel="stylesheet" href="css/global.css" />
-  <link rel="stylesheet" href="css/bauhaus.css" />
-  <style>
-    body { display: flex; align-items: center; justify-content: center; min-height: 100vh; }
-    .splash { display: flex; flex-direction: column; align-items: center; gap: 14px; color: var(--text-muted); font-size: 13px; }
-    .splash strong { color: var(--text); font-size: 19px; letter-spacing: -0.02em; }
-  </style>
-  <script>
-    (function () {
-      try {
-        var stored = localStorage.getItem("frostbase-theme");
-        if (stored === "dark" || stored === "light") document.documentElement.dataset.theme = stored;
-      } catch (error) {}
-    })();
-  </script>
+  <link rel="preload" href="assets/fonts/outfit-latin.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="stylesheet" href="css/fonts.css" />
+  <link rel="stylesheet" href="css/tokens.css" />
+  <link rel="stylesheet" href="css/base.css" />
+  <link rel="stylesheet" href="css/pages/index.css" />
+  <script src="js/core/theme-boot.js"></script>
 </head>
-<body>
+<body class="splash-page">
   <div class="splash">
     <strong>FrostBase</strong>
     <span class="spinner"></span>
     <span>Verificando sesión…</span>
   </div>
-  <script type="module">
-    import { getMe } from "./js/core/auth.js";
-    getMe()
-      .then(() => window.location.replace("dashboard.html"))
-      .catch(() => window.location.replace("login.html"));
-  </script>
+  <script type="module" src="js/pages/index.js"></script>
 </body>
 </html>

@@ -15,6 +15,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy import text
+from starlette.middleware.gzip import GZipMiddleware
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from app.api.v1.router import api_router
@@ -28,7 +29,7 @@ from app.services.bootstrap import bootstrap_database, ensure_schema
 setup_logging(settings.log_level)
 logger = logging.getLogger("frostbase")
 
-CSP_REPORT_ONLY = (
+CSP_POLICY = (
     "default-src 'self'; "
     "img-src 'self' data: https://*.tile.openstreetmap.org; "
     "style-src 'self'; "
@@ -136,7 +137,13 @@ async def observability_middleware(request: Request, call_next):
     response.headers["Permissions-Policy"] = (
         "geolocation=(self), camera=(), microphone=()"
     )
-    response.headers["Content-Security-Policy-Report-Only"] = CSP_REPORT_ONLY
+    response.headers["Content-Security-Policy"] = CSP_POLICY
+    if path.startswith("/assets/build/"):
+        response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
+    elif path.endswith(".html") or path == "/":
+        response.headers["Cache-Control"] = "no-cache"
+    elif path.startswith(("/assets/", "/css/", "/js/")):
+        response.headers["Cache-Control"] = "public, max-age=3600"
     logger.info(
         "request_completed",
         extra={
@@ -190,6 +197,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 app.add_middleware(TrustedHostMiddleware, allowed_hosts=settings.allowed_host_list)
+app.add_middleware(GZipMiddleware, minimum_size=500)
 
 app.include_router(api_router, prefix=settings.api_v1_prefix)
 

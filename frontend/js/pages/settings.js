@@ -60,7 +60,7 @@ function renderAccount() {
     <div class="detail-row"><dt>Correo</dt><dd>${escapeHtml(currentAdmin.email)}</dd></div>
     <div class="detail-row"><dt>Último acceso</dt><dd>${
       currentAdmin.last_login
-        ? `${formatDateTime(currentAdmin.last_login)}<div class="muted" style="font-size: 11px;">${timeAgo(
+        ? `${formatDateTime(currentAdmin.last_login)}<div class="muted text-xs">${timeAgo(
             currentAdmin.last_login
           )}</div>`
         : "—"
@@ -88,26 +88,26 @@ function fillForm(settings) {
 }
 
 function validate(payload) {
-  if (payload.temperatureIdeal - payload.temperatureTolerance < -80) {
+  if (payload.temperature_ideal - payload.temperature_tolerance < -80) {
     return "El límite mínimo de temperatura no puede ser menor a -80 °C.";
   }
-  if (payload.temperatureIdeal + payload.temperatureTolerance > 60) {
+  if (payload.temperature_ideal + payload.temperature_tolerance > 60) {
     return "El límite máximo de temperatura no puede superar 60 °C.";
   }
-  if (payload.humidityIdeal - payload.humidityTolerance < 0) {
+  if (payload.humidity_ideal - payload.humidity_tolerance < 0) {
     return "El límite mínimo de humedad no puede ser menor a 0 %.";
   }
-  if (payload.humidityIdeal + payload.humidityTolerance > 100) {
+  if (payload.humidity_ideal + payload.humidity_tolerance > 100) {
     return "El límite máximo de humedad no puede superar 100 %.";
   }
-  if (payload.temperatureTolerance <= 0)
+  if (payload.temperature_tolerance <= 0)
     return "La tolerancia de temperatura debe ser mayor que 0.";
-  if (payload.humidityTolerance <= 0)
+  if (payload.humidity_tolerance <= 0)
     return "La tolerancia de humedad debe ser mayor que 0.";
-  if (payload.offlineTimeout < 10 || payload.offlineTimeout > 86400) {
+  if (payload.offline_timeout_seconds < 10 || payload.offline_timeout_seconds > 86400) {
     return "El tiempo de desconexión debe estar entre 10 y 86400 segundos.";
   }
-  if (!payload.weatherCity) return "Indica una ciudad para el clima.";
+  if (!payload.weather_city) return "Indica una ciudad para el clima.";
   return null;
 }
 

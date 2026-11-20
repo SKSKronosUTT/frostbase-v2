@@ -419,7 +419,7 @@ function renderWeather(weather) {
   weatherCity.textContent = weather.city || "Tijuana";
   if (!weather.available) {
     weatherCard.innerHTML = `
-      <div class="empty-state" style="padding: 18px 4px;">
+      <div class="empty-state empty-state--compact">
         <div class="empty-state__icon"><i class="fa-solid fa-cloud"></i></div>
         <strong>Clima no disponible</strong>
         <p>${escapeHtml(weather.error || "No se pudo consultar el clima exterior.")}</p>
@@ -472,14 +472,20 @@ async function loadWeather() {
 
 async function loadDashboard() {
   try {
-    const [summary, trucks, alerts] = await Promise.all([
+    const [summaryResult, trucksResult, alertsResult] = await Promise.allSettled([
       api.get("/dashboard/summary"),
       api.get("/dashboard/trucks"),
       api.get("/dashboard/alerts"),
     ]);
-    state.summary = summary;
-    state.trucks = trucks;
-    state.alerts = alerts;
+
+    const failures = [summaryResult, trucksResult, alertsResult].filter(
+      (result) => result.status === "rejected"
+    );
+    if (failures.length === 3) throw failures[0].reason;
+
+    if (summaryResult.status === "fulfilled") state.summary = summaryResult.value;
+    if (trucksResult.status === "fulfilled") state.trucks = trucksResult.value;
+    if (alertsResult.status === "fulfilled") state.alerts = alertsResult.value;
     state.lastGoodUpdate = new Date();
     state.loadedOnce = true;
     if (!state.connectionOk) {
@@ -494,6 +500,7 @@ async function loadDashboard() {
     renderStatus();
     updateMap();
   } catch (error) {
+    if (error?.cancelled) return;
     updateConnection(false);
     if (!state.failureNotified) {
       notify.error(

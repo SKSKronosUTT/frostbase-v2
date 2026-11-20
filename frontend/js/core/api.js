@@ -1,13 +1,22 @@
 const API_BASE = "/api/v1";
 const MUTATING_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
+export const REQUEST_TIMEOUT_MS = 15000;
+
+const inFlight = new Set();
+let redirectingToLogin = false;
 
 export class ApiError extends Error {
-  constructor(message, status, payload = null) {
+  constructor(message, status, payload = null, { cancelled = false } = {}) {
     super(message);
     this.name = "ApiError";
     this.status = status;
     this.payload = payload;
+    this.cancelled = cancelled;
   }
+}
+
+function emitConnection(online) {
+  window.dispatchEvent(new CustomEvent("frostbase:connection", { detail: { online } }));
 }
 
 function readCookie(name) {
@@ -31,9 +40,34 @@ function extractDetail(payload, fallback) {
   return fallback;
 }
 
+export function isCancelledError(error) {
+  return Boolean(error?.cancelled);
+}
+
+export function redirectToLogin() {
+  if (redirectingToLogin) return;
+  if (window.location.pathname.endsWith("login.html")) return;
+  redirectingToLogin = true;
+  const next = encodeURIComponent(
+    window.location.pathname.split("/").pop() + window.location.search
+  );
+  window.location.replace(`login.html?next=${next}`);
+}
+
+export function cancelPendingRequests() {
+  inFlight.forEach((controller) => controller.abort());
+  inFlight.clear();
+}
+
+if (typeof document !== "undefined") {
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) cancelPendingRequests();
+  });
+}
+
 async function request(
   path,
-  { method = "GET", body, headers = {} } = {},
+  { method = "GET", body, headers = {}, timeout = REQUEST_TIMEOUT_MS } = {},
   retried = false
 ) {
   const requestHeaders = { Accept: "application/json", ...headers };
@@ -45,20 +79,41 @@ async function request(
     if (csrfToken) requestHeaders["X-CSRF-Token"] = csrfToken;
   }
 
+  const controller = new AbortController();
+  const timer = window.setTimeout(() => controller.abort(), timeout);
+  inFlight.add(controller);
+
   let response;
   try {
     response = await fetch(`${API_BASE}${path}`, {
       method,
       credentials: "same-origin",
       headers: requestHeaders,
+      signal: controller.signal,
       body: body !== undefined ? JSON.stringify(body) : undefined,
     });
+    emitConnection(true);
   } catch (error) {
+    if (error?.name === "AbortError") {
+      const hidden = typeof document !== "undefined" && document.hidden;
+      throw new ApiError(
+        hidden
+          ? "Solicitud cancelada"
+          : "La solicitud tardó más de 15 segundos. Intenta de nuevo.",
+        0,
+        null,
+        { cancelled: hidden }
+      );
+    }
+    emitConnection(false);
     throw new ApiError(
       "No se pudo conectar con el servidor. Verifica tu conexión.",
       0,
       null
     );
+  } finally {
+    window.clearTimeout(timer);
+    inFlight.delete(controller);
   }
 
   const contentType = response.headers.get("content-type") || "";
@@ -79,10 +134,12 @@ async function request(
   ) {
     try {
       await request("/auth/refresh", { method: "POST" }, true);
-      return request(path, { method, body, headers }, true);
+      return request(path, { method, body, headers, timeout }, true);
     } catch (refreshError) {
-      /* La sesión no se pudo renovar; se propaga el 401 original. */
+      redirectToLogin();
     }
+  } else if (response.status === 401 && path !== "/auth/login") {
+    redirectToLogin();
   }
 
   if (!response.ok) {
@@ -97,8 +154,8 @@ async function request(
 }
 
 export const api = {
-  get: (path) => request(path),
-  post: (path, body) => request(path, { method: "POST", body }),
-  put: (path, body) => request(path, { method: "PUT", body }),
-  delete: (path) => request(path, { method: "DELETE" }),
+  get: (path, options) => request(path, options),
+  post: (path, body, options) => request(path, { ...options, method: "POST", body }),
+  put: (path, body, options) => request(path, { ...options, method: "PUT", body }),
+  delete: (path, options) => request(path, { ...options, method: "DELETE" }),
 };

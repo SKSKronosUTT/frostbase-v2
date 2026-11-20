@@ -1,0 +1,16 @@
+{
+  "name": "frostbase-frontend",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "check:html": "node scripts/check-innerhtml.mjs",
+    "check:css": "node scripts/check-css.mjs"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.14.0",
+    "@playwright/test": "^1.49.0",
+    "esbuild": "^0.24.0"
+  }
+}

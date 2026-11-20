@@ -1,6 +1,7 @@
 .alerts-filters {
   display: grid;
-  grid-template-columns: minmax(150px, 1.2fr) minmax(140px, 1fr) minmax(130px, 0.8fr)
+  grid-template-columns:
+    minmax(150px, 1.2fr) minmax(140px, 1fr) minmax(130px, 0.8fr)
     minmax(140px, 1fr) minmax(140px, 1fr) auto;
   gap: 12px;
   align-items: end;
@@ -116,4 +117,24 @@
   .alert-detail-grid {
     grid-template-columns: 1fr;
   }
+}
+
+/* ===== Consolidado desde bauhaus.css (T4.5) ===== */
+.alert-detail-hero {
+  border: 2px solid var(--danger);
+  border-radius: 0;
+}
+
+.alerts-filters {
+  border-bottom: 3px solid var(--border-ink);
+}
+
+.alert-detail-hero--active {
+  border-color: var(--danger);
+}
+
+.alert-detail-hero--resolved {
+  background: var(--success-soft);
+  border-color: rgba(39, 198, 163, 0.24);
+  color: var(--success);
 }

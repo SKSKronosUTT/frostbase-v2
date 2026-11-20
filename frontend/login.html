@@ -6,25 +6,14 @@
   <title>Iniciar sesión | FrostBase</title>
   <meta name="description" content="Acceso administrativo al sistema de monitoreo de camiones refrigerados FrostBase." />
   <link rel="icon" href="assets/logo.png" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" />
-  <link rel="stylesheet" href="css/variables.css" />
-  <link rel="stylesheet" href="css/global.css" />
+  <link rel="preload" href="assets/fonts/outfit-latin.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="stylesheet" href="css/fonts.css" />
+  <link rel="stylesheet" href="assets/vendors/fontawesome/fa-subset.css" />
+  <link rel="stylesheet" href="css/tokens.css" />
+  <link rel="stylesheet" href="css/base.css" />
   <link rel="stylesheet" href="css/components.css" />
   <link rel="stylesheet" href="css/pages/login.css" />
-  <link rel="stylesheet" href="css/bauhaus.css" />
-  <script>
-    (function () {
-      try {
-        var stored = localStorage.getItem("frostbase-theme");
-        if (stored === "dark" || stored === "light") {
-          document.documentElement.dataset.theme = stored;
-        }
-      } catch (error) {}
-    })();
-  </script>
+  <script src="js/core/theme-boot.js"></script>
 </head>
 <body class="login-page">
   <button class="login-theme-toggle" id="themeToggle" type="button" aria-label="Cambiar tema">
@@ -35,8 +24,7 @@
     <section class="login-brand" aria-label="FrostBase">
       <div class="login-brand__top">
         <span class="login-brand__logo">
-          <img src="assets/logo.png" alt="Logotipo FrostBase"
-               onerror="this.style.display='none'; this.parentElement.classList.add('login-brand__logo--placeholder');" />
+          <img src="assets/logo.png" alt="Logotipo FrostBase" width="72" height="72" />
         </span>
         <span class="login-brand__name">FrostBase</span>
       </div>

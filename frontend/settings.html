@@ -3,26 +3,19 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow" />
+  <meta name="description" content="Configuración de umbrales y preferencias de FrostBase." />
   <title>Configuración | FrostBase</title>
   <link rel="icon" href="assets/logo.png" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" />
-  <link rel="stylesheet" href="css/variables.css" />
-  <link rel="stylesheet" href="css/global.css" />
+  <link rel="preload" href="assets/fonts/outfit-latin.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="stylesheet" href="css/fonts.css" />
+  <link rel="stylesheet" href="assets/vendors/fontawesome/fa-subset.css" />
+  <link rel="stylesheet" href="css/tokens.css" />
+  <link rel="stylesheet" href="css/base.css" />
   <link rel="stylesheet" href="css/components.css" />
   <link rel="stylesheet" href="css/layout.css" />
   <link rel="stylesheet" href="css/pages/settings.css" />
-  <link rel="stylesheet" href="css/bauhaus.css" />
-  <script>
-    (function () {
-      try {
-        var stored = localStorage.getItem("frostbase-theme");
-        if (stored === "dark" || stored === "light") document.documentElement.dataset.theme = stored;
-      } catch (error) {}
-    })();
-  </script>
+  <script src="js/core/theme-boot.js"></script>
 </head>
 <body data-page="settings">
   <div class="app-shell">
@@ -99,7 +92,7 @@
               </div>
             </header>
             <div class="settings-section__body">
-              <div class="form-field" style="max-width: 280px;">
+              <div class="form-field form-field--narrow">
                 <label for="offlineTimeout">Tiempo de desconexión (segundos)</label>
                 <input class="input" id="offlineTimeout" type="number" step="1" min="10" max="86400" required />
               </div>
@@ -115,7 +108,7 @@
               </div>
             </header>
             <div class="settings-section__body">
-              <div class="form-field" style="margin-bottom: 14px;">
+              <div class="form-field form-field--spaced">
                 <label for="weatherCity">Ciudad</label>
                 <input class="input" id="weatherCity" type="text" maxlength="120" required />
               </div>
@@ -149,10 +142,10 @@
               <dl class="detail-list" id="accountInfo">
                 <div class="loading-block"><span class="spinner"></span> Cargando…</div>
               </dl>
-              <button class="btn btn--ghost btn--sm" id="changePasswordButton" type="button" style="margin-top: 14px; width: 100%;">
+              <button class="btn btn--ghost btn--sm btn--block settings-action-btn" id="changePasswordButton" type="button">
                 <i class="fa-solid fa-key"></i> Cambiar contraseña
               </button>
-              <button class="btn btn--ghost btn--sm" id="settingsThemeToggle" type="button" style="margin-top: 10px; width: 100%;">
+              <button class="btn btn--ghost btn--sm btn--block settings-action-btn settings-action-btn--tight" id="settingsThemeToggle" type="button">
                 <i class="fa-solid fa-moon"></i> Cambiar tema
               </button>
             </div>

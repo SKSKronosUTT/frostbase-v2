@@ -22,7 +22,9 @@ body {
   font-size: 14px;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
-  transition: background-color var(--transition), color var(--transition);
+  transition:
+    background-color var(--transition),
+    color var(--transition);
 }
 
 body.modal-open {
@@ -41,26 +43,31 @@ h1,
 h2,
 h3,
 h4 {
-  font-weight: 600;
+  font-weight: 900;
+  text-transform: uppercase;
   letter-spacing: -0.02em;
 }
 
 h1 {
   font-size: 26px;
-  line-height: 1.2;
+  line-height: 0.95;
 }
 
 h2 {
-  font-size: 17px;
+  font-size: 20px;
 }
 
 h3 {
-  font-size: 15px;
+  font-size: 16px;
 }
 
 a {
-  color: var(--color-electric);
+  color: var(--accent-deep);
   text-decoration: none;
+}
+
+[data-theme="dark"] a {
+  color: var(--accent-frost);
 }
 
 a:hover {
@@ -202,4 +209,27 @@ svg {
   padding: 34px 16px;
   color: var(--text-muted);
   font-size: 13px;
+}
+
+/* ===== Consolidado desde bauhaus.css (T4.5) ===== */
+body {
+  font-family: var(--font-sans);
+  font-size: 14.5px;
+  background-color: var(--bg);
+  background-image: radial-gradient(rgba(10, 27, 43, 0.07) 1.4px, transparent 1.4px);
+  background-size: 22px 22px;
+}
+
+[data-theme="dark"] body {
+  background-image: radial-gradient(rgba(143, 227, 240, 0.08) 1.4px, transparent 1.4px);
+}
+
+::selection {
+  background: var(--accent-frost);
+  color: var(--ink);
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent-mid);
+  outline-offset: 3px;
 }

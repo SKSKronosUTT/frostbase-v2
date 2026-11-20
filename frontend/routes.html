@@ -3,27 +3,20 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow" />
+  <meta name="description" content="Gestión de rutas de reparto de FrostBase." />
   <title>Rutas | FrostBase</title>
   <link rel="icon" href="assets/logo.png" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" />
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <link rel="stylesheet" href="css/variables.css" />
-  <link rel="stylesheet" href="css/global.css" />
+  <link rel="preload" href="assets/fonts/outfit-latin.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="stylesheet" href="css/fonts.css" />
+  <link rel="stylesheet" href="assets/vendors/fontawesome/fa-subset.css" />
+  <link rel="stylesheet" href="assets/vendors/leaflet/leaflet.css" />
+  <link rel="stylesheet" href="css/tokens.css" />
+  <link rel="stylesheet" href="css/base.css" />
   <link rel="stylesheet" href="css/components.css" />
   <link rel="stylesheet" href="css/layout.css" />
   <link rel="stylesheet" href="css/pages/routes.css" />
-  <link rel="stylesheet" href="css/bauhaus.css" />
-  <script>
-    (function () {
-      try {
-        var stored = localStorage.getItem("frostbase-theme");
-        if (stored === "dark" || stored === "light") document.documentElement.dataset.theme = stored;
-      } catch (error) {}
-    })();
-  </script>
+  <script src="js/core/theme-boot.js"></script>
 </head>
 <body data-page="routes">
   <div class="app-shell">
@@ -60,12 +53,13 @@
           <div class="routes-search">
             <div class="input-with-icon">
               <i class="fa-solid fa-magnifying-glass"></i>
-              <input class="input" id="routeSearch" type="search" placeholder="Buscar ruta" style="padding-top: 8px; padding-bottom: 8px; font-size: 12.5px;" />
+              <input class="input" id="routeSearch" type="search" placeholder="Buscar ruta" />
             </div>
           </div>
           <div class="routes-list" id="routesList">
             <div class="loading-block"><span class="spinner"></span> Cargando rutas…</div>
           </div>
+          <div class="pagination" id="routesPagination"></div>
           </aside>
         </div>
 
@@ -104,8 +98,8 @@
               </div>
               <div class="form-field">
                 <label>Proveedor de geometría</label>
-                <div class="input" style="display: flex; align-items: center; gap: 8px; color: var(--text-muted);">
-                  <i class="fa-solid fa-cloud" style="color: var(--text-soft);"></i> OSRM
+                <div class="input input--static">
+                  <i class="fa-solid fa-cloud legend-icon legend-icon--soft"></i> OSRM
                 </div>
               </div>
               <div class="form-field form-field--full">
@@ -119,7 +113,7 @@
                 <i class="fa-solid fa-hand-pointer"></i>
                 Haz clic en el mapa para agregar un punto de entrega. Arrastra un marcador para ajustar sus coordenadas.
               </div>
-              <div class="map map--editor" id="routeMap" style="margin-top: 8px;"></div>
+              <div class="map map--editor map--editor-spaced" id="routeMap" role="application" aria-label="Mapa de la ruta"></div>
             </div>
 
             <div class="points-section">
@@ -152,7 +146,7 @@
   </div>
 
   <div class="toast-root" id="toastRoot" aria-live="polite"></div>
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="assets/vendors/leaflet/leaflet.js"></script>
   <script type="module" src="js/pages/routes.js"></script>
 </body>
 </html>

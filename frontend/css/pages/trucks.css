@@ -34,7 +34,7 @@
 }
 
 .fleet-table .last-comms.is-online {
-  color: #149a7c;
+  color: #0a6f60;
 }
 
 [data-theme="dark"] .fleet-table .last-comms.is-online {
@@ -107,9 +107,5 @@
 
   .fleet-tabs__right .btn {
     flex: 1;
-  }
-
-  .pagination {
-    padding: 12px 14px 16px;
   }
 }

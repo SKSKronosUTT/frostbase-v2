@@ -3,27 +3,20 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow" />
+  <meta name="description" content="Detalle de una ruta: puntos de entrega y geometría." />
   <title>Detalle de ruta | FrostBase</title>
   <link rel="icon" href="assets/logo.png" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" />
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <link rel="stylesheet" href="css/variables.css" />
-  <link rel="stylesheet" href="css/global.css" />
+  <link rel="preload" href="assets/fonts/outfit-latin.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="stylesheet" href="css/fonts.css" />
+  <link rel="stylesheet" href="assets/vendors/fontawesome/fa-subset.css" />
+  <link rel="stylesheet" href="assets/vendors/leaflet/leaflet.css" />
+  <link rel="stylesheet" href="css/tokens.css" />
+  <link rel="stylesheet" href="css/base.css" />
   <link rel="stylesheet" href="css/components.css" />
   <link rel="stylesheet" href="css/layout.css" />
   <link rel="stylesheet" href="css/pages/routes.css" />
-  <link rel="stylesheet" href="css/bauhaus.css" />
-  <script>
-    (function () {
-      try {
-        var stored = localStorage.getItem("frostbase-theme");
-        if (stored === "dark" || stored === "light") document.documentElement.dataset.theme = stored;
-      } catch (error) {}
-    })();
-  </script>
+  <script src="js/core/theme-boot.js"></script>
 </head>
 <body data-page="route-detail">
   <div class="app-shell">
@@ -33,7 +26,7 @@
         <div class="page-header__title">
           <div class="breadcrumb">
             <a href="routes.html">Rutas</a>
-            <i class="fa-solid fa-chevron-right" style="font-size: 8px;"></i>
+            <i class="fa-solid fa-chevron-right icon-xs"></i>
             <span>Detalle</span>
           </div>
           <h1 id="routeTitle">Detalle de ruta</h1>
@@ -52,14 +45,14 @@
             <span class="section-header__meta" id="geometryStatus">—</span>
           </header>
           <div class="card__body">
-            <div class="notice notice--warning hidden" id="geometryWarning" style="margin-bottom: 12px;">
+            <div class="notice notice--warning notice--spaced-bottom hidden" id="geometryWarning">
               <i class="fa-solid fa-triangle-exclamation"></i>
               <span>Esta ruta no tiene geometría calculada. La línea punteada solo une los puntos de entrega.</span>
             </div>
-            <div class="map map--editor" id="routeDetailMap"></div>
+            <div class="map map--editor" id="routeDetailMap" role="application" aria-label="Mapa de ubicación de la flota"></div>
             <div class="map-legend">
               <span class="map-legend__item"><span class="map-legend__line"></span> Geometría de la ruta</span>
-              <span class="map-legend__item"><i class="fa-solid fa-location-dot" style="color: var(--color-primary);"></i> Punto de entrega</span>
+              <span class="map-legend__item"><i class="fa-solid fa-location-dot legend-icon legend-icon--primary"></i> Punto de entrega</span>
             </div>
           </div>
         </article>
@@ -89,7 +82,7 @@
   </div>
 
   <div class="toast-root" id="toastRoot" aria-live="polite"></div>
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="assets/vendors/leaflet/leaflet.js"></script>
   <script type="module" src="js/pages/route-detail.js"></script>
 </body>
 </html>

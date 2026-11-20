@@ -134,3 +134,39 @@
     flex: 1;
   }
 }
+
+/* ===== Consolidado desde bauhaus.css (T4.5) ===== */
+.settings-section + .settings-section {
+  border-top: 3px solid var(--border-ink);
+}
+
+.settings-section__icon {
+  border: 2px solid var(--border-ink);
+  border-radius: 0;
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 2px 2px 0 var(--ink);
+}
+
+.range-preview {
+  border: 2px solid var(--border-ink);
+  border-radius: 0;
+  background: var(--surface-soft);
+}
+
+.form-field--narrow {
+  max-width: 280px;
+}
+
+.form-field--spaced {
+  margin-bottom: 14px;
+}
+
+.settings-action-btn {
+  margin-top: 14px;
+  width: 100%;
+}
+
+.settings-action-btn--tight {
+  margin-top: 10px;
+}
