@@ -1,4 +1,4 @@
-from sqlalchemy import or_, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
 from app.models.admin import Admin
@@ -24,10 +24,9 @@ def create(db: Session, *, username: str, email: str, password_hash: str) -> Adm
         password_hash=password_hash,
     )
     db.add(admin)
-    db.commit()
-    db.refresh(admin)
+    db.flush()
     return admin
 
 
 def count(db: Session) -> int:
-    return db.scalar(select(Admin.id).limit(1)) is not None and 1 or 0
+    return db.scalar(select(func.count(Admin.id))) or 0

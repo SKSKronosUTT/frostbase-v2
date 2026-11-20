@@ -2,7 +2,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Header, HTTPException, Request, Response, status
 
-from app.api.deps import TxSession, authenticate_device_or_401
+from app.api.deps import DbSession, authenticate_device_or_401
 from app.core.ratelimit import RateLimit
 from app.schemas.iot import IoTConfigResponse, IoTReadingResponse, ReadingIngest
 from app.services import reading_service, settings_service
@@ -21,7 +21,7 @@ def receive_reading(
     payload: ReadingIngest,
     request: Request,
     response: Response,
-    db: TxSession,
+    db: DbSession,
     x_device_key: Annotated[str | None, Header(alias="X-Device-Key")] = None,
 ) -> IoTReadingResponse:
     # El límite se aplica antes de cualquier verificación de clave (KDF/HMAC).
@@ -58,7 +58,7 @@ def receive_reading(
 def device_config(
     request: Request,
     response: Response,
-    db: TxSession,
+    db: DbSession,
     x_device_id: Annotated[str | None, Header(alias="X-Device-Id")] = None,
     x_device_key: Annotated[str | None, Header(alias="X-Device-Key")] = None,
 ) -> IoTConfigResponse:

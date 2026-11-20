@@ -50,6 +50,7 @@ def main() -> int:
                     with SessionLocal() as db:
                         setting = settings_service.get_settings(db)
                         alert_service.check_disconnected_devices(db, setting)
+                        db.commit()
                 except Exception:
                     logger.exception("Error en el ciclo de desconexiones")
                 deadline = time.monotonic() + max(

@@ -1,27 +1,16 @@
-from collections.abc import Generator
 from typing import Annotated
 
 from fastapi import Depends, Header, HTTPException, Request, status
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
-from app.core.database import SessionLocal, get_db
+from app.core.database import get_db
 from app.core.security import decode_access_token
 from app.models.admin import Admin
 from app.repositories import admin as admin_repo
 from app.services import device_service
 
 DbSession = Annotated[Session, Depends(get_db)]
-
-
-def get_tx_db() -> Generator[Session, None, None]:
-    """Sesión con una transacción por petición para la API IoT."""
-    with SessionLocal() as db:
-        with db.begin():
-            yield db
-
-
-TxSession = Annotated[Session, Depends(get_tx_db)]
 
 
 def _token_from_request(request: Request) -> str | None:

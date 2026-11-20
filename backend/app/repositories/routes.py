@@ -51,21 +51,19 @@ def list_all(db: Session) -> list[Route]:
 
 def create(db: Session, route: Route) -> Route:
     db.add(route)
-    db.commit()
-    db.refresh(route)
+    db.flush()
     return route
 
 
-def commit(db: Session, route: Route) -> Route:
+def save(db: Session, route: Route) -> Route:
     db.add(route)
-    db.commit()
-    db.refresh(route)
+    db.flush()
     return route
 
 
 def delete(db: Session, route: Route) -> None:
     db.delete(route)
-    db.commit()
+    db.flush()
 
 
 def replace_points(db: Session, route: Route, points: list[DeliveryPoint]) -> None:

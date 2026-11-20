@@ -121,7 +121,7 @@ def update_device(db: Session, device_pk: int, payload: DeviceUpdate) -> DeviceO
             _detach_truck_devices(db, payload.truck_id, except_device_id=device.id)
         device.truck_id = payload.truck_id
         db.add(device)
-        db.commit()
+        db.flush()
         device = devices_repo.get(db, device.id) or device
     return _to_out(db, device)
 
@@ -134,7 +134,7 @@ def rotate_key(db: Session, device_pk: int) -> DeviceCreatedOut:
     device.key_hash = device_fingerprint(secret)
     device.key_scheme = "hmac"
     db.add(device)
-    db.commit()
+    db.flush()
     clear_device_cache()
     device = devices_repo.get(db, device.id) or device
     return _created_out(db, device, secret)
@@ -164,6 +164,5 @@ def authenticate_device(db: Session, device_id: str, secret: str) -> Device | No
 def touch_device(db: Session, device: Device) -> Device:
     device.last_seen = utcnow()
     db.add(device)
-    db.commit()
-    db.refresh(device)
+    db.flush()
     return device

@@ -81,15 +81,13 @@ def count_by_status(db: Session) -> dict[str, int]:
 
 def create(db: Session, truck: Truck) -> Truck:
     db.add(truck)
-    db.commit()
-    db.refresh(truck)
+    db.flush()
     return truck
 
 
-def commit(db: Session, truck: Truck) -> Truck:
+def save(db: Session, truck: Truck) -> Truck:
     db.add(truck)
-    db.commit()
-    db.refresh(truck)
+    db.flush()
     return truck
 
 

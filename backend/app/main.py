@@ -28,6 +28,7 @@ async def _disconnect_watcher() -> None:
             with SessionLocal() as db:
                 setting = settings_service.get_settings(db)
                 alert_service.check_disconnected_devices(db, setting)
+                db.commit()
         except asyncio.CancelledError:
             raise
         except Exception:

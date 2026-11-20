@@ -137,7 +137,7 @@ def update_route(
     route.geometry = geometry
     route.geometry_status = _geometry_status(geometry, warning)
     routes_repo.replace_points(db, route, _build_points(payload.points))
-    routes_repo.commit(db, route)
+    routes_repo.save(db, route)
     route = _get_or_fail(db, route.id)
     return serialize_route(route, warning=warning)
 
@@ -155,11 +155,11 @@ def calculate_route(
             )
         except routing.RoutingUnavailableError as exc:
             route.geometry_status = "failed"
-            routes_repo.commit(db, route)
+            routes_repo.save(db, route)
             raise RouteValidationError(str(exc)) from exc
     route.geometry = geometry
     route.geometry_status = "ready"
-    routes_repo.commit(db, route)
+    routes_repo.save(db, route)
     route = _get_or_fail(db, route.id)
     return serialize_route(route)
 
@@ -174,19 +174,17 @@ async def calculate_geometry_background(route_id: int) -> None:
         geometry = await routing.calculate_geometry_async(points)
     except (RouteNotFoundError, routing.RoutingUnavailableError) as exc:
         logger.warning("No se pudo calcular la geometría de la ruta %s: %s", route_id, exc)
-        with SessionLocal() as db:
+        with SessionLocal() as db, db.begin():
             route = routes_repo.get(db, route_id)
             if route is not None:
                 route.geometry_status = "failed"
-                db.commit()
         return
 
-    with SessionLocal() as db:
+    with SessionLocal() as db, db.begin():
         route = routes_repo.get(db, route_id)
         if route is not None:
             route.geometry = geometry
             route.geometry_status = "ready"
-            db.commit()
 
 
 def delete_route(db: Session, route_id: int) -> None:
@@ -208,6 +206,6 @@ def assign_route(db: Session, route_id: int, truck_id: int) -> RouteOut:
         db.add(other)
     truck.route_id = route.id
     db.add(truck)
-    db.commit()
+    db.flush()
     route = _get_or_fail(db, route.id)
     return serialize_route(route)

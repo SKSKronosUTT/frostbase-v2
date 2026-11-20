@@ -146,6 +146,7 @@ def create_device():
             created = device_service.create_device(
                 db, DeviceCreate(device_id=device_id, truck_id=truck_id)
             )
+            db.commit()
             return created.id, created.device_id, created.device_key
 
     return _create

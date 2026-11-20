@@ -75,21 +75,19 @@ def create(
         key_scheme=key_scheme,
     )
     db.add(device)
-    db.commit()
-    db.refresh(device)
+    db.flush()
     return device
 
 
-def commit(db: Session, device: Device) -> Device:
+def save(db: Session, device: Device) -> Device:
     db.add(device)
-    db.commit()
-    db.refresh(device)
+    db.flush()
     return device
 
 
 def delete(db: Session, device: Device) -> None:
     db.delete(device)
-    db.commit()
+    db.flush()
 
 
 def truck_exists(db: Session, truck_id: int) -> bool:

@@ -8,8 +8,7 @@ from app.models.reading import Reading
 
 def create(db: Session, reading: Reading) -> Reading:
     db.add(reading)
-    db.commit()
-    db.refresh(reading)
+    db.flush()
     return reading
 
 

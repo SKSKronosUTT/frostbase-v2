@@ -119,8 +119,7 @@ def authenticate(
         raise AuthenticationError("Usuario o contraseña incorrectos")
     admin.last_login = utcnow()
     db.add(admin)
-    db.commit()
-    db.refresh(admin)
+    db.flush()
     logger.info(
         "login_ok identifier=%s ip=%s result=allowed",
         admin.username,
@@ -147,8 +146,7 @@ def change_password(
     admin.must_change_password = False
     admin.token_version += 1
     db.add(admin)
-    db.commit()
-    db.refresh(admin)
+    db.flush()
     logger.info("Contraseña actualizada para el administrador %s", admin.username)
     return admin
 
@@ -160,6 +158,5 @@ def get_admin(db: Session, admin_id: int) -> Admin | None:
 def update_theme(db: Session, admin: Admin, theme: str) -> Admin:
     admin.theme = theme
     db.add(admin)
-    db.commit()
-    db.refresh(admin)
+    db.flush()
     return admin

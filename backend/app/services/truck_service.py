@@ -136,8 +136,7 @@ def create_truck(db: Session, payload: TruckCreate) -> TruckOut:
     if payload.device_id is not None:
         _assign_device(db, truck, payload.device_id)
 
-    db.commit()
-    db.refresh(truck)
+    db.flush()
     truck = _get_or_fail(db, truck.id)
     setting = settings_service.get_settings(db)
     latest = readings_repo.get_latest_for_truck(db, truck.id)
@@ -170,7 +169,7 @@ def update_truck(db: Session, truck_id: int, payload: TruckUpdate) -> TruckOut:
         _assign_device(db, truck, payload.device_id)
 
     db.add(truck)
-    db.commit()
+    db.flush()
     truck = _get_or_fail(db, truck.id)
     setting = settings_service.get_settings(db)
     latest = readings_repo.get_latest_for_truck(db, truck.id)
@@ -192,7 +191,7 @@ def delete_truck(db: Session, truck_id: int) -> None:
     truck.route_id = None
     truck.is_deleted = True
     db.add(truck)
-    db.commit()
+    db.flush()
     alert_service.resolve_truck_alerts(db, truck.id, "Camión eliminado del sistema")
 
 
@@ -200,7 +199,7 @@ def assign_route_to_truck(db: Session, route_id: int, truck_id: int) -> TruckOut
     truck = _get_or_fail(db, truck_id)
     _assign_route(db, truck, route_id)
     db.add(truck)
-    db.commit()
+    db.flush()
     truck = _get_or_fail(db, truck.id)
     setting = settings_service.get_settings(db)
     latest = readings_repo.get_latest_for_truck(db, truck.id)

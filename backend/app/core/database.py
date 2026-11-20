@@ -21,8 +21,7 @@ SessionLocal = sessionmaker(bind=engine, autoflush=False, expire_on_commit=False
 
 
 def get_db() -> Generator[Session, None, None]:
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+    """Una transacción por petición; commit al salir sin excepción."""
+    with SessionLocal() as db:
+        with db.begin():
+            yield db

@@ -50,6 +50,7 @@ def main() -> int:
             return 1
 
         created = device_service.rotate_key(db, device.id)
+        db.commit()
 
     print(f"Dispositivo: {created.device_id}")
     print(f"DEVICE_KEY={created.device_key}")

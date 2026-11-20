@@ -190,7 +190,7 @@ def check_disconnected_devices(db: Session, setting: Setting) -> int:
     )
     resolved = max(0, db.execute(resolve_stmt).rowcount or 0)
 
-    db.commit()
+    db.flush()
     if created:
         logger.info("Se generaron %s alertas de desconexión", created)
     if resolved:
@@ -206,4 +206,4 @@ def resolve_truck_alerts(db: Session, truck_id: int, reason: str) -> None:
         alert.resolved_at = now
         alert.message = f"{alert.message or ''} ({reason})".strip()
         db.add(alert)
-    db.commit()
+    db.flush()
