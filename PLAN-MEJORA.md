@@ -14,7 +14,7 @@
 | Fases de trabajo | 4 (F1 · F2 · F3 · F4) |
 | Tareas totales | 39 |
 | Esfuerzo estimado | 132–164 h |
-| Estado global | 🟨 F1–F3 tareas completadas · gates manuales pendientes · F4 pendiente |
+| Estado global | 🟨 F1–F4 tareas completadas · gates manuales/Linux pendientes |
 
 ---
 
@@ -1282,18 +1282,18 @@ try {
 | T3.10 | F3 | ✅ | OpenCode (agente IA) | `470628c` | 2026-11-20 | `/health/live` y `/health/ready` (DB + Alembic head); logging JSON con `request_id`, `admin_id` y `device_id`; cabeceras de seguridad, CSP Report-Only y `TrustedHostMiddleware`. |
 | T3.11 | F3 | ✅ | OpenCode (agente IA) | `470628c` | 2026-11-20 | CSRF de doble cookie (`frostbase_csrf` + `X-CSRF-Token`) para mutaciones por cookie; `/auth/refresh`; sesión de 60 min; reintento silencioso en `api.js`; tests 403/200. |
 | T3.12 | F3 | ✅ | OpenCode (agente IA) | `435d5ef` | 2026-11-20 | Eliminadas variables de config no usadas, `trucks_without_contact`, `unassign_truck`, `truck_exists`, `freshness_threshold`, `assign_route_to_truck`, `MessageOut` y `dependencies=[]`; `admin.count` con `func.count`; test de config. |
-| T4.1 | F4A | ⬜ | — | — | — | — |
-| T4.2 | F4A | ⬜ | — | — | — | — |
-| T4.3 | F4A | ⬜ | — | — | — | — |
-| T4.4 | F4A | ⬜ | — | — | — | — |
-| T4.5 | F4B | ⬜ | — | — | — | — |
-| T4.6 | F4B | ⬜ | — | — | — | — |
-| T4.7 | F4B | ⬜ | — | — | — | — |
-| T4.8 | F4B | ⬜ | — | — | — | — |
-| T4.9 | F4B | ⬜ | — | — | — | — |
-| T4.10 | F4B | ⬜ | — | — | — | — |
-| T4.11 | F4B | ⬜ | — | — | — | — |
-| T4.12 | F4B | ⬜ | — | — | — | — |
+| T4.1 | F4A | ✅ | OpenCode (agente IA) | `4d299cb` | 2026-11-20 | Leaflet 1.9.4, Font Awesome subset (56 iconos) y Outfit vendorizados; cero CDN e `inline`; CSP enforced; `theme-boot.js` externo; E2E `csp.spec.js` sin violaciones en 5 páginas. |
+| T4.2 | F4A | ✅ | OpenCode (agente IA) | `4d299cb` | 2026-11-20 | `AbortController` 15 s, cancelación al ocultar pestaña, 401→`login.html?next=` desde cualquier llamada, backoff exponencial hasta 60 s, badge «Sin conexión» y `Promise.allSettled` en dashboard. E2E de login/recuperación en verde. |
+| T4.3 | F4A | ✅ | OpenCode (agente IA) | `4d299cb` · `41ee330` | 2026-11-20 | Rutas con búsqueda y paginación server-side; `/routes/options` y `/trucks/options`; componente `pagination.js` con «Mostrando X–Y de N»; selects sin límite 100. |
+| T4.4 | F4A | ✅ | OpenCode (agente IA) | `4d299cb` | 2026-11-20 | `feedback.js` unifica skeleton, empty state, error con botón «Reintentar» y `aria-busy` en camiones, dispositivos, rutas, alertas y lecturas. |
+| T4.5 | F4B | ✅ | OpenCode (agente IA) | `4d299cb` | 2026-11-20 | `variables.css`→`tokens.css`, `global.css`→`base.css`, `bauhaus.css` distribuido y eliminado; `check-css.mjs` en CI: 13 archivos sin selectores duplicados; estilos inline de HTML/JS sustituidos por clases. |
+| T4.6 | F4B | ✅ | OpenCode (agente IA) | `4d299cb` | 2026-11-20 | `modal.js` con focus trap, `aria-modal`, Escape y restauración de foco; `role="application"`/`aria-label` en mapas; `width`/`height` en imágenes; `meta description`/`noindex`; contraste corregido; **axe-core: 12/12 escaneos sin violaciones serious/critical** (5 páginas + login × claro/oscuro). |
+| T4.7 | F4B | ✅ | OpenCode (agente IA) | `4d299cb` | 2026-11-20 | `escapeText` eliminado, `escapeHtml` central; componentes `pagination/feedback/modal`; `check-innerhtml.mjs` falla ante interpolaciones de datos sin escape y se ejecuta en CI. |
+| T4.8 | F4B | ✅ | OpenCode (agente IA) | `4d299cb` | 2026-11-20 | `frontend/package.json` + esbuild: CSS/JS minificados con hash y `manifest.json`; `frontend/build` servido si existe; `Cache-Control immutable` para `/assets/build/`, `no-cache` para HTML; `GZipMiddleware`. Build: 19 assets, 531 KB totales; primera carga < 300 KB sin tiles. |
+| T4.9 | F4B | ✅ | OpenCode (agente IA) | `41ee330` | 2026-11-20 | `scripts/retention.py` idempotente con `--dry-run`, ventanas configurables y logging; el `watcher` lo ejecuta cada `RETENTION_CHECK_SECONDS`; test de borrado selectivo. |
+| T4.10 | F4B | ✅ | OpenCode (agente IA) | `41ee330` | 2026-11-20 | `docs/ops/RUNBOOK.md`; `docs/api/openapi.json` versionado con `--check` en CI; README con arquitectura, build y tareas; `tasks.ps1`/`Makefile`; `pip-audit` semanal y Nightly. |
+| T4.11 | F4B | ✅ | OpenCode (agente IA) | `41ee330` | 2026-11-20 | Seed idempotente (ruta por nombre), `--reset`, `--print-keys`, `--trucks N --devices M`; 3 ejecuciones sin duplicados. |
+| T4.12 | F4B | ✅ | OpenCode (agente IA) | `41ee330` | 2026-11-20 | Playwright con 6 flujos críticos + 12 escaneos axe + CSP, **18/18 en verde**; `scripts/loadtest.py` y `.github/workflows/nightly.yml`; resultados y limitaciones en `docs/ops/load-test.md` (p95 59 ms con 10 dispositivos; 1.49 s con 50 en Docker/Windows, pendiente validar en Linux). |
 
 ### Gates de fase
 
@@ -1302,8 +1302,8 @@ try {
 | F1 cerrado | 🟨 | 2026-11-19 | 7/7 tareas ✅ · `import app.main` con `.env` válido · login + rotación/revocación probados por API · `alembic current == head` · restore drill 0.79 s · **pendiente:** §10 manual en navegador con simulador 10 min (modal de cambio forzado y flujo del panel) |
 | F2 cerrado | 🟨 | 2026-11-19 | 8/8 tareas ✅ · `pytest -q` 11 passed · loadcheck 30×401 + 10×429 · idempotencia real (3 envíos → 1 lectura) · migraciones 0003/0004 up/down · **pendiente:** §10 manual con simulador 10 min y revisión visual del panel |
 | F3 cerrado | 🟨 | 2026-11-20 | 12/12 tareas ✅ · `ruff`/`mypy` limpios · 47 tests y cobertura 78 % · contenedor no-root healthy · migraciones 0005/0006/0007 aplicadas · baseline de rendimiento archivado · **pendiente:** §10 manual con simulador 10 min y revisión visual |
-| F4A cerrado | ⬜ | — | — |
-| F4B cerrado | ⬜ | — | — |
+| F4A cerrado | ✅ | 2026-11-20 | 4/4 tareas ✅ · cero violaciones CSP en 5 páginas · E2E de login y recuperación · rutas paginadas y 250 alcanzables · `check-css`/`check-innerhtml` en CI |
+| F4B cerrado | 🟨 | 2026-11-20 | 8/8 tareas ✅ · axe-core 12/12 sin serious/critical · build hasheado 531 KB y caché inmutable · retención y runbook · E2E 18/18 · **pendiente:** validar Lighthouse ≥90 y p95 de 50 dispositivos en Linux (Nightly) y §10 manual |
 
 ---
 

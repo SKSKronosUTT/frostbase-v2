@@ -567,4 +567,6 @@ Antes de modificar código, lee **[PLAN-MEJORA.md](PLAN-MEJORA.md)**. Allí est�
 >
 > ✅ **Tareas de la Fase 3 completadas:** índices y caché del dashboard, watcher SQL fuera del proceso web, I/O externo asíncrono con circuit breaker, paginación keyset, placa reutilizable tras borrado lógico, UnitOfWork transaccional, contenedor no-root, `/health/ready`, logging JSON, CSRF/refresh, limpieza de configuración y CI con ruff/mypy/cobertura.
 >
-> Queda pendiente la regresión manual de los gates F1/F2/F3 (navegador + simulador 10 min). El estado de las fases restantes está en `PLAN-MEJORA.md` §9.
+> ✅ **Tareas de la Fase 4 completadas:** assets locales con CSP activa, cliente HTTP con timeout/backoff, paginación server-side, estados de carga/error homogéneos, CSS consolidado, accesibilidad con axe sin violaciones graves, build hasheado con caché inmutable, retención de datos, runbook/OpenAPI, seed idempotente y E2E + load test.
+>
+> Queda pendiente la regresión manual §10, la validación de Lighthouse ≥ 90 y el p95 de 50 dispositivos en el runner Linux (Nightly). El estado de las fases restantes está en `PLAN-MEJORA.md` §9.
