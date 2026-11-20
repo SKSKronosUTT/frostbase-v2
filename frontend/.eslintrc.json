@@ -4,6 +4,9 @@
     "browser": true,
     "es2022": true
   },
+  "globals": {
+    "L": "readonly"
+  },
   "parserOptions": {
     "ecmaVersion": 2022,
     "sourceType": "module"

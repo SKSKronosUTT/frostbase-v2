@@ -28,7 +28,10 @@ function updateToggle(theme) {
   const isDark = theme === "dark";
   if (icon) icon.className = isDark ? "fa-solid fa-sun" : "fa-solid fa-moon";
   if (label) label.textContent = isDark ? "Tema claro" : "Tema oscuro";
-  button.setAttribute("aria-label", isDark ? "Cambiar a tema claro" : "Cambiar a tema oscuro");
+  button.setAttribute(
+    "aria-label",
+    isDark ? "Cambiar a tema claro" : "Cambiar a tema oscuro"
+  );
 }
 
 export function initTheme(adminTheme) {

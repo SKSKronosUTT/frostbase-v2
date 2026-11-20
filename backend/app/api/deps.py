@@ -49,6 +49,7 @@ def get_current_admin(request: Request, db: DbSession) -> Admin:
             detail="Sesión inválida o expirada",
             headers={"WWW-Authenticate": "Bearer"},
         )
+    request.state.admin_id = admin.id
     return admin
 
 

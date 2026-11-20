@@ -4,6 +4,8 @@ on:
   push:
     branches: [devolp, main]
   pull_request:
+  schedule:
+    - cron: "0 3 * * 1"
 
 jobs:
   backend:
@@ -60,6 +62,22 @@ jobs:
       - name: ESLint
         working-directory: frontend
         run: npx --yes eslint@8 js
+      - name: Prettier
+        working-directory: frontend
+        run: npx --yes prettier@3 --check js
+
+  audit:
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Auditar dependencias
+        run: |
+          pip install pip-audit
+          pip-audit -r backend/requirements.lock
 
   docker:
     runs-on: ubuntu-latest

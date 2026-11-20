@@ -144,6 +144,8 @@ async def observability_middleware(request: Request, call_next):
             "path": path,
             "status_code": response.status_code,
             "duration_ms": round(duration_ms, 1),
+            "admin_id": getattr(request.state, "admin_id", None),
+            "device_id": getattr(request.state, "device_id", None),
         },
     )
     request_id_ctx.reset(token)

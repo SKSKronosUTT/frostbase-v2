@@ -41,7 +41,8 @@ function routeName() {
   if (!state.points.length) return "Nueva ruta";
   if (state.points.length === 1) return names[0] || "Nueva ruta";
   const first = state.points[0].name.trim() || "Punto 1";
-  const last = state.points[state.points.length - 1].name.trim() || `Punto ${state.points.length}`;
+  const last =
+    state.points[state.points.length - 1].name.trim() || `Punto ${state.points.length}`;
   return `${first} - ${last}`;
 }
 
@@ -50,11 +51,6 @@ function syncRouteInList(route) {
   if (index >= 0) state.routes[index] = route;
   else state.routes.unshift(route);
   renderRoutesList();
-}
-
-function setWarning(message) {
-  state.warning = message;
-  renderWarning();
 }
 
 function markPointsChanged() {
@@ -164,9 +160,7 @@ function updateLine() {
     state.line = null;
   }
   const hasGeometry =
-    Array.isArray(state.geometry) &&
-    state.geometry.length > 1 &&
-    !state.geometryStale;
+    Array.isArray(state.geometry) && state.geometry.length > 1 && !state.geometryStale;
   let latLngs = [];
   if (hasGeometry) {
     latLngs = toLatLngs(state.geometry);
@@ -584,7 +578,9 @@ function wireEvents() {
   qs("#routesList").addEventListener("click", (event) => {
     const item = event.target.closest("[data-route-id]");
     if (!item) return;
-    const route = state.routes.find((entry) => entry.id === Number(item.dataset.routeId));
+    const route = state.routes.find(
+      (entry) => entry.id === Number(item.dataset.routeId)
+    );
     if (route) applyRoute(route);
   });
 
@@ -597,9 +593,7 @@ function wireEvents() {
     point[field] = event.target.value;
     if (field === "name") {
       updateHeader();
-      const markerRecord = state.pointMarkers.find(
-        (entry) => entry.uid === point.uid
-      );
+      const markerRecord = state.pointMarkers.find((entry) => entry.uid === point.uid);
       if (markerRecord) {
         markerRecord.marker.setTooltipContent(point.name || "Punto");
       }

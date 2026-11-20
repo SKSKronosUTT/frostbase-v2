@@ -103,7 +103,9 @@ export function confirmDialog({
       const button = event.target.closest("[data-confirm]");
       if (button) close(button.dataset.confirm === "true");
     });
-    overlay.querySelector(".modal__close").addEventListener("click", () => close(false));
+    overlay
+      .querySelector(".modal__close")
+      .addEventListener("click", () => close(false));
 
     document.body.appendChild(overlay);
     document.body.classList.add("modal-open");

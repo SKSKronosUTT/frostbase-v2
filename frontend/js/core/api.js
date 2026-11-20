@@ -12,9 +12,7 @@ export class ApiError extends Error {
 
 function readCookie(name) {
   const prefix = `${name}=`;
-  const item = document.cookie
-    .split("; ")
-    .find((row) => row.startsWith(prefix));
+  const item = document.cookie.split("; ").find((row) => row.startsWith(prefix));
   return item ? decodeURIComponent(item.slice(prefix.length)) : "";
 }
 

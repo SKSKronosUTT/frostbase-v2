@@ -35,6 +35,7 @@ def receive_reading(
     device = authenticate_device_or_401(
         db, device_id=payload.device_id, device_key=x_device_key
     )
+    request.state.device_id = device.device_id
     setting = settings_service.get_settings(db)
     try:
         reading, alerts, duplicate = reading_service.ingest_reading(
@@ -82,6 +83,7 @@ def device_config(
     device = authenticate_device_or_401(
         db, device_id=x_device_id, device_key=x_device_key
     )
+    request.state.device_id = device.device_id
     setting = settings_service.get_settings(db)
     route = device.truck.route if device.truck else None
     return IoTConfigResponse(

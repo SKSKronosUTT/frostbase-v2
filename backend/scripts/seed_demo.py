@@ -90,7 +90,15 @@ def main() -> None:
         db.flush()
 
         for index, data in enumerate(TRUCKS):
-            if db.query(Truck).filter(Truck.plate == data["plate"]).first():
+            existing_truck = (
+                db.query(Truck)
+                .filter(
+                    Truck.plate == data["plate"],
+                    Truck.is_deleted.is_(False),
+                )
+                .first()
+            )
+            if existing_truck:
                 logger.info("El camión %s ya existe, se omite", data["plate"])
                 continue
             truck = Truck(

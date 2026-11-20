@@ -75,8 +75,8 @@ function renderRows(alerts) {
         alert.alert_type === "temperatura"
           ? "alert-type-cell--temperature"
           : alert.alert_type === "humedad"
-          ? "alert-type-cell--humidity"
-          : "alert-type-cell--offline";
+            ? "alert-type-cell--humidity"
+            : "alert-type-cell--offline";
       return `
         <tr>
           <td>
@@ -121,12 +121,12 @@ function renderPagination() {
     <span class="pagination__info">Mostrando ${start}–${end} de ${state.total}</span>
     <div class="pagination__controls">
       <button class="icon-button" type="button" data-page="${state.page - 1}" ${
-    state.page <= 1 ? "disabled" : ""
-  } aria-label="Anterior"><i class="fa-solid fa-chevron-left"></i></button>
+        state.page <= 1 ? "disabled" : ""
+      } aria-label="Anterior"><i class="fa-solid fa-chevron-left"></i></button>
       <span class="pagination__page">Página ${state.page} de ${totalPages}</span>
       <button class="icon-button" type="button" data-page="${state.page + 1}" ${
-    state.page >= totalPages ? "disabled" : ""
-  } aria-label="Siguiente"><i class="fa-solid fa-chevron-right"></i></button>
+        state.page >= totalPages ? "disabled" : ""
+      } aria-label="Siguiente"><i class="fa-solid fa-chevron-right"></i></button>
     </div>
   `;
   pagination.querySelectorAll("[data-page]").forEach((button) => {
@@ -216,11 +216,13 @@ async function showAlert(alertId) {
     const isActive = alert.status === "activa";
     qs("#alertModalBody").innerHTML = `
       <div class="alert-detail-hero" style="${
-        isActive ? "" : "background: var(--success-soft); border-color: rgba(39,198,163,.24);"
+        isActive
+          ? ""
+          : "background: var(--success-soft); border-color: rgba(39,198,163,.24);"
       }">
         <i class="fa-solid ${isActive ? "fa-fire" : "fa-circle-check"}" style="${
-      isActive ? "" : "color: var(--success);"
-    }"></i>
+          isActive ? "" : "color: var(--success);"
+        }"></i>
         <div>
           <strong>${isActive ? "Alerta activa" : "Alerta resuelta"}</strong>
           <p>${escapeHtml(alert.message || type.label)}</p>

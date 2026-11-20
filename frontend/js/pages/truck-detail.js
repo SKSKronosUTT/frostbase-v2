@@ -72,12 +72,12 @@ function renderDetail() {
   qs("#heroBadges").innerHTML = `
     <span class="badge ${status.className}">${status.label}</span>
     <span class="status-dot ${deviceOnline ? "is-online" : "is-offline"}">${
-    truck.device
-      ? deviceOnline
-        ? "Dispositivo en línea"
-        : "Dispositivo desconectado"
-      : "Sin dispositivo"
-  }</span>
+      truck.device
+        ? deviceOnline
+          ? "Dispositivo en línea"
+          : "Dispositivo desconectado"
+        : "Sin dispositivo"
+    }</span>
     ${
       truck.active_alerts > 0
         ? `<span class="badge badge--danger">${truck.active_alerts} alerta${
@@ -106,8 +106,7 @@ function renderDetail() {
       reading.temperature < truck.temperature_min ||
       reading.temperature > truck.temperature_max;
     const humAlert =
-      reading.humidity < truck.humidity_min ||
-      reading.humidity > truck.humidity_max;
+      reading.humidity < truck.humidity_min || reading.humidity > truck.humidity_max;
     qs("#currentReading").innerHTML = `
       <div class="reading-tile ${tempAlert ? "reading-tile--alert" : ""}">
         <div class="reading-tile__label"><i class="fa-solid fa-temperature-half"></i> Temperatura</div>
@@ -145,13 +144,15 @@ function renderDetail() {
         )}</dd></div>
         <div class="detail-row"><dt>Estado de conexión</dt><dd>
           <span class="status-dot ${device.is_online ? "is-online" : "is-offline"}">${
-      device.is_online ? "En línea" : "Desconectado"
-    }</span>
+            device.is_online ? "En línea" : "Desconectado"
+          }</span>
         </dd></div>
         <div class="detail-row"><dt>Última comunicación</dt><dd>${
-          device.last_seen ? `${timeAgo(device.last_seen)}<br><span class="muted">${formatDateTime(
-              device.last_seen
-            )}</span>` : "Nunca"
+          device.last_seen
+            ? `${timeAgo(device.last_seen)}<br><span class="muted">${formatDateTime(
+                device.last_seen
+              )}</span>`
+            : "Nunca"
         }</dd></div>
         <div class="detail-row"><dt>Registrado</dt><dd>${formatDateTime(
           device.created_at
@@ -300,8 +301,7 @@ function renderReadings(data) {
         reading.temperature < truck.temperature_min ||
         reading.temperature > truck.temperature_max;
       const humAlert =
-        reading.humidity < truck.humidity_min ||
-        reading.humidity > truck.humidity_max;
+        reading.humidity < truck.humidity_min || reading.humidity > truck.humidity_max;
       const gps =
         reading.latitude !== null && reading.longitude !== null
           ? `${Number(reading.latitude).toFixed(5)}, ${Number(
@@ -371,16 +371,16 @@ function renderAlerts(data) {
         alert.alert_type === "desconexion"
           ? "Desconectado"
           : alert.alert_type === "temperatura"
-          ? formatTemp(alert.value)
-          : formatHum(alert.value);
+            ? formatTemp(alert.value)
+            : formatHum(alert.value);
       return `
         <div class="detail-row" style="align-items: center;">
           <div>
             <div style="font-size: 12.5px; font-weight: 600;"><i class="fa-solid ${
               type.icon
             }" style="color: var(--text-soft); margin-right: 5px;"></i>${
-        type.label
-      }</div>
+              type.label
+            }</div>
             <div class="muted" style="font-size: 11px;">${timeAgo(alert.started_at)} · ${value}</div>
           </div>
           <span class="badge ${status.className}">${status.label}</span>
@@ -417,9 +417,7 @@ async function loadReadings() {
   if (state.readingsFrom) params.set("date_from", state.readingsFrom);
   if (state.readingsTo) params.set("date_to", state.readingsTo);
   try {
-    const data = await api.get(
-      `/readings/truck/${truckId}?${params.toString()}`
-    );
+    const data = await api.get(`/readings/truck/${truckId}?${params.toString()}`);
     renderReadings(data);
   } catch (error) {
     qs("#readingsBody").innerHTML = `<tr><td colspan="5">
@@ -434,9 +432,7 @@ async function loadReadings() {
 
 async function loadAlerts() {
   try {
-    const data = await api.get(
-      `/alerts?truck_id=${truckId}&page=1&page_size=5`
-    );
+    const data = await api.get(`/alerts?truck_id=${truckId}&page=1&page_size=5`);
     renderAlerts(data);
   } catch (error) {
     qs("#alertsList").innerHTML = `<div class="empty-state" style="padding: 20px 8px;">
