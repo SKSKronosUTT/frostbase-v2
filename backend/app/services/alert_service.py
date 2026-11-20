@@ -177,7 +177,7 @@ def check_disconnected_devices(db: Session, setting: Setting) -> int:
             index_where=text("status = 'activa'"),
         )
     )
-    created = max(0, getattr(db.execute(insert_stmt), "rowcount", 0) or 0)
+    created = len(db.execute(insert_stmt.returning(Alert.id)).all())
 
     resolve_stmt = (
         update(Alert)
@@ -188,7 +188,7 @@ def check_disconnected_devices(db: Session, setting: Setting) -> int:
         )
         .values(status="resuelta", resolved_at=now)
     )
-    resolved = max(0, getattr(db.execute(resolve_stmt), "rowcount", 0) or 0)
+    resolved = len(db.execute(resolve_stmt.returning(Alert.id)).all())
 
     db.flush()
     if created:

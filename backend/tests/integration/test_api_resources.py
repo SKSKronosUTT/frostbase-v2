@@ -119,3 +119,21 @@ def test_dashboard_endpoints(client, login, create_truck, monkeypatch):
     weather = client.get("/api/v1/dashboard/weather")
     assert weather.status_code == 200
     assert weather.json()["available"] is True
+
+
+def test_route_geometry_async_flag(client, login, csrf_headers, monkeypatch):
+    from app.core.config import settings
+
+    assert login().status_code == 200
+    headers = csrf_headers()
+    monkeypatch.setattr(settings, "route_geometry_async", True)
+    monkeypatch.setattr(routing, "calculate_geometry_async", _fake_geometry)
+
+    created = client.post("/api/v1/routes", json=_route_payload(), headers=headers)
+    assert created.status_code == 201
+    route_id = created.json()["id"]
+    assert created.json()["geometry_status"] == "pending"
+
+    detail = client.get(f"/api/v1/routes/{route_id}")
+    assert detail.status_code == 200
+    assert detail.json()["geometry_status"] in {"ready", "pending"}
