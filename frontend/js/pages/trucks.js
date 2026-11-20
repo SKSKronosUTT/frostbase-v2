@@ -319,9 +319,9 @@ async function openTruckModal(truckId = null) {
           const assigned = route.truck
             ? ` · asignada a ${route.truck.plate}`
             : "";
-          return `<option value="${route.id}">${escapeHtml(route.name)}${escapeHtml(
-            assigned
-          )}</option>`;
+          return `<option value="${route.id}" data-assigned-plate="${
+            route.truck ? escapeHtml(route.truck.plate) : ""
+          }">${escapeHtml(route.name)}${escapeHtml(assigned)}</option>`;
         })
         .join("");
 
@@ -383,6 +383,20 @@ async function submitTruck(event) {
   };
 
   const button = qs("#truckSubmit");
+  const routeSelect = qs("#truckRoute");
+  const selectedRoute = routeSelect.selectedOptions[0];
+  const assignedPlate = selectedRoute?.dataset.assignedPlate || "";
+  const currentPlate = payload.plate;
+  if (payload.route_id && assignedPlate && assignedPlate !== currentPlate) {
+    const accepted = await confirmDialog({
+      title: "Reasignar ruta",
+      message: `La ruta está asignada al camión ${assignedPlate}. Si continúas, ese camión quedará sin ruta y se asignará a ${currentPlate}.`,
+      confirmText: "Reasignar",
+      danger: false,
+    });
+    if (!accepted) return;
+  }
+
   setButtonLoading(button, true, "Guardando…");
   try {
     if (id) {

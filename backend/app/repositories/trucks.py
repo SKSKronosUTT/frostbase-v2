@@ -20,7 +20,12 @@ def get(db: Session, truck_id: int, *, include_deleted: bool = False) -> Truck |
 
 
 def get_by_plate(db: Session, plate: str) -> Truck | None:
-    return db.scalar(select(Truck).where(Truck.plate == plate.strip().upper()))
+    return db.scalar(
+        select(Truck).where(
+            Truck.plate == plate.strip().upper(),
+            Truck.is_deleted.is_(False),
+        )
+    )
 
 
 def list_paginated(

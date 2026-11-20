@@ -468,14 +468,29 @@ async function assignRoute() {
   if (state.mode !== "edit" || !state.routeId) return;
   const value = qs("#assignTruckSelect").value;
   const targetTruckId = value ? Number(value) : null;
+
+  if (!targetTruckId && !state.routeTruck) {
+    notify.info("La ruta ya no tiene un camión asignado.");
+    return;
+  }
+  if (targetTruckId && state.routeTruck && state.routeTruck.id === targetTruckId) {
+    notify.info("La ruta ya está asignada a ese camión.");
+    return;
+  }
+  if (targetTruckId && state.routeTruck) {
+    const accepted = await confirmDialog({
+      title: "Reasignar ruta",
+      message: `La ruta está asignada al camión ${state.routeTruck.plate}. Si continúas, ese camión quedará sin ruta.`,
+      confirmText: "Reasignar",
+      danger: false,
+    });
+    if (!accepted) return;
+  }
+
   const button = qs("#assignRouteButton");
   setButtonLoading(button, true, "Aplicando…");
   try {
     if (!targetTruckId) {
-      if (!state.routeTruck) {
-        notify.info("La ruta ya no tiene un camión asignado.");
-        return;
-      }
       await api.put(`/trucks/${state.routeTruck.id}`, { route_id: null });
       const route = await api.get(`/routes/${state.routeId}`);
       state.routeTruck = null;
@@ -484,10 +499,6 @@ async function assignRoute() {
       updateAssignOptions();
       notify.success("Ruta desasignada del camión.");
     } else {
-      if (state.routeTruck && state.routeTruck.id === targetTruckId) {
-        notify.info("La ruta ya está asignada a ese camión.");
-        return;
-      }
       const route = await api.post(`/routes/${state.routeId}/assign`, {
         truck_id: targetTruckId,
       });
