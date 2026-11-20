@@ -18,7 +18,7 @@ def list_trucks(
     _: CurrentAdmin,
     search: str | None = Query(default=None, max_length=100),
     status_filter: TruckStatusFilter | None = Query(default=None, alias="status"),
-    page: int = Query(default=1, ge=1),
+    page: int = Query(default=1, ge=1, le=10000),
     page_size: int = Query(default=20, ge=1, le=100),
 ) -> Page[TruckOut]:
     return truck_service.list_trucks(

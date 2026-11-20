@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import func, select
+from sqlalchemy import and_, func, or_, select
 from sqlalchemy.orm import Session
 
 from app.models.reading import Reading
@@ -47,6 +47,7 @@ def list_paginated(
     date_to: datetime | None = None,
     page: int = 1,
     page_size: int = 50,
+    cursor: tuple[datetime, int] | None = None,
 ) -> tuple[list[Reading], int]:
     stmt = select(Reading)
     count_stmt = select(func.count(Reading.id))
@@ -62,9 +63,20 @@ def list_paginated(
     for condition in conditions:
         stmt = stmt.where(condition)
         count_stmt = count_stmt.where(condition)
+    if cursor is not None:
+        cursor_timestamp, cursor_id = cursor
+        stmt = stmt.where(
+            or_(
+                Reading.reading_timestamp < cursor_timestamp,
+                and_(
+                    Reading.reading_timestamp == cursor_timestamp,
+                    Reading.id < cursor_id,
+                ),
+            )
+        )
     total = db.scalar(count_stmt) or 0
     stmt = (
-        stmt.order_by(Reading.reading_timestamp.desc())
+        stmt.order_by(Reading.reading_timestamp.desc(), Reading.id.desc())
         .offset((page - 1) * page_size)
         .limit(page_size)
     )

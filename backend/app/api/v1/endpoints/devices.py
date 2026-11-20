@@ -16,7 +16,7 @@ def list_devices(
     db: DbSession,
     _: CurrentAdmin,
     search: str | None = Query(default=None, max_length=100),
-    page: int = Query(default=1, ge=1),
+    page: int = Query(default=1, ge=1, le=10000),
     page_size: int = Query(default=20, ge=1, le=100),
 ) -> Page[DeviceOut]:
     return device_service.list_devices(

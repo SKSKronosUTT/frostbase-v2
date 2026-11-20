@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session, selectinload
 
 from app.models.route import DeliveryPoint, Route
 from app.models.truck import Truck
+from app.utils.search import escape_like
 
 
 def _with_relations():
@@ -27,8 +28,9 @@ def list_paginated(
     stmt = select(Route).options(*_with_relations())
     count_stmt = select(func.count(Route.id))
     if search:
-        stmt = stmt.where(Route.name.ilike(f"%{search.strip()}%"))
-        count_stmt = count_stmt.where(Route.name.ilike(f"%{search.strip()}%"))
+        pattern = f"%{escape_like(search.strip())}%"
+        stmt = stmt.where(Route.name.ilike(pattern, escape="\\"))
+        count_stmt = count_stmt.where(Route.name.ilike(pattern, escape="\\"))
     if status:
         stmt = stmt.where(Route.status == status)
         count_stmt = count_stmt.where(Route.status == status)

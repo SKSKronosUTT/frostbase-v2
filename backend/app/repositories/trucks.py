@@ -2,6 +2,7 @@ from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session, selectinload
 
 from app.models.truck import Truck
+from app.utils.search import escape_like
 
 
 def _with_relations():
@@ -33,11 +34,11 @@ def list_paginated(
     stmt = select(Truck).options(*_with_relations()).where(Truck.is_deleted.is_(False))
     count_stmt = select(func.count(Truck.id)).where(Truck.is_deleted.is_(False))
     if search:
-        pattern = f"%{search.strip()}%"
+        pattern = f"%{escape_like(search.strip())}%"
         condition = or_(
-            Truck.plate.ilike(pattern),
-            Truck.brand.ilike(pattern),
-            Truck.model.ilike(pattern),
+            Truck.plate.ilike(pattern, escape="\\"),
+            Truck.brand.ilike(pattern, escape="\\"),
+            Truck.model.ilike(pattern, escape="\\"),
         )
         stmt = stmt.where(condition)
         count_stmt = count_stmt.where(condition)

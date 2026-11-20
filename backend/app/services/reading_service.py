@@ -14,6 +14,7 @@ from app.schemas.iot import ReadingIngest
 from app.schemas.reading import ReadingOut
 from app.services import alert_service
 from app.services.serializers import serialize_reading
+from app.utils.pagination import encode_cursor
 from app.utils.time import ensure_utc, utcnow
 
 
@@ -91,6 +92,7 @@ def list_readings(
     date_to: datetime | None,
     page: int,
     page_size: int,
+    cursor: tuple[datetime, int] | None = None,
 ) -> Page[ReadingOut]:
     date_from = ensure_utc(date_from)
     date_to = ensure_utc(date_to)
@@ -102,10 +104,16 @@ def list_readings(
         date_to=date_to,
         page=page,
         page_size=page_size,
+        cursor=cursor,
     )
+    next_cursor = None
+    if readings and len(readings) == page_size:
+        last = readings[-1]
+        next_cursor = encode_cursor(last.reading_timestamp, last.id)
     return Page(
         items=[serialize_reading(reading) for reading in readings],
         total=total,
         page=page,
         page_size=page_size,
+        next_cursor=next_cursor,
     )

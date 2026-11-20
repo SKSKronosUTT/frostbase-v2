@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import func, select
+from sqlalchemy import and_, func, or_, select
 from sqlalchemy.orm import Session, selectinload
 
 from app.models.alert import Alert
@@ -26,6 +26,7 @@ def list_paginated(
     date_to: datetime | None = None,
     page: int = 1,
     page_size: int = 20,
+    cursor: tuple[datetime, int] | None = None,
 ) -> tuple[list[Alert], int]:
     stmt = select(Alert).options(selectinload(Alert.truck), selectinload(Alert.device))
     count_stmt = select(func.count(Alert.id))
@@ -43,9 +44,20 @@ def list_paginated(
     for condition in conditions:
         stmt = stmt.where(condition)
         count_stmt = count_stmt.where(condition)
+    if cursor is not None:
+        cursor_timestamp, cursor_id = cursor
+        stmt = stmt.where(
+            or_(
+                Alert.started_at < cursor_timestamp,
+                and_(
+                    Alert.started_at == cursor_timestamp,
+                    Alert.id < cursor_id,
+                ),
+            )
+        )
     total = db.scalar(count_stmt) or 0
     stmt = (
-        stmt.order_by(Alert.started_at.desc())
+        stmt.order_by(Alert.started_at.desc(), Alert.id.desc())
         .offset((page - 1) * page_size)
         .limit(page_size)
     )

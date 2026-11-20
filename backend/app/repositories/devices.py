@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session, selectinload
 
 from app.models.device import Device
 from app.models.truck import Truck
+from app.utils.search import escape_like
 
 
 def get(db: Session, device_pk: int) -> Device | None:
@@ -40,9 +41,9 @@ def list_all(
     stmt = select(Device).options(selectinload(Device.truck))
     count_stmt = select(func.count(Device.id))
     if search:
-        pattern = f"%{search.strip()}%"
-        stmt = stmt.where(Device.device_id.ilike(pattern))
-        count_stmt = count_stmt.where(Device.device_id.ilike(pattern))
+        pattern = f"%{escape_like(search.strip())}%"
+        stmt = stmt.where(Device.device_id.ilike(pattern, escape="\\"))
+        count_stmt = count_stmt.where(Device.device_id.ilike(pattern, escape="\\"))
     if unassigned_only:
         stmt = stmt.where(Device.truck_id.is_(None))
         count_stmt = count_stmt.where(Device.truck_id.is_(None))

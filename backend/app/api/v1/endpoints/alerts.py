@@ -8,6 +8,7 @@ from app.repositories import alerts as alerts_repo
 from app.schemas.alert import AlertOut
 from app.schemas.common import Page
 from app.services.serializers import serialize_alert
+from app.utils.pagination import decode_cursor, encode_cursor
 
 router = APIRouter(prefix="/alerts", tags=["Alertas"])
 
@@ -24,14 +25,23 @@ def list_alerts(
     status_filter: AlertStatusFilter | None = Query(default=None, alias="status"),
     date_from: datetime | None = Query(default=None),
     date_to: datetime | None = Query(default=None),
-    page: int = Query(default=1, ge=1),
+    page: int = Query(default=1, ge=1, le=10000),
     page_size: int = Query(default=20, ge=1, le=200),
+    cursor: str | None = Query(default=None, max_length=256),
 ) -> Page[AlertOut]:
     if date_from and date_to and date_from > date_to:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail="La fecha inicial no puede ser posterior a la final",
         )
+    parsed_cursor = None
+    if cursor:
+        parsed_cursor = decode_cursor(cursor)
+        if parsed_cursor is None:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="cursor inválido",
+            )
     alerts, total = alerts_repo.list_paginated(
         db,
         truck_id=truck_id,
@@ -41,12 +51,18 @@ def list_alerts(
         date_to=date_to,
         page=page,
         page_size=page_size,
+        cursor=parsed_cursor,
     )
+    next_cursor = None
+    if alerts and len(alerts) == page_size:
+        last = alerts[-1]
+        next_cursor = encode_cursor(last.started_at, last.id)
     return Page(
         items=[serialize_alert(alert) for alert in alerts],
         total=total,
         page=page,
         page_size=page_size,
+        next_cursor=next_cursor,
     )
 
 
