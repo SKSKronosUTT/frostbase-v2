@@ -52,6 +52,16 @@ def list_all(db: Session) -> list[Route]:
     )
 
 
+def list_options(
+    db: Session, *, search: str | None = None, limit: int = 500
+) -> list[tuple[int, str]]:
+    stmt = select(Route.id, Route.name).order_by(Route.name).limit(limit)
+    if search:
+        pattern = f"%{escape_like(search.strip())}%"
+        stmt = stmt.where(Route.name.ilike(pattern, escape="\\"))
+    return [(row[0], row[1]) for row in db.execute(stmt).all()]
+
+
 def create(db: Session, route: Route) -> Route:
     db.add(route)
     db.flush()

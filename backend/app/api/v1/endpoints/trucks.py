@@ -3,7 +3,7 @@ from typing import Literal
 from fastapi import APIRouter, HTTPException, Query, status
 
 from app.api.deps import CurrentAdmin, DbSession
-from app.schemas.common import Page
+from app.schemas.common import OptionOut, Page
 from app.schemas.truck import TruckCreate, TruckDetailOut, TruckOut, TruckUpdate
 from app.services import truck_service
 
@@ -42,6 +42,15 @@ def create_truck(payload: TruckCreate, db: DbSession, _: CurrentAdmin) -> TruckO
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc)
         ) from exc
+
+
+@router.get("/options", response_model=list[OptionOut])
+def list_truck_options(
+    db: DbSession,
+    _: CurrentAdmin,
+    search: str | None = Query(default=None, max_length=100),
+) -> list[OptionOut]:
+    return truck_service.list_truck_options(db, search=search)
 
 
 @router.get("/{truck_id}", response_model=TruckDetailOut)

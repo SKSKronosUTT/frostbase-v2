@@ -66,6 +66,27 @@ def list_active(db: Session) -> list[Truck]:
     )
 
 
+def list_options(
+    db: Session, *, search: str | None = None, limit: int = 500
+) -> list[tuple[int, str]]:
+    stmt = (
+        select(Truck.id, Truck.plate, Truck.brand, Truck.model)
+        .where(Truck.is_deleted.is_(False))
+        .order_by(Truck.plate)
+        .limit(limit)
+    )
+    if search:
+        pattern = f"%{escape_like(search.strip())}%"
+        stmt = stmt.where(
+            or_(
+                Truck.plate.ilike(pattern, escape="\\"),
+                Truck.brand.ilike(pattern, escape="\\"),
+                Truck.model.ilike(pattern, escape="\\"),
+            )
+        )
+    return [(row[0], f"{row[1]} · {row[2]} {row[3]}") for row in db.execute(stmt).all()]
+
+
 def count_by_status(db: Session) -> dict[str, int]:
     rows = db.execute(
         select(Truck.status, func.count(Truck.id))

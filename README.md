@@ -165,7 +165,16 @@ docker compose exec app python -m scripts.seed_demo
 
 El comando crea una ruta en Tijuana, 3 camiones y 2 dispositivos. **Imprime las claves de los dispositivos una sola vez**: cópialas si vas a usar el simulador.
 
-> Ejecutar el seed varias veces no duplica camiones ni dispositivos, pero sí puede crear rutas nuevas (se corrige en la Fase 4 del plan).
+> El seed es idempotente: ejecutarlo de nuevo no duplica rutas, camiones ni dispositivos. Opciones útiles:
+>
+> ```bash
+> # Mostrar de nuevo las claves generadas en esta ejecución
+> docker compose exec app python -m scripts.seed_demo --print-keys
+> # Datos extra para pruebas de carga
+> docker compose exec app python -m scripts.seed_demo --trucks 50 --devices 50
+> # Borrar los datos de demostración
+> docker compose exec app python -m scripts.seed_demo --reset
+> ```
 
 ---
 
@@ -454,7 +463,17 @@ El volumen de PostgreSQL conserva la contraseña con la que se creó. Si actuali
    uvicorn app.main:app --reload --host 0.0.0.0 --port 8050
    ```
 
-5. Abre `http://localhost:8050`. El frontend se sirve automáticamente desde `../frontend`.
+5. Abre `http://localhost:8050`. El frontend se sirve automáticamente desde `../frontend` o, si existe, desde `../frontend/build`.
+
+> Para probar el build de producción en local:
+>
+> ```bash
+> cd frontend
+> npm ci
+> npm run build
+> ```
+>
+> El backend detecta `frontend/build/index.html` y sirve los assets hasheados con caché inmutable. Sin build sirve el código fuente.
 
 > El esquema lo controla Alembic. Mantén `AUTO_CREATE_TABLES=false`; `create_all` solo se usa en pruebas automatizadas.
 >
@@ -471,9 +490,12 @@ El volumen de PostgreSQL conserva la contraseña con la que se creó. Si actuali
 | `compose.yml` | Servicios de Docker: aplicación y PostgreSQL. |
 | `.env.example` | Plantilla de configuración. Copiar a `.env` y completar. |
 | `backend/` | API en FastAPI, modelos, servicios, migraciones Alembic y scripts. |
-| `frontend/` | Panel web en HTML, CSS y JavaScript (sin build). |
+| `frontend/` | Panel web en HTML, CSS y JavaScript. `npm run build` genera `frontend/build` con assets hasheados. |
+| `frontend/tests/e2e/` | Flujos críticos con Playwright (login, flota, rutas, alertas, configuración). |
 | `iot-simulator/` | Simulador del dispositivo ESP32-S3. |
-| `docs/` | Instalación, API, base de datos, integración IoT y respaldos. |
+| `deploy/nginx.conf` | Proxy inverso de referencia con TLS, gzip y rate limit. |
+| `tasks.ps1` / `Makefile` | Tareas `dev`, `test`, `lint`, `build`, `seed` y `e2e`. |
+| `docs/` | Instalación, API, base de datos, integración IoT, runbook y respaldos. |
 | `PLAN-MEJORA.md` | Auditoría técnica y plan de mejora por fases. |
 
 Flujo simplificado:
@@ -483,6 +505,19 @@ Navegador  →  FastAPI (backend)  →  PostgreSQL
                     ↑
         Simulador / ESP32-S3 (API IoT)
 ```
+
+### Tareas de desarrollo
+
+```powershell
+.\tasks.ps1 dev      # docker compose up -d --build
+.\tasks.ps1 test     # PostgreSQL de test + pytest con cobertura
+.\tasks.ps1 lint     # ruff, mypy, ESLint, Prettier y checks de CSS/HTML
+.\tasks.ps1 build    # frontend/build con assets hasheados
+.\tasks.ps1 seed -Reset -PrintKeys -Trucks 20 -Devices 10
+.\tasks.ps1 e2e      # Playwright (requiere navegadores instalados)
+```
+
+En macOS/Linux use el `Makefile` equivalente (`make test`, `make lint`, `make build`).
 
 ---
 
@@ -495,7 +530,10 @@ Navegador  →  FastAPI (backend)  →  PostgreSQL
 | [docs/DATABASE.md](docs/DATABASE.md) | Tablas, relaciones y columnas. |
 | [docs/IOT-INTEGRATION.md](docs/IOT-INTEGRATION.md) | Integración de firmware ESP32-S3. |
 | [docs/ops/BACKUP-RESTORE.md](docs/ops/BACKUP-RESTORE.md) | Respaldo, restauración probada, RPO y RTO. |
+| [docs/ops/RUNBOOK.md](docs/ops/RUNBOOK.md) | Arranque, incidentes, rotación de secretos y retención. |
 | [docs/ops/perf-baseline.md](docs/ops/perf-baseline.md) | EXPLAIN, índices y tiempos del dashboard (Fase 3). |
+| [docs/ops/load-test.md](docs/ops/load-test.md) | Prueba de carga IoT y criterios p95 (Fase 4). |
+| [docs/api/openapi.json](docs/api/openapi.json) | Contrato OpenAPI versionado; CI detecta cambios. |
 | [PLAN-MEJORA.md](PLAN-MEJORA.md) | Estado de la remediación técnica y tareas pendientes. |
 
 ---
@@ -507,7 +545,8 @@ Navegador  →  FastAPI (backend)  →  PostgreSQL
 - El login tiene rate limit por IP e identificador, bloqueo progresivo y mensajes genéricos.
 - La ingesta IoT tiene rate limit por dispositivo e IP, ingesta atómica e idempotencia por `(device_id, timestamp)`.
 - Los JWT viajan en cookies `HttpOnly` (60 min) y se renuevan con `POST /auth/refresh`; las mutaciones por cookie exigen `X-CSRF-Token` (doble cookie `frostbase_csrf`).
-- El backend envía cabeceras de seguridad (`X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`) y CSP en `Report-Only`.
+- El backend envía cabeceras de seguridad (`X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`) y **CSP activa** (`default-src 'self'`, sin CDN ni scripts inline).
+- Los assets (Leaflet, Font Awesome y Outfit) se sirven localmente desde `frontend/assets`; el panel funciona sin Internet salvo los tiles del mapa y las APIs externas.
 - Cambiar la contraseña incrementa `token_version` y revoca los JWT anteriores.
 - Nunca subas `.env`, respaldos ni claves reales al repositorio.
 - Para exponer la aplicación fuera de `localhost`, usa HTTPS y un proxy inverso; revisa la sección de producción en [docs/INSTALLATION.md](docs/INSTALLATION.md).

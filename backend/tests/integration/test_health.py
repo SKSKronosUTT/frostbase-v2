@@ -16,5 +16,6 @@ def test_security_headers_and_request_id(client):
     assert response.headers["X-Content-Type-Options"] == "nosniff"
     assert response.headers["X-Frame-Options"] == "DENY"
     assert response.headers["Referrer-Policy"] == "strict-origin-when-cross-origin"
-    assert "Content-Security-Policy-Report-Only" in response.headers
+    assert "Content-Security-Policy" in response.headers
+    assert "Report-Only" not in response.headers
     assert response.headers.get("X-Request-ID")

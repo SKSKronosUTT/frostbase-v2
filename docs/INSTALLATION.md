@@ -83,6 +83,9 @@ Variables que el código lee actualmente:
 | `WEATHER_TIMEOUT_SECONDS` | — | `3` | Timeout de Open-Meteo. |
 | `WEATHER_CACHE_SECONDS` | — | `600` | TTL de la caché de clima. |
 | `ROUTE_GEOMETRY_ASYNC` | — | `false` | `true` guarda la ruta y calcula la geometría en segundo plano. |
+| `READINGS_RETENTION_DAYS` | — | `90` | Días de lecturas que conserva el job de retención. |
+| `RESOLVED_ALERTS_RETENTION_DAYS` | — | `365` | Días de alertas resueltas que conserva la retención. |
+| `RETENTION_CHECK_SECONDS` | — | `86400` | Frecuencia del job de retención en el `watcher`. |
 | `FRONTEND_DIR` | — | autodetectado | Ruta alternativa del frontend. |
 
 Las variables `DEVICE_OFFLINE_SECONDS`, `WEATHER_CITY`, `WEATHER_LATITUDE` y
@@ -245,9 +248,29 @@ mypy app
 docker compose -f compose.test.yml down
 ```
 
-Resultado actual: **47 passed** y cobertura **78 %**. El contenedor instala las
+Resultado actual: **50 passed** y cobertura **78 %**. El contenedor instala las
 dependencias desde `requirements.lock` (versiones y hashes fijados); para
 desarrollo se usa `requirements-dev.txt`.
+
+### 7.2 Build del frontend
+
+```bash
+cd frontend
+npm ci
+npm run build
+```
+
+Genera `frontend/build` con CSS/JS minificados y hasheados, `manifest.json` y los
+assets vendorizados. El backend sirve ese directorio si existe; en su defecto
+sirve el código fuente. En CI y en la imagen Docker el build es obligatorio.
+
+Verificaciones adicionales:
+
+```bash
+npm run check:css    # selectores duplicados entre archivos
+npm run check:html   # interpolaciones innerHTML sin escape
+npx playwright test  # E2E (requiere navegadores instalados)
+```
 
 Si usa otra base, defina `TEST_DATABASE_URL` antes de `pytest`. La suite fija
 `SECRET_KEY`, `DEVICE_KEY_PEPPER` y `ADMIN_PASSWORD` de test antes de importar

@@ -7,3 +7,8 @@ class Page[T](BaseModel):
     page: int
     page_size: int
     next_cursor: str | None = None
+
+
+class OptionOut(BaseModel):
+    id: int
+    label: str
