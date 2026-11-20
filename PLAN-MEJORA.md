@@ -14,7 +14,7 @@
 | Fases de trabajo | 4 (F1 · F2 · F3 · F4) |
 | Tareas totales | 39 |
 | Esfuerzo estimado | 132–164 h |
-| Estado global | 🟨 F1 y F2 tareas completadas · gates manuales pendientes · F3–F4 pendientes |
+| Estado global | 🟨 F1–F3 tareas completadas · gates manuales pendientes · F4 pendiente |
 
 ---
 
@@ -1270,18 +1270,18 @@ try {
 | T2.6 | F2 | ✅ | OpenCode (agente IA) | `e45c322` | 2026-11-19 | Límites antes del hash; `Retry-After` + `X-RateLimit-*`; semántica 401/409/422/429. Prueba real 30×401 + 10×429. |
 | T2.7 | F2 | ✅ | OpenCode (agente IA) | `63332e4` | 2026-11-19 | `compose.test.yml`, `conftest.py` y tests de auth/IoT (incluye `/iot/config`). `pytest -q` → **11 passed**. Ampliado en `a5a76ec` con la recuperación de clave del simulador. |
 | T2.8 | F2 | ✅ | OpenCode (agente IA) | `c8868d4` | 2026-11-19 | `docs/API.md`, `docs/IOT-INTEGRATION.md`, `docs/INSTALLATION.md` y README actualizados: ventana de timestamp, `duplicate`, 429, cabeceras, backoff y rotación de claves. |
-| T3.1 | F3 | ⬜ | — | — | — | — |
-| T3.2 | F3 | ⬜ | — | — | — | — |
-| T3.3 | F3 | ⬜ | — | — | — | — |
-| T3.4 | F3 | ⬜ | — | — | — | — |
-| T3.5 | F3 | ⬜ | — | — | — | — |
-| T3.6 | F3 | ⬜ | — | — | — | — |
-| T3.7 | F3 | ⬜ | — | — | — | — |
-| T3.8 | F3 | ⬜ | — | — | — | — |
-| T3.9 | F3 | ⬜ | — | — | — | — |
-| T3.10 | F3 | ⬜ | — | — | — | — |
-| T3.11 | F3 | ⬜ | — | — | — | — |
-| T3.12 | F3 | ⬜ | — | — | — | — |
+| T3.1 | F3 | ✅ | OpenCode (agente IA) | `7aa000c` | 2026-11-20 | `ruff check`/`ruff format` limpios; `mypy app` sin errores; `requirements.lock` con hashes generado en Python 3.12/Linux; CI con PostgreSQL 16, cobertura ≥70 %, ESLint y build Docker; 47 tests, cobertura 78 %. |
+| T3.2 | F3 | ✅ | OpenCode (agente IA) | `aae075b` | 2026-11-20 | `count_active_by_truck` en SQL; `get_truck_detail` ya no carga todas las alertas; `find_active` sin `selectinload` innecesario. |
+| T3.3 | F3 | ✅ | OpenCode (agente IA) | `5b291f9` | 2026-11-20 | Migración 0005 (`ix_readings_received_at DESC`, `ix_alerts_truck_status`); caché TTL 10 s invalidada al guardar settings; geometría RDP (478→60 puntos); efectividad en una query. Baseline: `max(received_at)` 0.30 ms, última por camión 0.14 ms, summary 58.9 ms frío/10–12 ms caliente. |
+| T3.4 | F3 | ✅ | OpenCode (agente IA) | `95175da` | 2026-11-20 | Watcher con INSERT/UPDATE set-based y `ON CONFLICT`; `started_at = last_seen`; servicio `watcher` con advisory lock; flag `ENABLE_INPROCESS_WATCHER=false`; test de creación/resolución. |
+| T3.5 | F3 | ✅ | OpenCode (agente IA) | `edb2c64` | 2026-11-20 | `httpx.AsyncClient` compartido, timeouts 3 s clima / 5 s OSRM, circuit breaker 3 fallos/60 s; migración 0007 `geometry_status` y flag `ROUTE_GEOMETRY_ASYNC`; endpoints de rutas async. |
+| T3.6 | F3 | ✅ | OpenCode (agente IA) | `cadbc9a` | 2026-11-20 | `page` con `le=10000`; cursores keyset en readings/alerts (`next_cursor`); escape de `%`, `_` y `\` en búsquedas; orden estable documentado. |
+| T3.7 | F3 | ✅ | OpenCode (agente IA) | `e45e760` | 2026-11-20 | Migración 0006 con índice único parcial `uq_trucks_plate_active`; placa reutilizable tras baja lógica; confirmación de reasignación en rutas y camiones; test de reutilización. |
+| T3.8 | F3 | ✅ | OpenCode (agente IA) | `95188ef` | 2026-11-20 | `get_db` transaccional; sin `commit()` en repositorios ni servicios; `TxSession` eliminado; scripts y bootstrap hacen commit explícito; tests verdes. |
+| T3.9 | F3 | ✅ | OpenCode (agente IA) | `470628c` | 2026-11-20 | `docker/Dockerfile` multi-stage, `USER app` (uid 999), `HEALTHCHECK /health/ready`, `WEB_CONCURRENCY=2`, límites, servicio watcher, `deploy/nginx.conf` y perfil Redis opcional. |
+| T3.10 | F3 | ✅ | OpenCode (agente IA) | `470628c` | 2026-11-20 | `/health/live` y `/health/ready` (DB + Alembic head); logging JSON con `request_id`; cabeceras de seguridad, CSP Report-Only y `TrustedHostMiddleware`. |
+| T3.11 | F3 | ✅ | OpenCode (agente IA) | `470628c` | 2026-11-20 | CSRF de doble cookie (`frostbase_csrf` + `X-CSRF-Token`) para mutaciones por cookie; `/auth/refresh`; sesión de 60 min; reintento silencioso en `api.js`; tests 403/200. |
+| T3.12 | F3 | ✅ | OpenCode (agente IA) | `435d5ef` | 2026-11-20 | Eliminadas variables de config no usadas, `trucks_without_contact`, `unassign_truck`, `truck_exists`, `freshness_threshold`, `assign_route_to_truck`, `MessageOut` y `dependencies=[]`; `admin.count` con `func.count`; test de config. |
 | T4.1 | F4A | ⬜ | — | — | — | — |
 | T4.2 | F4A | ⬜ | — | — | — | — |
 | T4.3 | F4A | ⬜ | — | — | — | — |
@@ -1301,7 +1301,7 @@ try {
 |---|:--:|---|---|
 | F1 cerrado | 🟨 | 2026-11-19 | 7/7 tareas ✅ · `import app.main` con `.env` válido · login + rotación/revocación probados por API · `alembic current == head` · restore drill 0.79 s · **pendiente:** §10 manual en navegador con simulador 10 min (modal de cambio forzado y flujo del panel) |
 | F2 cerrado | 🟨 | 2026-11-19 | 8/8 tareas ✅ · `pytest -q` 11 passed · loadcheck 30×401 + 10×429 · idempotencia real (3 envíos → 1 lectura) · migraciones 0003/0004 up/down · **pendiente:** §10 manual con simulador 10 min y revisión visual del panel |
-| F3 cerrado | ⬜ | — | — |
+| F3 cerrado | 🟨 | 2026-11-20 | 12/12 tareas ✅ · `ruff`/`mypy` limpios · 47 tests y cobertura 78 % · contenedor no-root healthy · migraciones 0005/0006/0007 aplicadas · baseline de rendimiento archivado · **pendiente:** §10 manual con simulador 10 min y revisión visual |
 | F4A cerrado | ⬜ | — | — |
 | F4B cerrado | ⬜ | — | — |
 

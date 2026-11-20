@@ -131,10 +131,11 @@ La primera vez tarda varios minutos porque descarga y construye la imagen. Cuand
 docker compose ps
 ```
 
-Deberías ver dos servicios, `frostbase-v4-db` y `frostbase-v4-app`, con estado **healthy** o **running**. Si quieres ver el arranque en vivo:
+Deberías ver tres servicios: `frostbase-v4-db`, `frostbase-v4-app` y `frostbase-v4-watcher`, con estado **healthy** o **running**. La aplicación corre con un usuario **no root** y el contenedor incluye un `HEALTHCHECK` contra `/health/ready`. Si quieres ver el arranque en vivo:
 
 ```bash
 docker compose logs -f app
+docker compose logs -f watcher
 ```
 
 > `Ctrl+C` sale de los logs, pero **no detiene** la aplicación.
@@ -178,19 +179,23 @@ Haz estas tres comprobaciones rápidas:
    docker compose ps
    ```
 
-   Ambos servicios deben aparecer como `healthy` o `running`.
+   Deben aparecer `frostbase-v4-db`, `frostbase-v4-app` y
+   `frostbase-v4-watcher` como `healthy` o `running`.
 
-2. **API viva:**
+2. **API y esquema listos:**
 
    ```bash
-   curl http://localhost:8050/health
+   curl http://localhost:8050/health/ready
    ```
 
    Respuesta esperada:
 
    ```json
-   {"status":"ok","service":"FrostBase"}
+   {"status":"ready","service":"FrostBase","schema":"0007_route_geometry_status"}
    ```
+
+   `/health/live` solo comprueba el proceso; `/health/ready` verifica PostgreSQL y
+   que Alembic esté en la última revisión.
 
 3. **Panel visible:** abre `http://localhost:8050` y entra con `admin` y tu `ADMIN_PASSWORD`.
 
@@ -299,9 +304,10 @@ python -m venv .venv
 source .venv/bin/activate        # Windows: .\.venv\Scripts\Activate.ps1
 pip install -r requirements-dev.txt
 pytest -q
+pytest --cov=app --cov-report=term-missing
 ```
 
-Resultado esperado: `11 passed` en menos de 60 segundos. Para limpiar la base de pruebas:
+Resultado esperado: **47 passed** y cobertura **≥ 70 %** (actual: 78 %). Para limpiar la base de pruebas:
 
 ```bash
 docker compose -f compose.test.yml down
@@ -314,6 +320,7 @@ docker compose -f compose.test.yml down
 | Quiero… | Comando |
 |---|---|
 | Ver los logs de la aplicación | `docker compose logs -f app` |
+| Ver los logs del watcher | `docker compose logs -f watcher` |
 | Detener sin borrar datos | `docker compose down` |
 | Volver a arrancar | `docker compose up -d` |
 | Reiniciar tras cambiar código | `docker compose up -d --build` |
@@ -488,6 +495,7 @@ Navegador  →  FastAPI (backend)  →  PostgreSQL
 | [docs/DATABASE.md](docs/DATABASE.md) | Tablas, relaciones y columnas. |
 | [docs/IOT-INTEGRATION.md](docs/IOT-INTEGRATION.md) | Integración de firmware ESP32-S3. |
 | [docs/ops/BACKUP-RESTORE.md](docs/ops/BACKUP-RESTORE.md) | Respaldo, restauración probada, RPO y RTO. |
+| [docs/ops/perf-baseline.md](docs/ops/perf-baseline.md) | EXPLAIN, índices y tiempos del dashboard (Fase 3). |
 | [PLAN-MEJORA.md](PLAN-MEJORA.md) | Estado de la remediación técnica y tareas pendientes. |
 
 ---
@@ -498,7 +506,8 @@ Navegador  →  FastAPI (backend)  →  PostgreSQL
 - Las contraseñas se guardan con Argon2 y las claves de dispositivo se almacenan hasheadas (HMAC-SHA256 en claves nuevas y Argon2 en las legacy).
 - El login tiene rate limit por IP e identificador, bloqueo progresivo y mensajes genéricos.
 - La ingesta IoT tiene rate limit por dispositivo e IP, ingesta atómica e idempotencia por `(device_id, timestamp)`.
-- Los JWT viajan en cookies `HttpOnly`; en producción se exige `COOKIE_SECURE=true` y HTTPS.
+- Los JWT viajan en cookies `HttpOnly` (60 min) y se renuevan con `POST /auth/refresh`; las mutaciones por cookie exigen `X-CSRF-Token` (doble cookie `frostbase_csrf`).
+- El backend envía cabeceras de seguridad (`X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`) y CSP en `Report-Only`.
 - Cambiar la contraseña incrementa `token_version` y revoca los JWT anteriores.
 - Nunca subas `.env`, respaldos ni claves reales al repositorio.
 - Para exponer la aplicación fuera de `localhost`, usa HTTPS y un proxy inverso; revisa la sección de producción en [docs/INSTALLATION.md](docs/INSTALLATION.md).
@@ -517,4 +526,6 @@ Antes de modificar código, lee **[PLAN-MEJORA.md](PLAN-MEJORA.md)**. Allí est�
 >
 > ✅ **Tareas de la Fase 2 completadas:** rate limiting, login en tiempo constante con lockout, claves de dispositivo HMAC, ingesta IoT atómica e idempotente y arnés de pruebas con PostgreSQL real.
 >
-> Queda pendiente la regresión manual de los gates F1/F2 (navegador + simulador 10 min). El estado de las fases restantes está en `PLAN-MEJORA.md` §9.
+> ✅ **Tareas de la Fase 3 completadas:** índices y caché del dashboard, watcher SQL fuera del proceso web, I/O externo asíncrono con circuit breaker, paginación keyset, placa reutilizable tras borrado lógico, UnitOfWork transaccional, contenedor no-root, `/health/ready`, logging JSON, CSRF/refresh, limpieza de configuración y CI con ruff/mypy/cobertura.
+>
+> Queda pendiente la regresión manual de los gates F1/F2/F3 (navegador + simulador 10 min). El estado de las fases restantes está en `PLAN-MEJORA.md` §9.
