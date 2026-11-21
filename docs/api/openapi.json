@@ -783,6 +783,389 @@
         "title": "DeviceUpdate",
         "type": "object"
       },
+      "DriverAdminOut": {
+        "properties": {
+          "birthdate": {
+            "format": "date",
+            "title": "Birthdate",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "email": {
+            "title": "Email",
+            "type": "string"
+          },
+          "first_name": {
+            "title": "First Name",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "is_active": {
+            "title": "Is Active",
+            "type": "boolean"
+          },
+          "last_login": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Login"
+          },
+          "last_name": {
+            "title": "Last Name",
+            "type": "string"
+          },
+          "middle_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Middle Name"
+          },
+          "must_change_password": {
+            "title": "Must Change Password",
+            "type": "boolean"
+          },
+          "phone": {
+            "title": "Phone",
+            "type": "string"
+          },
+          "truck": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DriverTruckBrief"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "first_name",
+          "last_name",
+          "email",
+          "phone",
+          "birthdate",
+          "is_active",
+          "must_change_password",
+          "created_at"
+        ],
+        "title": "DriverAdminOut",
+        "type": "object"
+      },
+      "DriverCreate": {
+        "properties": {
+          "birthdate": {
+            "format": "date",
+            "title": "Birthdate",
+            "type": "string"
+          },
+          "email": {
+            "maxLength": 254,
+            "minLength": 3,
+            "title": "Email",
+            "type": "string"
+          },
+          "first_name": {
+            "maxLength": 80,
+            "minLength": 1,
+            "title": "First Name",
+            "type": "string"
+          },
+          "last_name": {
+            "maxLength": 80,
+            "minLength": 1,
+            "title": "Last Name",
+            "type": "string"
+          },
+          "middle_name": {
+            "anyOf": [
+              {
+                "maxLength": 80,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Middle Name"
+          },
+          "password": {
+            "anyOf": [
+              {
+                "maxLength": 255,
+                "minLength": 12,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Password"
+          },
+          "phone": {
+            "maxLength": 20,
+            "minLength": 10,
+            "title": "Phone",
+            "type": "string"
+          },
+          "truck_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Truck Id"
+          }
+        },
+        "required": [
+          "first_name",
+          "last_name",
+          "email",
+          "phone",
+          "birthdate"
+        ],
+        "title": "DriverCreate",
+        "type": "object"
+      },
+      "DriverCreatedOut": {
+        "description": "La contraseña temporal solo aparece en la respuesta de alta/reset.",
+        "properties": {
+          "birthdate": {
+            "format": "date",
+            "title": "Birthdate",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "email": {
+            "title": "Email",
+            "type": "string"
+          },
+          "first_name": {
+            "title": "First Name",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "is_active": {
+            "title": "Is Active",
+            "type": "boolean"
+          },
+          "last_login": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Login"
+          },
+          "last_name": {
+            "title": "Last Name",
+            "type": "string"
+          },
+          "middle_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Middle Name"
+          },
+          "must_change_password": {
+            "title": "Must Change Password",
+            "type": "boolean"
+          },
+          "phone": {
+            "title": "Phone",
+            "type": "string"
+          },
+          "temporary_password": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Temporary Password"
+          },
+          "truck": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DriverTruckBrief"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "first_name",
+          "last_name",
+          "email",
+          "phone",
+          "birthdate",
+          "is_active",
+          "must_change_password",
+          "created_at"
+        ],
+        "title": "DriverCreatedOut",
+        "type": "object"
+      },
+      "DriverDeactivationOut": {
+        "properties": {
+          "affected_routes": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/DriverRouteBrief"
+            },
+            "title": "Affected Routes",
+            "type": "array"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "title": "DriverDeactivationOut",
+        "type": "object"
+      },
+      "DriverDetailOut": {
+        "properties": {
+          "birthdate": {
+            "format": "date",
+            "title": "Birthdate",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "email": {
+            "title": "Email",
+            "type": "string"
+          },
+          "first_name": {
+            "title": "First Name",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "is_active": {
+            "title": "Is Active",
+            "type": "boolean"
+          },
+          "last_login": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Login"
+          },
+          "last_name": {
+            "title": "Last Name",
+            "type": "string"
+          },
+          "middle_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Middle Name"
+          },
+          "must_change_password": {
+            "title": "Must Change Password",
+            "type": "boolean"
+          },
+          "phone": {
+            "title": "Phone",
+            "type": "string"
+          },
+          "routes": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/DriverRouteBrief"
+            },
+            "title": "Routes",
+            "type": "array"
+          },
+          "truck": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DriverTruckBrief"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "first_name",
+          "last_name",
+          "email",
+          "phone",
+          "birthdate",
+          "is_active",
+          "must_change_password",
+          "created_at"
+        ],
+        "title": "DriverDetailOut",
+        "type": "object"
+      },
       "DriverMeOut": {
         "properties": {
           "created_at": {
@@ -860,6 +1243,24 @@
         "title": "DriverMeOut",
         "type": "object"
       },
+      "DriverOptionOut": {
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "label"
+        ],
+        "title": "DriverOptionOut",
+        "type": "object"
+      },
       "DriverOut": {
         "properties": {
           "created_at": {
@@ -927,6 +1328,70 @@
         "title": "DriverOut",
         "type": "object"
       },
+      "DriverRouteBrief": {
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "status"
+        ],
+        "title": "DriverRouteBrief",
+        "type": "object"
+      },
+      "DriverTripOut": {
+        "properties": {
+          "ended_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ended At"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "started_at": {
+            "format": "date-time",
+            "title": "Started At",
+            "type": "string"
+          },
+          "state": {
+            "title": "State",
+            "type": "string"
+          },
+          "truck_id": {
+            "title": "Truck Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "state",
+          "started_at",
+          "truck_id"
+        ],
+        "title": "DriverTripOut",
+        "type": "object"
+      },
       "DriverTruckBrief": {
         "properties": {
           "id": {
@@ -943,6 +1408,101 @@
           "plate"
         ],
         "title": "DriverTruckBrief",
+        "type": "object"
+      },
+      "DriverTruckIn": {
+        "properties": {
+          "truck_id": {
+            "title": "Truck Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "truck_id"
+        ],
+        "title": "DriverTruckIn",
+        "type": "object"
+      },
+      "DriverUpdate": {
+        "properties": {
+          "birthdate": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Birthdate"
+          },
+          "email": {
+            "anyOf": [
+              {
+                "maxLength": 254,
+                "minLength": 3,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email"
+          },
+          "first_name": {
+            "anyOf": [
+              {
+                "maxLength": 80,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "First Name"
+          },
+          "last_name": {
+            "anyOf": [
+              {
+                "maxLength": 80,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Name"
+          },
+          "middle_name": {
+            "anyOf": [
+              {
+                "maxLength": 80,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Middle Name"
+          },
+          "phone": {
+            "anyOf": [
+              {
+                "maxLength": 20,
+                "minLength": 10,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phone"
+          }
+        },
+        "title": "DriverUpdate",
         "type": "object"
       },
       "HTTPValidationError": {
@@ -1260,6 +1820,90 @@
           "page_size"
         ],
         "title": "Page[DeviceOut]",
+        "type": "object"
+      },
+      "Page_DriverAdminOut_": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/DriverAdminOut"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          },
+          "page": {
+            "title": "Page",
+            "type": "integer"
+          },
+          "page_size": {
+            "title": "Page Size",
+            "type": "integer"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "page",
+          "page_size"
+        ],
+        "title": "Page[DriverAdminOut]",
+        "type": "object"
+      },
+      "Page_DriverTripOut_": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/DriverTripOut"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          },
+          "page": {
+            "title": "Page",
+            "type": "integer"
+          },
+          "page_size": {
+            "title": "Page Size",
+            "type": "integer"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "page",
+          "page_size"
+        ],
+        "title": "Page[DriverTripOut]",
         "type": "object"
       },
       "Page_ReadingOut_": {
@@ -3354,6 +3998,552 @@
         "summary": "Me",
         "tags": [
           "Conductor"
+        ]
+      }
+    },
+    "/api/v1/drivers": {
+      "get": {
+        "operationId": "list_drivers_api_v1_drivers_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "search",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 100,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Search"
+            }
+          },
+          {
+            "in": "query",
+            "name": "active",
+            "required": false,
+            "schema": {
+              "default": "true",
+              "enum": [
+                "true",
+                "false",
+                "all"
+              ],
+              "title": "Active",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "has_truck",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Has Truck"
+            }
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "maximum": 10000,
+              "minimum": 1,
+              "title": "Page",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "page_size",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Page Size",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page_DriverAdminOut_"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Drivers",
+        "tags": [
+          "Conductores"
+        ]
+      },
+      "post": {
+        "operationId": "create_driver_api_v1_drivers_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DriverCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DriverCreatedOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Driver",
+        "tags": [
+          "Conductores"
+        ]
+      }
+    },
+    "/api/v1/drivers/options": {
+      "get": {
+        "description": "Conductores activos con camión asignado (para selectores de rutas, G4).",
+        "operationId": "list_driver_options_api_v1_drivers_options_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/DriverOptionOut"
+                  },
+                  "title": "Response List Driver Options Api V1 Drivers Options Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List Driver Options",
+        "tags": [
+          "Conductores"
+        ]
+      }
+    },
+    "/api/v1/drivers/{driver_id}": {
+      "delete": {
+        "description": "Baja lógica: libera el camión y revoca las sesiones del conductor.",
+        "operationId": "deactivate_driver_api_v1_drivers__driver_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "driver_id",
+            "required": true,
+            "schema": {
+              "title": "Driver Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DriverDeactivationOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Deactivate Driver",
+        "tags": [
+          "Conductores"
+        ]
+      },
+      "get": {
+        "operationId": "get_driver_api_v1_drivers__driver_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "driver_id",
+            "required": true,
+            "schema": {
+              "title": "Driver Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DriverDetailOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Driver",
+        "tags": [
+          "Conductores"
+        ]
+      },
+      "patch": {
+        "operationId": "update_driver_api_v1_drivers__driver_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "driver_id",
+            "required": true,
+            "schema": {
+              "title": "Driver Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DriverUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DriverAdminOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update Driver",
+        "tags": [
+          "Conductores"
+        ]
+      }
+    },
+    "/api/v1/drivers/{driver_id}/reset-password": {
+      "post": {
+        "description": "Genera una contraseña temporal visible una sola vez.",
+        "operationId": "reset_password_api_v1_drivers__driver_id__reset_password_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "driver_id",
+            "required": true,
+            "schema": {
+              "title": "Driver Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DriverCreatedOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Reset Password",
+        "tags": [
+          "Conductores"
+        ]
+      }
+    },
+    "/api/v1/drivers/{driver_id}/restore": {
+      "post": {
+        "operationId": "restore_driver_api_v1_drivers__driver_id__restore_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "driver_id",
+            "required": true,
+            "schema": {
+              "title": "Driver Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DriverAdminOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Restore Driver",
+        "tags": [
+          "Conductores"
+        ]
+      }
+    },
+    "/api/v1/drivers/{driver_id}/trips": {
+      "get": {
+        "operationId": "list_driver_trips_api_v1_drivers__driver_id__trips_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "driver_id",
+            "required": true,
+            "schema": {
+              "title": "Driver Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "maximum": 10000,
+              "minimum": 1,
+              "title": "Page",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "page_size",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Page Size",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page_DriverTripOut_"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Driver Trips",
+        "tags": [
+          "Conductores"
+        ]
+      }
+    },
+    "/api/v1/drivers/{driver_id}/truck": {
+      "delete": {
+        "operationId": "remove_truck_api_v1_drivers__driver_id__truck_delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "driver_id",
+            "required": true,
+            "schema": {
+              "title": "Driver Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DriverAdminOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Remove Truck",
+        "tags": [
+          "Conductores"
+        ]
+      },
+      "put": {
+        "operationId": "assign_truck_api_v1_drivers__driver_id__truck_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "driver_id",
+            "required": true,
+            "schema": {
+              "title": "Driver Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DriverTruckIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DriverAdminOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Assign Truck",
+        "tags": [
+          "Conductores"
         ]
       }
     },
