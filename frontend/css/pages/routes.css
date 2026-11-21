@@ -408,3 +408,68 @@
 .map--editor-spaced {
   margin-top: 8px;
 }
+
+/* ===== Conductor y calendario semanal (G4) ===== */
+
+.weekday-picker {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border: 0;
+  padding: 0;
+  margin: 0 0 10px;
+}
+
+.weekday-picker legend {
+  padding: 0;
+  margin-right: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  float: left;
+}
+
+.weekday-picker__day {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 30px;
+  border: 2px solid var(--border-ink);
+  background: var(--surface);
+  cursor: pointer;
+}
+
+.weekday-picker__day input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.weekday-picker__day span {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.weekday-picker__day:has(input:checked) {
+  background: var(--accent-mid);
+  color: #ffffff;
+}
+
+.weekday-picker__day:has(input:checked) span {
+  color: #ffffff;
+}
+
+.route-driver-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}

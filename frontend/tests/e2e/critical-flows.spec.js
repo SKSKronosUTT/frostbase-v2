@@ -128,10 +128,90 @@ test("configuración de umbrales y tema", async ({ page }) => {
   ).toBeVisible();
 });
 
+test("asignar conductor y calendario semanal a una ruta", async ({ page }) => {
+  const api = page.context().request;
+  const csrf = await csrfToken(page.context());
+  const suffix = `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
+
+  // Conductor activo con camión (requisito de asignación de rutas).
+  const truck = await api.post("/api/v1/trucks", {
+    headers: { "X-CSRF-Token": csrf },
+    data: {
+      brand: "E2E",
+      model: "Calendario",
+      year: 2024,
+      plate: `E2E-G4-${suffix}`,
+      status: "disponible",
+    },
+  });
+  expect(truck.status()).toBe(201);
+  const driver = await api.post("/api/v1/drivers", {
+    headers: { "X-CSRF-Token": csrf },
+    data: {
+      first_name: "Beto",
+      last_name: "Castañeda",
+      email: `beto.g4.${suffix}@frostbase.local`,
+      phone: "6643334445",
+      birthdate: "1985-02-10",
+      truck_id: (await truck.json()).id,
+    },
+  });
+  expect(driver.status()).toBe(201);
+
+  const route = await api.post("/api/v1/routes", {
+    headers: { "X-CSRF-Token": csrf },
+    data: {
+      description: "Ruta G4",
+      status: "activa",
+      points: [
+        { name: "G4 A", latitude: 32.52, longitude: -117.04 },
+        { name: "G4 B", latitude: 32.53, longitude: -117.05 },
+      ],
+    },
+  });
+  expect(route.status()).toBe(201);
+  const routeId = (await route.json()).id;
+
+  await page.goto(`/routes.html?id=${routeId}`);
+  await expect(page.locator("#routeEditorTitle")).toContainText("G4 A");
+  await page
+    .locator("#assignDriverSelect")
+    .selectOption(String((await driver.json()).id));
+  await page.locator('[data-weekday="1"]').check();
+  await page.locator('[data-weekday="4"]').check();
+  await page.locator("#assignDriverButton").click();
+  await expect(page.locator("#routeEditorMeta")).toContainText(
+    "Conductor: Beto Castañeda (LJ)"
+  );
+
+  // El filtro «Sin conductor» ya no muestra la ruta migrada.
+  await page.locator("#routeDriverFilter").selectOption("pending");
+  await expect(page.locator(`[data-route-id="${routeId}"]`)).toHaveCount(0);
+
+  await page.locator("#routeDriverFilter").selectOption("assigned");
+  await expect(page.locator(`[data-route-id="${routeId}"]`)).toContainText(
+    "Beto Castañeda · LJ"
+  );
+
+  // Limpieza: quitar conductor, ruta y camión de prueba.
+  await api.put(`/api/v1/routes/${routeId}/driver`, {
+    headers: { "X-CSRF-Token": csrf },
+    data: { driver_id: null, weekdays: [] },
+  });
+  await api.delete(`/api/v1/routes/${routeId}`, {
+    headers: { "X-CSRF-Token": csrf },
+  });
+  await api.delete(`/api/v1/trucks/${(await truck.json()).id}`, {
+    headers: { "X-CSRF-Token": csrf },
+  });
+});
+
 test("borrado lógico y reutilización de placa", async ({ page }) => {
   const api = page.context().request;
   const csrf = await csrfToken(page.context());
-  const plate = `REU-${Date.now().toString().slice(-6)}`;
+  const plate = `REU-${Date.now().toString(36)}${Math.random()
+    .toString(36)
+    .slice(2, 6)}`.toUpperCase();
   const created = await api.post("/api/v1/trucks", {
     headers: { "X-CSRF-Token": csrf },
     data: {
@@ -188,6 +268,7 @@ test("alta de conductor con contraseña temporal y baja lógica", async ({
   const temporaryPassword = await page.locator("#secretValue").textContent();
   expect(temporaryPassword?.length ?? 0).toBeGreaterThanOrEqual(12);
   await page.getByRole("button", { name: "Entendido" }).click();
+  await page.locator("#driverSearch").fill(`elena.${suffix}@frostbase.local`);
   await expect(page.getByText(`elena.${suffix}@frostbase.local`)).toBeVisible();
 
   // El conductor entra con la contraseña temporal y se le exige cambiarla.

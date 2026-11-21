@@ -16,7 +16,9 @@ import { listSkeleton, panelState, renderTableState } from "../components/feedba
 const state = {
   routes: [],
   trucks: [],
+  driverOptions: [],
   search: "",
+  driverFilter: "",
   page: 1,
   pageSize: 12,
   total: 0,
@@ -27,12 +29,16 @@ const state = {
   geometryStale: false,
   warning: null,
   routeTruck: null,
+  routeDriver: null,
+  routeDays: [],
   map: null,
   pointMarkers: [],
   line: null,
   fitPending: false,
   uid: 0,
 };
+
+const WEEKDAY_INITIALS = ["D", "L", "M", "X", "J", "V", "S"];
 
 const pointsList = qs("#pointsList");
 
@@ -93,16 +99,23 @@ function updateHeader() {
     state.geometry && !state.geometryStale
       ? "Geometría calculada"
       : "Sin geometría calculada";
+  const driverLabel = state.routeDriver
+    ? ` · Conductor: ${state.routeDriver.full_name}`
+    : " · Sin conductor";
+  const daysLabel = state.routeDays.length
+    ? ` (${state.routeDays.map((day) => WEEKDAY_INITIALS[day]).join("")})`
+    : "";
   const truckLabel = state.routeTruck
-    ? ` · Asignada a ${state.routeTruck.plate}`
-    : " · Sin camión asignado";
+    ? ` · Camión (legado): ${state.routeTruck.plate}`
+    : "";
   qs("#routeEditorMeta").textContent = `${state.points.length} punto${
     state.points.length === 1 ? "" : "s"
-  } · ${geometryLabel}${truckLabel}`;
+  } · ${geometryLabel}${driverLabel}${daysLabel}${truckLabel}`;
   qs("#routePointsCount").textContent = `(${state.points.length})`;
   qs("#deleteRouteButton").classList.toggle("hidden", state.mode === "new");
   qs("#calculateRouteButton").classList.toggle("hidden", state.mode === "new");
   qs("#routeAssign").classList.toggle("hidden", state.mode === "new");
+  qs("#routeDriverAssign").classList.toggle("hidden", state.mode === "new");
 }
 
 function updateAssignOptions() {
@@ -231,6 +244,8 @@ function showEmptyEditor() {
   state.points = [];
   state.geometry = null;
   state.routeTruck = null;
+  state.routeDriver = null;
+  state.routeDays = [];
   state.pointMarkers.forEach(({ marker }) => marker.remove());
   state.pointMarkers = [];
   updateLine();
@@ -274,6 +289,15 @@ function renderRoutesList() {
         route.status === "activa"
           ? '<span class="badge badge--success">Activa</span>'
           : '<span class="badge badge--muted">Inactiva</span>';
+      const driver = route.assigned_driver
+        ? `<span><i class="fa-solid fa-user-shield"></i>${escapeHtml(
+            route.assigned_driver.full_name
+          )}${
+            route.delivery_days.length
+              ? ` · ${route.delivery_days.map((day) => WEEKDAY_INITIALS[day]).join("")}`
+              : ""
+          }</span>`
+        : '<span><i class="fa-solid fa-user-shield"></i>Sin conductor</span>';
       return `
         <button class="route-list-item ${
           route.id === state.routeId ? "is-active" : ""
@@ -284,10 +308,13 @@ function renderRoutesList() {
           </div>
           <div class="route-list-item__meta">
             <span><i class="fa-solid fa-location-dot"></i>${route.points.length} puntos</span>
+            ${driver}
             ${
               route.truck
-                ? `<span><i class="fa-solid fa-truck"></i>${escapeHtml(route.truck.plate)}</span>`
-                : '<span><i class="fa-solid fa-truck"></i>Sin asignar</span>'
+                ? `<span><i class="fa-solid fa-truck"></i>${escapeHtml(
+                    route.truck.plate
+                  )} (legado)</span>`
+                : ""
             }
           </div>
         </button>
@@ -325,15 +352,39 @@ function applyRoute(route, { fit = true } = {}) {
   state.geometryStale = false;
   state.warning = route.warning || null;
   state.routeTruck = route.truck || null;
+  state.routeDriver = route.assigned_driver || null;
+  state.routeDays = route.delivery_days || [];
   qs("#routeStatus").value = route.status;
   qs("#routeDescription").value = route.description || "";
   updateAssignOptions();
+  updateDriverAssignForm();
   renderPoints();
   showEditor();
   updateHeader();
   renderWarning();
   renderMap({ fit });
   history.replaceState({}, "", `routes.html?id=${route.id}`);
+}
+
+function updateDriverAssignForm() {
+  const select = qs("#assignDriverSelect");
+  const current = state.routeDriver ? String(state.routeDriver.id) : "";
+  const options =
+    '<option value="">Sin conductor asignado</option>' +
+    state.driverOptions
+      .map(
+        (driver) =>
+          `<option value="${driver.id}" ${
+            String(driver.id) === current ? "selected" : ""
+          }>${escapeHtml(driver.label)}</option>`
+      )
+      .join("");
+  select.innerHTML = options;
+  select.value = current;
+
+  document.querySelectorAll("[data-weekday]").forEach((checkbox) => {
+    checkbox.checked = state.routeDays.includes(Number(checkbox.dataset.weekday));
+  });
 }
 
 function startNewRoute() {
@@ -344,9 +395,12 @@ function startNewRoute() {
   state.geometryStale = false;
   state.warning = null;
   state.routeTruck = null;
+  state.routeDriver = null;
+  state.routeDays = [];
   qs("#routeStatus").value = "activa";
   qs("#routeDescription").value = "";
   updateAssignOptions();
+  updateDriverAssignForm();
   renderPoints();
   showEditor();
   updateHeader();
@@ -565,6 +619,8 @@ async function loadRoutes() {
       page_size: state.pageSize,
     });
     if (state.search) params.set("search", state.search);
+    if (state.driverFilter === "pending") params.set("missing_driver", "true");
+    if (state.driverFilter === "assigned") params.set("missing_driver", "false");
     const data = await api.get(`/routes?${params.toString()}`);
     state.total = data.total;
     state.routes = data.items;
@@ -597,12 +653,87 @@ async function loadTrucks() {
   }
 }
 
+async function loadDriverOptions() {
+  try {
+    state.driverOptions = await api.get("/drivers/options");
+    updateDriverAssignForm();
+  } catch (error) {
+    notify.error(error.message, { title: "No se pudieron cargar los conductores" });
+  }
+}
+
+async function assignRouteDriver() {
+  if (state.mode !== "edit" || !state.routeId) return;
+  const driverId = qs("#assignDriverSelect").value;
+  const weekdays = Array.from(document.querySelectorAll("[data-weekday]"))
+    .filter((checkbox) => checkbox.checked)
+    .map((checkbox) => Number(checkbox.dataset.weekday));
+
+  if (!driverId) {
+    notify.warning("Selecciona un conductor. Para quitarlo usa «Quitar conductor».");
+    return;
+  }
+
+  const button = qs("#assignDriverButton");
+  setButtonLoading(button, true, "Guardando…");
+  try {
+    const route = await api.put(`/routes/${state.routeId}/driver`, {
+      driver_id: Number(driverId),
+      weekdays,
+    });
+    state.routeDriver = route.assigned_driver;
+    state.routeDays = route.delivery_days;
+    syncRouteInList(route);
+    updateHeader();
+    updateDriverAssignForm();
+    notify.success("Conductor y calendario guardados correctamente.");
+  } catch (error) {
+    notify.error(error.message, { title: "No se pudo asignar el conductor" });
+  } finally {
+    setButtonLoading(button, false);
+  }
+}
+
+async function removeRouteDriver() {
+  if (state.mode !== "edit" || !state.routeId) return;
+  if (!state.routeDriver) {
+    notify.info("Esta ruta no tiene conductor asignado.");
+    return;
+  }
+  const accepted = await confirmDialog({
+    title: "Quitar conductor",
+    message: `La ruta quedará sin conductor y sin días de entrega. ${
+      state.routeTruck ? "El vínculo legado con el camión se conserva." : ""
+    }`,
+    confirmText: "Quitar conductor",
+    danger: true,
+  });
+  if (!accepted) return;
+
+  try {
+    const route = await api.put(`/routes/${state.routeId}/driver`, {
+      driver_id: null,
+      weekdays: [],
+    });
+    state.routeDriver = route.assigned_driver;
+    state.routeDays = route.delivery_days;
+    syncRouteInList(route);
+    updateHeader();
+    updateDriverAssignForm();
+    notify.success("Conductor retirado de la ruta.");
+  } catch (error) {
+    notify.error(error.message, { title: "No se pudo quitar el conductor" });
+  }
+}
+
 function wireEvents() {
   qs("#newRouteButton").addEventListener("click", startNewRoute);
   qs("#saveRouteButton").addEventListener("click", saveRoute);
   qs("#calculateRouteButton").addEventListener("click", calculateRoute);
   qs("#deleteRouteButton").addEventListener("click", deleteRoute);
   qs("#assignRouteButton").addEventListener("click", assignRoute);
+  qs("#assignDriverButton").addEventListener("click", assignRouteDriver);
+  qs("#removeDriverButton").addEventListener("click", removeRouteDriver);
 
   qs("#addPointButton").addEventListener("click", () => {
     if (!state.map) return;
@@ -618,6 +749,12 @@ function wireEvents() {
       loadRoutes();
     }, 280)
   );
+
+  qs("#routeDriverFilter").addEventListener("change", (event) => {
+    state.driverFilter = event.target.value;
+    state.page = 1;
+    loadRoutes();
+  });
 
   qs("#routesList").addEventListener("click", (event) => {
     const item = event.target.closest("[data-route-id]");
@@ -664,7 +801,7 @@ async function init() {
   await initProtectedPage();
   state.map = createMap("routeMap", { zoom: 12 });
   wireEvents();
-  await Promise.all([loadRoutes(), loadTrucks()]);
+  await Promise.all([loadRoutes(), loadTrucks(), loadDriverOptions()]);
   const id = Number(new URLSearchParams(window.location.search).get("id"));
   if (id) {
     let route = state.routes.find((item) => item.id === id);
