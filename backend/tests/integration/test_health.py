@@ -1,3 +1,6 @@
+from app.main import _alembic_head
+
+
 def test_health_live_and_ready(client):
     live = client.get("/health/live")
     assert live.status_code == 200
@@ -7,7 +10,7 @@ def test_health_live_and_ready(client):
     assert ready.status_code == 200
     body = ready.json()
     assert body["status"] == "ready"
-    assert body["schema"] == "0007_route_geometry_status"
+    assert body["schema"] == _alembic_head()
 
 
 def test_security_headers_and_request_id(client):

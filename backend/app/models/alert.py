@@ -24,6 +24,7 @@ class Alert(Base):
         ),
         Index("ix_alerts_status_started", "status", "started_at"),
         Index("ix_alerts_truck_status", "truck_id", "status"),
+        Index("ix_alerts_trip_started", "trip_id", "started_at"),
     )
 
     id: Mapped[int] = mapped_column(primary_key=True)
@@ -32,6 +33,9 @@ class Alert(Base):
     )
     device_id: Mapped[int | None] = mapped_column(
         ForeignKey("devices.id", ondelete="SET NULL"), nullable=True, index=True
+    )
+    trip_id: Mapped[int | None] = mapped_column(
+        ForeignKey("trips.id", ondelete="SET NULL"), nullable=True, index=True
     )
     alert_type: Mapped[str] = mapped_column(String(30), nullable=False)
     value: Mapped[float | None] = mapped_column(Float, nullable=True)
@@ -45,6 +49,12 @@ class Alert(Base):
         DateTime(timezone=True), nullable=True
     )
     status: Mapped[str] = mapped_column(String(20), default="activa", nullable=False)
+    acknowledged_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    acknowledged_by: Mapped[int | None] = mapped_column(
+        ForeignKey("drivers.id", ondelete="SET NULL"), nullable=True
+    )
 
     truck: Mapped["Truck | None"] = relationship(
         back_populates="alerts", lazy="selectin"

@@ -33,6 +33,9 @@ class Setting(Base):
     weather_longitude: Mapped[float] = mapped_column(
         Float, default=-117.0382, nullable=False
     )
+    door_open_grace_seconds: Mapped[int] = mapped_column(
+        Integer, default=30, server_default="30", nullable=False
+    )
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=utcnow, onupdate=utcnow, nullable=False
     )

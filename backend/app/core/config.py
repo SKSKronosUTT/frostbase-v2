@@ -1,6 +1,7 @@
 from functools import lru_cache
 from pathlib import Path
 from typing import Literal
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from pydantic import field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -71,6 +72,8 @@ class Settings(BaseSettings):
 
     route_geometry_async: bool = False
 
+    app_timezone: str = "America/Tijuana"
+
     frontend_dir: str = ""
 
     @field_validator("secret_key", "device_key_pepper")
@@ -96,6 +99,16 @@ class Settings(BaseSettings):
         if value == "ChangeMe123!":
             raise ValueError("no puede ser la contraseña por defecto del proyecto")
         return value
+
+    @field_validator("app_timezone")
+    @classmethod
+    def _valid_timezone(cls, value: str) -> str:
+        normalized = value.strip()
+        try:
+            ZoneInfo(normalized)
+        except ZoneInfoNotFoundError as exc:
+            raise ValueError(f"zona horaria desconocida: {normalized}") from exc
+        return normalized
 
     @model_validator(mode="after")
     def _production_coherence(self) -> "Settings":
@@ -133,6 +146,11 @@ class Settings(BaseSettings):
     @property
     def is_production(self) -> bool:
         return self.environment.lower() in {"production", "prod"}
+
+    @property
+    def tz(self) -> ZoneInfo:
+        """Zona horaria de negocio (calendario semanal de rutas)."""
+        return ZoneInfo(self.app_timezone)
 
 
 @lru_cache

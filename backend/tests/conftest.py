@@ -85,7 +85,11 @@ def _clean_database():
         db.execute(
             text(
                 "TRUNCATE TABLE admins, alerts, readings, devices, trucks, "
-                "delivery_points, routes, settings RESTART IDENTITY CASCADE"
+                "delivery_points, routes, settings, drivers, "
+                "driver_truck_assignments, login_identities, "
+                "route_delivery_days, stores, trips, trip_orders, trip_logs, "
+                "door_events, truck_threshold_overrides "
+                "RESTART IDENTITY CASCADE"
             )
         )
         db.commit()

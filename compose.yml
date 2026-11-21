@@ -32,6 +32,7 @@ x-app-environment: &app-environment
   ALLOWED_HOSTS: ${ALLOWED_HOSTS:-localhost,127.0.0.1}
   LOG_LEVEL: ${LOG_LEVEL:-INFO}
   WEB_CONCURRENCY: ${WEB_CONCURRENCY:-2}
+  APP_TIMEZONE: ${APP_TIMEZONE:-America/Tijuana}
 
 services:
   db:
