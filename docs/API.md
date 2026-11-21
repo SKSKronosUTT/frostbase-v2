@@ -205,6 +205,62 @@ La placa se normaliza a mayúsculas y es única. `route_id` y `device_id` son op
 
 ---
 
+## Conductores (rol administrador)
+
+Gestión CRUD de conductores. Todos los endpoints requieren rol `admin`;
+un conductor recibe `403`.
+
+| Método | Ruta | Descripción |
+|---|---|---|
+| `GET` | `/drivers` | Lista paginada. `search`, `active` (`true`/`false`/`all`), `has_truck` |
+| `GET` | `/drivers/options` | Conductores activos con camión (para selectores de rutas) |
+| `POST` | `/drivers` | Crea conductor (RF4). Devuelve `temporary_password` **una sola vez** |
+| `GET` | `/drivers/{id}` | Detalle con camión asignado y rutas |
+| `PATCH` | `/drivers/{id}` | Edita datos (RF6). Cambiar el correo revoca las sesiones |
+| `DELETE` | `/drivers/{id}` | Baja lógica: libera camión, revoca sesiones y reporta `affected_routes` |
+| `POST` | `/drivers/{id}/restore` | Reactiva al conductor |
+| `POST` | `/drivers/{id}/reset-password` | Contraseña temporal visible una sola vez |
+| `PUT` | `/drivers/{id}/truck` | Asigna o reasigna camión (relevo con historial) |
+| `DELETE` | `/drivers/{id}/truck` | Quita el camión asignado |
+| `GET` | `/drivers/{id}/trips` | Historial de viajes del conductor |
+
+### Reglas
+
+- **Correo único global**: no puede coincidir con otro conductor ni con un
+  administrador (`409`). Un conductor inactivo conserva su correo reservado:
+  se sugiere restaurarlo en lugar de duplicarlo.
+- **Contraseña**: opcional en el alta. Si se omite, se genera una temporal de
+  16 caracteres que se devuelve **una sola vez**; siempre se exige cambio en
+  el primer ingreso (`must_change_password = true`).
+- **Baja lógica**: rechazada con `409` si el conductor tiene un viaje en
+  curso. Si no, `is_active = false`, se cierra la asignación de camión y
+  `token_version += 1` (sus sesiones mueren de inmediato). Las rutas activas
+  que tenían a este conductor se devuelven en `affected_routes`.
+- **Asignación de camión**: el camión debe existir y no estar en mantenimiento;
+  un camión solo puede tener un conductor activo (`409`). El relevo cierra la
+  asignación anterior y abre la nueva en la misma transacción.
+- Validaciones: teléfono de 10–15 dígitos y conductor mayor de 18 años (`422`).
+
+### Ejemplo de alta
+
+```json
+{
+  "first_name": "María",
+  "last_name": "López",
+  "middle_name": null,
+  "email": "maria.lopez@frostbase.local",
+  "phone": "6641234567",
+  "birthdate": "1988-07-22",
+  "password": null,
+  "truck_id": null
+}
+```
+
+La respuesta incluye `temporary_password` (por ejemplo `k7Rm2xQvPz9bNaWc`),
+visible solo en esa llamada.
+
+---
+
 ## Dispositivos IoT
 
 | Método | Ruta | Descripción |

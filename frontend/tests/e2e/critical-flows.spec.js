@@ -165,3 +165,109 @@ test("borrado lógico y reutilización de placa", async ({ page }) => {
     headers: { "X-CSRF-Token": csrf },
   });
 });
+
+test("alta de conductor con contraseña temporal y baja lógica", async ({
+  page,
+  browser,
+}) => {
+  const api = page.context().request;
+  const csrf = await csrfToken(page.context());
+  const suffix = `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
+
+  await page.goto("/drivers.html");
+  await page.getByRole("button", { name: "Nuevo conductor" }).click();
+  await page.locator("#driverFirstName").fill("Elena");
+  await page.locator("#driverLastName").fill("Ramírez");
+  await page.locator("#driverEmail").fill(`elena.${suffix}@frostbase.local`);
+  await page.locator("#driverPhone").fill("6641112223");
+  await page.locator("#driverBirthdate").fill("1991-04-05");
+  await page.locator("#driverSubmit").click();
+
+  const secret = page.locator("#secretModal");
+  await expect(secret).toBeVisible();
+  const temporaryPassword = await page.locator("#secretValue").textContent();
+  expect(temporaryPassword?.length ?? 0).toBeGreaterThanOrEqual(12);
+  await page.getByRole("button", { name: "Entendido" }).click();
+  await expect(page.getByText(`elena.${suffix}@frostbase.local`)).toBeVisible();
+
+  // El conductor entra con la contraseña temporal y se le exige cambiarla.
+  // Se usa un contexto aparte para no sustituir la sesión de administrador.
+  const driverContext = await browser.newContext();
+  const driverApi = driverContext.request;
+  const login = await driverApi.post("/api/v1/auth/login", {
+    data: {
+      identifier: `elena.${suffix}@frostbase.local`,
+      password: temporaryPassword,
+    },
+  });
+  expect(login.ok()).toBeTruthy();
+  expect((await login.json()).role).toBe("driver");
+
+  // Baja lógica desde el panel y reactivación desde el filtro de inactivos.
+  const listed = await api.get(`/api/v1/drivers?search=elena.${suffix}&active=true`);
+  expect(listed.ok(), await listed.text()).toBeTruthy();
+  const [driver] = (await listed.json()).items;
+  expect(driver).toBeTruthy();
+
+  await page
+    .locator(`[data-driver-action="deactivate"][data-id="${driver.id}"]`)
+    .click();
+  await page.getByRole("button", { name: "Desactivar" }).click();
+  await expect(page.getByText(`elena.${suffix}@frostbase.local`)).toHaveCount(0);
+
+  const inactiveLogin = await driverApi.post("/api/v1/auth/login", {
+    data: {
+      identifier: `elena.${suffix}@frostbase.local`,
+      password: temporaryPassword,
+    },
+  });
+  expect(inactiveLogin.status()).toBe(401);
+
+  await page.locator("#driverActiveFilter").selectOption("false");
+  await page.locator(`[data-driver-action="restore"][data-id="${driver.id}"]`).click();
+  await expect(
+    page.locator(`[data-driver-action="restore"][data-id="${driver.id}"]`)
+  ).toHaveCount(0);
+
+  // De vuelta en el filtro de activos, el conductor aparece con su acción de baja.
+  await page.locator("#driverActiveFilter").selectOption("true");
+  await expect(
+    page.locator(`[data-driver-action="deactivate"][data-id="${driver.id}"]`)
+  ).toBeVisible();
+
+  const restored = await api.get("/api/v1/drivers?active=false");
+  const inactive = (await restored.json()).items;
+  const stillInactive = inactive.find(
+    (item) => item.email === `elena.${suffix}@frostbase.local`
+  );
+  expect(stillInactive).toBeUndefined();
+
+  // Edición: asignar un camión desde el mismo formulario (regresión de api.patch).
+  const plate = `E2E-DT-${suffix}`;
+  const createdTruck = await api.post("/api/v1/trucks", {
+    headers: { "X-CSRF-Token": csrf },
+    data: {
+      brand: "E2E",
+      model: "Conductor",
+      year: 2024,
+      plate,
+      status: "disponible",
+    },
+  });
+  expect(createdTruck.status()).toBe(201);
+
+  await page.locator(`[data-driver-action="truck"][data-id="${driver.id}"]`).click();
+  await expect(page.locator("#driverModal")).toBeVisible();
+  await page
+    .locator("#driverTruckSelect")
+    .selectOption(String((await createdTruck.json()).id));
+  await page.locator("#driverSubmit").click();
+  await expect(page.locator("#driverModal")).toBeHidden();
+  await expect(page.getByText(plate).first()).toBeVisible();
+
+  await api.delete(`/api/v1/trucks/${(await createdTruck.json()).id}`, {
+    headers: { "X-CSRF-Token": csrf },
+  });
+
+  await driverContext.close();
+});

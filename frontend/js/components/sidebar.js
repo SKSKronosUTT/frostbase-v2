@@ -5,6 +5,12 @@ import { toggleTheme } from "../core/theme.js";
 const NAV_ITEMS = [
   { page: "dashboard", label: "Inicio", href: "dashboard.html", icon: "fa-house" },
   { page: "trucks", label: "Flota", href: "trucks.html", icon: "fa-truck" },
+  {
+    page: "drivers",
+    label: "Conductores",
+    href: "drivers.html",
+    icon: "fa-user-shield",
+  },
   { page: "routes", label: "Rutas", href: "routes.html", icon: "fa-route" },
   {
     page: "alerts",

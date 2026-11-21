@@ -1,0 +1,27 @@
+/* Conductores (G3). Los componentes genéricos viven en components.css. */
+
+.drivers-card .toolbar {
+  padding: 16px 18px;
+}
+
+.drivers-table td {
+  vertical-align: middle;
+}
+
+.drivers-card .hint {
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.drivers-card .secret-box {
+  margin-top: 10px;
+}
+
+@media (max-width: 900px) {
+  .drivers-table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+}

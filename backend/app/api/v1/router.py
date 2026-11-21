@@ -6,6 +6,7 @@ from app.api.v1.endpoints import (
     dashboard,
     devices,
     driver,
+    drivers,
     iot,
     readings,
     routes,
@@ -24,3 +25,4 @@ api_router.include_router(alerts.router)
 api_router.include_router(settings.router)
 api_router.include_router(iot.router)
 api_router.include_router(driver.router)
+api_router.include_router(drivers.router)

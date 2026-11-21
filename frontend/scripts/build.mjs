@@ -20,6 +20,7 @@ const PAGES = [
   "alerts.html",
   "settings.html",
   "driver.html",
+  "drivers.html",
 ];
 
 function hashedName(name, content) {
