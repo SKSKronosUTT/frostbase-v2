@@ -1,7 +1,17 @@
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Index, Integer, String, Text, text
+from sqlalchemy import (
+    Boolean,
+    DateTime,
+    Float,
+    ForeignKey,
+    Index,
+    Integer,
+    String,
+    Text,
+    text,
+)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
@@ -53,3 +63,33 @@ class Truck(Base):
     )
     readings: Mapped[list["Reading"]] = relationship(back_populates="truck")
     alerts: Mapped[list["Alert"]] = relationship(back_populates="truck")
+
+
+class TruckThresholdOverride(Base):
+    """Umbrales por camión (H3): ``NULL`` significa "usar el valor global".
+
+    Los servicios resuelven el rango efectivo con fallback a ``settings``;
+    la base de datos garantiza un solo override por camión.
+    """
+
+    __tablename__ = "truck_threshold_overrides"
+    __table_args__ = (
+        Index("uq_truck_threshold_overrides_truck", "truck_id", unique=True),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    truck_id: Mapped[int] = mapped_column(
+        ForeignKey("trucks.id", ondelete="CASCADE"), nullable=False
+    )
+    temperature_ideal: Mapped[float | None] = mapped_column(Float, nullable=True)
+    temperature_tolerance: Mapped[float | None] = mapped_column(Float, nullable=True)
+    humidity_ideal: Mapped[float | None] = mapped_column(Float, nullable=True)
+    humidity_tolerance: Mapped[float | None] = mapped_column(Float, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utcnow, nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utcnow, onupdate=utcnow, nullable=False
+    )
+
+    truck: Mapped[Truck] = relationship()

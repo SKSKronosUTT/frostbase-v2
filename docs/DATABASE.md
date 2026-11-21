@@ -140,9 +140,116 @@ Fila única (`id = 1`).
 | `weather_city` | varchar(120) | `Tijuana` |
 | `weather_latitude` | double | `32.5149` |
 | `weather_longitude` | double | `-117.0382` |
+| `door_open_grace_seconds` | integer | `30` |
 | `updated_at` | timestamptz | |
 
 Los mínimos y máximos se calculan en el servicio (`ideal ± tolerancia`), no se almacenan.
+
+## Tablas del módulo de conductores (G1)
+
+### drivers
+
+| Columna | Tipo | Notas |
+|---|---|---|
+| `id` | integer PK | |
+| `first_name` / `last_name` / `middle_name` | varchar(80) | `middle_name` nullable |
+| `email` | varchar(254) | único por `lower(email)` |
+| `phone` | varchar(20) | |
+| `birthdate` | date | |
+| `password_hash` | varchar(255) | Argon2, nunca se devuelve |
+| `is_active` | boolean | baja lógica |
+| `must_change_password` | boolean | fuerza cambio en el primer login |
+| `token_version` | integer | revocación de sesiones |
+| `created_by` | integer FK → `admins.id` | auditoría, `SET NULL` |
+| `last_login` / `created_at` / `updated_at` | timestamptz | |
+
+### login_identities
+
+Correo como identificador global de acceso: un email no puede existir a la vez
+como administrador y como conductor (`uq_login_identities_email`). Columnas:
+`email`, `account_type` (`admin`/`driver`), `account_id`, `created_at`.
+Los servicios la mantienen en la misma transacción que crean/reactivan cuentas.
+
+### driver_truck_assignments
+
+Historial de relevo conductor–camión. Una sola asignación **activa** por
+conductor (`uq_assignment_active_driver`) y por camión
+(`uq_assignment_active_truck`), ambas índices únicos parciales sobre
+`unassigned_at IS NULL`. Columnas: `driver_id` (RESTRICT), `truck_id`
+(RESTRICT), `assigned_by` → `admins.id`, `assigned_at`, `unassigned_at`.
+
+### routes (nuevas columnas) y route_delivery_days
+
+- `routes.assigned_driver_id` → `drivers.id` (`SET NULL`): **la ruta pertenece
+  al conductor**. `trucks.route_id` se conserva durante la transición hasta que
+  el administrador reasigne los vínculos existentes.
+- `route_delivery_days`: calendario semanal `weekday 0=domingo … 6=sábado`
+  con una sola ruta activa por conductor y día
+  (`uq_route_delivery_days_driver_weekday`). `driver_id` está desnormalizado
+  para poder exigirlo en la base de datos; los servicios lo mantienen coherente
+  con `routes.assigned_driver_id`.
+
+### stores y delivery_points.store_id
+
+`stores` es el catálogo de destinos (`name`, `address`, `phone`, lat/lon,
+`is_deleted`). `delivery_points.store_id` enlaza la parada con su tienda; la
+parada conserva su copia de nombre/dirección/coordenadas para el historial.
+
+### trips
+
+| Columna | Tipo | Notas |
+|---|---|---|
+| `id` | integer PK | |
+| `driver_id` | FK → `drivers.id` | RESTRICT |
+| `truck_id` | FK → `trucks.id` | RESTRICT |
+| `route_id` | FK → `routes.id` | nullable, `SET NULL` (historial) |
+| `state` | varchar(20) | `in_progress` / `completed` |
+| `started_at` / `ended_at` | timestamptz | |
+| `created_at` | timestamptz | |
+
+Solo un viaje `in_progress` por conductor (`uq_trips_active_driver`) y por
+camión (`uq_trips_active_truck`), con índices únicos parciales.
+
+### trip_orders
+
+Órdenes congeladas del viaje: `trip_id` (CASCADE), `delivery_point_id` y
+`store_id` (ambas `SET NULL`), `order_index` (único por viaje), `name`,
+`address`, `latitude`, `longitude`, `state` (`pending` / `in_delivery` /
+`delivered` / `failed`), `started_at`, `delivered_at`, `failure_reason`.
+
+`ck_trip_orders_failed_reason` exige motivo de texto libre no vacío cuando
+`state = 'failed'` (decisión G0: no hay reprogramación automática).
+
+### trip_logs
+
+Bitácora de eventos de viaje y de órdenes: `trip_id` (CASCADE), `order_id`
+(CASCADE, nullable), `event`, `detail`, `actor_admin_id` / `actor_driver_id`
+(`SET NULL`), `created_at`.
+
+### door_events
+
+Eventos de puerta del contenedor, idempotentes por
+`uq_door_events_device_time (device_id, event_time)`. Columnas: `device_id`
+(RESTRICT), `truck_id` (`SET NULL`), `is_open`, `event_time`, `received_at`,
+`evaluated_at`, `alert_id` → `alerts.id` (`SET NULL`).
+
+El índice parcial `ix_door_events_pending` deja listos los eventos abiertos sin
+evaluar para el escaneo del watcher: la alerta `puerta` solo se crea si, al
+vencer `settings.door_open_grace_seconds` (30 s por defecto), la puerta sigue
+abierta durante un viaje `in_progress` sin una orden `in_delivery`.
+
+### alerts (nuevas columnas)
+
+- `trip_id` → `trips.id` (`SET NULL`) e índice `ix_alerts_trip_started`.
+- `acknowledged_at` / `acknowledged_by` → `drivers.id`: acuse
+  "marcar como vista/entendida".
+
+### truck_threshold_overrides
+
+Umbrales por camión (H3): `truck_id` único (CASCADE) y `temperature_ideal`,
+`temperature_tolerance`, `humidity_ideal`, `humidity_tolerance` nullable.
+`NULL` significa "usar el valor global de `settings`"; los servicios resuelven
+el rango efectivo con fallback.
 
 ## Reglas de negocio relevantes
 
@@ -152,6 +259,10 @@ Los mínimos y máximos se calculan en el servicio (`ideal ± tolerancia`), no s
 4. **Desconexión:** tarea periódica (`DISCONNECT_CHECK_SECONDS`) marca dispositivos con `last_seen` vencido y crea/resuelve alertas.
 5. **Baja de camiones:** lógica (`is_deleted = true`), conservando lecturas y alertas históricas.
 6. **Rutas:** requieren al menos dos coordenadas distintas; el nombre se deriva del primer y último punto.
+7. **Conductores:** la baja lógica (`is_active = false`) y el cambio de contraseña incrementan `token_version`, invalidando sus sesiones.
+8. **Relevo conductor–camión:** cerrar la asignación anterior (`unassigned_at`) y abrir la nueva en la misma transacción.
+9. **Ruta de hoy:** se resuelve en el servidor con `APP_TIMEZONE` (`America/Tijuana`) y el calendario de `route_delivery_days`.
+10. **Puerta no autorizada:** alerta solo si, vencida la gracia de `door_open_grace_seconds`, la puerta sigue abierta en un viaje `in_progress` sin orden `in_delivery`.
 
 ## Operaciones útiles
 
