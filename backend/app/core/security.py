@@ -3,7 +3,7 @@ import hmac
 import secrets
 import threading
 from datetime import UTC, datetime, timedelta
-from typing import Any
+from typing import Any, Literal
 
 import jwt
 from cachetools import TTLCache
@@ -35,7 +35,11 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 
 
 def create_access_token(
-    subject: str, expires_minutes: int | None = None, *, token_version: int = 1
+    subject: str,
+    expires_minutes: int | None = None,
+    *,
+    token_version: int = 1,
+    token_type: Literal["admin", "driver"] = "admin",
 ) -> str:
     expire = datetime.now(UTC) + timedelta(
         minutes=expires_minutes or settings.access_token_expire_minutes
@@ -44,7 +48,7 @@ def create_access_token(
         "sub": str(subject),
         "exp": expire,
         "iat": datetime.now(UTC),
-        "type": "admin",
+        "type": token_type,
         "tv": token_version,
     }
     return jwt.encode(payload, settings.secret_key, algorithm=ALGORITHM)

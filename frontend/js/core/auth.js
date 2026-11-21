@@ -4,8 +4,8 @@ let cachedAdmin = null;
 
 export async function login(identifier, password) {
   const response = await api.post("/auth/login", { identifier, password });
-  cachedAdmin = response.admin;
-  return response.admin;
+  cachedAdmin = response.admin ?? null;
+  return response;
 }
 
 export async function getMe() {

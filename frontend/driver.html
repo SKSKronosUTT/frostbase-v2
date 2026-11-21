@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="es" data-theme="light">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Portal del conductor | FrostBase</title>
+    <meta name="robots" content="noindex, nofollow" />
+    <meta
+      name="description"
+      content="Portal del conductor de FrostBase: perfil, camión asignado y cambio de contraseña."
+    />
+    <link rel="icon" href="assets/logo.png" />
+    <link
+      rel="preload"
+      href="assets/fonts/outfit-latin.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    <link rel="stylesheet" href="css/fonts.css" />
+    <link rel="stylesheet" href="assets/vendors/fontawesome/fa-subset.css" />
+    <link rel="stylesheet" href="css/tokens.css" />
+    <link rel="stylesheet" href="css/base.css" />
+    <link rel="stylesheet" href="css/components.css" />
+    <link rel="stylesheet" href="css/pages/driver.css" />
+    <script src="js/core/theme-boot.js"></script>
+  </head>
+  <body class="driver-page">
+    <button
+      class="driver-theme-toggle"
+      id="themeToggle"
+      type="button"
+      aria-label="Cambiar tema"
+    >
+      <i class="fa-solid fa-moon"></i>
+    </button>
+
+    <main class="driver-shell">
+      <section class="driver-card card" aria-labelledby="driverTitle">
+        <header class="driver-card__head">
+          <img
+            src="assets/logo.png"
+            alt="Logotipo FrostBase"
+            class="driver-card__logo"
+            width="48"
+            height="48"
+          />
+          <div>
+            <h1 id="driverTitle">Portal del conductor</h1>
+            <p class="driver-card__subtitle" id="driverEmail">Cargando sesión…</p>
+          </div>
+        </header>
+
+        <dl class="detail-list">
+          <div class="detail-row">
+            <dt>Nombre</dt>
+            <dd id="driverName">—</dd>
+          </div>
+          <div class="detail-row">
+            <dt>Teléfono</dt>
+            <dd id="driverPhone">—</dd>
+          </div>
+          <div class="detail-row">
+            <dt>Camión asignado</dt>
+            <dd id="driverTruck">—</dd>
+          </div>
+        </dl>
+
+        <div class="driver-card__actions">
+          <button
+            class="btn btn--ghost btn--block"
+            id="changePasswordButton"
+            type="button"
+          >
+            <i class="fa-solid fa-key"></i> Cambiar contraseña
+          </button>
+          <button class="btn btn--primary btn--block" id="logoutButton" type="button">
+            <i class="fa-solid fa-right-from-bracket"></i> Cerrar sesión
+          </button>
+        </div>
+
+        <p class="driver-card__note">
+          <i class="fa-solid fa-circle-info"></i>
+          El panel de monitoreo del conductor llegará en la siguiente fase.
+        </p>
+      </section>
+    </main>
+
+    <div class="toast-root" id="toastRoot" aria-live="polite"></div>
+    <script type="module" src="js/pages/driver.js"></script>
+  </body>
+</html>

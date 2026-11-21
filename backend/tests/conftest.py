@@ -40,8 +40,9 @@ from alembic import command  # noqa: E402
 from app.core.cache import reset_cache  # noqa: E402
 from app.core.database import SessionLocal, engine  # noqa: E402
 from app.core.ratelimit import reset_rate_limits  # noqa: E402
-from app.core.security import clear_device_cache  # noqa: E402
+from app.core.security import clear_device_cache, hash_password  # noqa: E402
 from app.main import app  # noqa: E402
+from app.models.driver import Driver  # noqa: E402
 from app.models.truck import Truck  # noqa: E402
 from app.schemas.device import DeviceCreate  # noqa: E402
 from app.services import auth_service, device_service  # noqa: E402
@@ -163,5 +164,36 @@ def create_device():
             )
             db.commit()
             return created.id, created.device_id, created.device_key
+
+    return _create
+
+
+@pytest.fixture
+def create_driver():
+    """Crea un conductor directo en BD con contraseña conocida (G2/G3)."""
+
+    def _create(
+        email: str = "conductor@frostbase.local",
+        password: str = "Conductor123!",
+        must_change_password: bool = False,
+        is_active: bool = True,
+    ):
+        from datetime import date
+
+        with SessionLocal() as db:
+            driver = Driver(
+                first_name="Carlos",
+                last_name="Rivera",
+                email=email,
+                phone="6645551234",
+                birthdate=date(1992, 3, 14),
+                password_hash=hash_password(password),
+                must_change_password=must_change_password,
+                is_active=is_active,
+            )
+            db.add(driver)
+            db.commit()
+            db.refresh(driver)
+            return driver.id, driver.email, password
 
     return _create
