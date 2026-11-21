@@ -4,6 +4,7 @@ import { expect, test } from "@playwright/test";
 const PAGES = [
   "dashboard.html",
   "trucks.html",
+  "drivers.html",
   "routes.html",
   "alerts.html",
   "settings.html",

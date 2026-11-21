@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="es" data-theme="light">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta
+      name="description"
+      content="Gestión de conductores de la flota FrostBase: altas, camión asignado y credenciales."
+    />
+    <title>Conductores | FrostBase</title>
+    <link rel="icon" href="assets/logo.png" />
+    <link
+      rel="preload"
+      href="assets/fonts/outfit-latin.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    <link rel="stylesheet" href="css/fonts.css" />
+    <link rel="stylesheet" href="assets/vendors/fontawesome/fa-subset.css" />
+    <link rel="stylesheet" href="css/tokens.css" />
+    <link rel="stylesheet" href="css/base.css" />
+    <link rel="stylesheet" href="css/components.css" />
+    <link rel="stylesheet" href="css/layout.css" />
+    <link rel="stylesheet" href="css/pages/drivers.css" />
+    <script src="js/core/theme-boot.js"></script>
+  </head>
+  <body data-page="drivers">
+    <div class="app-shell">
+      <aside class="sidebar" id="sidebar"></aside>
+      <main class="main">
+        <header class="page-header">
+          <div class="page-header__title">
+            <span class="eyebrow">Administración</span>
+            <h1>Conductores</h1>
+            <p class="page-header__subtitle">
+              Alta de conductores, credenciales y camión asignado.
+            </p>
+          </div>
+          <div class="page-header__actions">
+            <button class="btn btn--primary" id="newDriverButton" type="button">
+              <i class="fa-solid fa-plus"></i> Nuevo conductor
+            </button>
+          </div>
+        </header>
+
+        <section class="card drivers-card">
+          <div class="toolbar">
+            <div class="toolbar__group">
+              <div class="input-with-icon">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input
+                  class="input"
+                  id="driverSearch"
+                  type="search"
+                  placeholder="Buscar por nombre, correo o teléfono"
+                  aria-label="Buscar conductor"
+                />
+              </div>
+              <select
+                class="select"
+                id="driverActiveFilter"
+                aria-label="Filtrar conductores por estado"
+              >
+                <option value="true">Activos</option>
+                <option value="false">Inactivos</option>
+                <option value="all">Todos</option>
+              </select>
+            </div>
+            <div class="toolbar__group">
+              <select
+                class="select"
+                id="driverTruckFilter"
+                aria-label="Filtrar por asignación de camión"
+              >
+                <option value="">Con y sin camión</option>
+                <option value="true">Con camión</option>
+                <option value="false">Sin camión</option>
+              </select>
+              <span class="section-header__meta" id="driversCount">—</span>
+            </div>
+          </div>
+
+          <div class="table-wrap">
+            <table class="table drivers-table">
+              <thead>
+                <tr>
+                  <th>Nombre</th>
+                  <th>Correo</th>
+                  <th>Teléfono</th>
+                  <th>Camión</th>
+                  <th>Estado</th>
+                  <th>Último acceso</th>
+                  <th aria-label="Acciones"></th>
+                </tr>
+              </thead>
+              <tbody id="driversTableBody">
+                <tr>
+                  <td colspan="7">
+                    <div class="loading-block">
+                      <span class="spinner"></span> Cargando conductores…
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="pagination" id="driversPagination"></div>
+        </section>
+
+        <div class="modal-overlay hidden" id="driverModal">
+          <div
+            class="modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="driverModalTitle"
+          >
+            <div class="modal__header">
+              <h2 id="driverModalTitle">Registrar conductor</h2>
+              <button
+                class="icon-button modal__close"
+                type="button"
+                data-close="driverModal"
+                aria-label="Cerrar"
+              >
+                <i class="fa-solid fa-xmark"></i>
+              </button>
+            </div>
+            <form class="modal__body" id="driverForm" novalidate>
+              <input type="hidden" id="driverPk" />
+              <div class="form-grid">
+                <div class="form-field">
+                  <label for="driverFirstName">Nombre</label>
+                  <input
+                    class="input"
+                    id="driverFirstName"
+                    type="text"
+                    maxlength="80"
+                    required
+                  />
+                </div>
+                <div class="form-field">
+                  <label for="driverLastName">Apellido paterno</label>
+                  <input
+                    class="input"
+                    id="driverLastName"
+                    type="text"
+                    maxlength="80"
+                    required
+                  />
+                </div>
+                <div class="form-field">
+                  <label for="driverMiddleName">Apellido materno</label>
+                  <input
+                    class="input"
+                    id="driverMiddleName"
+                    type="text"
+                    maxlength="80"
+                  />
+                </div>
+                <div class="form-field">
+                  <label for="driverEmail">Correo</label>
+                  <input
+                    class="input"
+                    id="driverEmail"
+                    type="email"
+                    maxlength="254"
+                    required
+                  />
+                </div>
+                <div class="form-field">
+                  <label for="driverPhone">Teléfono</label>
+                  <input
+                    class="input"
+                    id="driverPhone"
+                    type="tel"
+                    maxlength="20"
+                    required
+                  />
+                </div>
+                <div class="form-field">
+                  <label for="driverBirthdate">Fecha de nacimiento</label>
+                  <input class="input" id="driverBirthdate" type="date" required />
+                </div>
+                <div class="form-field" id="driverPasswordField">
+                  <label for="driverPassword">Contraseña (opcional)</label>
+                  <input
+                    class="input"
+                    id="driverPassword"
+                    type="text"
+                    maxlength="255"
+                    autocomplete="off"
+                    aria-describedby="driverPasswordHint"
+                  />
+                  <p class="hint" id="driverPasswordHint">
+                    Si la dejas vacía se genera una temporal que se muestra una sola
+                    vez.
+                  </p>
+                </div>
+                <div class="form-field">
+                  <label for="driverTruckSelect">Camión (opcional)</label>
+                  <select class="select" id="driverTruckSelect"></select>
+                </div>
+              </div>
+            </form>
+            <div class="modal__footer modal__footer--spread">
+              <button class="btn btn--ghost" data-close="driverModal" type="button">
+                Cancelar
+              </button>
+              <button
+                class="btn btn--primary"
+                id="driverSubmit"
+                type="submit"
+                form="driverForm"
+              >
+                Guardar conductor
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-overlay hidden" id="secretModal">
+          <div
+            class="modal modal--sm"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="secretModalTitle"
+          >
+            <div class="modal__header">
+              <h2 id="secretModalTitle">Credenciales del conductor</h2>
+              <button
+                class="icon-button modal__close"
+                type="button"
+                data-close="secretModal"
+                aria-label="Cerrar"
+              >
+                <i class="fa-solid fa-xmark"></i>
+              </button>
+            </div>
+            <div class="modal__body">
+              <p id="secretDriverLabel" class="muted">Conductor</p>
+              <div class="secret-box">
+                <code id="secretValue"></code>
+              </div>
+              <p class="hint">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                Guarda esta contraseña: no se volverá a mostrar y el conductor deberá
+                cambiarla en su primer ingreso.
+              </p>
+            </div>
+            <div class="modal__footer modal__footer--spread">
+              <button class="btn btn--ghost" id="copySecretButton" type="button">
+                <i class="fa-solid fa-copy"></i> Copiar
+              </button>
+              <button class="btn btn--primary" type="button" data-close="secretModal">
+                Entendido
+              </button>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <div class="toast-root" id="toastRoot" aria-live="polite"></div>
+    <script type="module" src="js/pages/drivers.js"></script>
+  </body>
+</html>
