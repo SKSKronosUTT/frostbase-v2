@@ -308,10 +308,11 @@ Respuesta (`201`):
 
 | Método | Ruta | Descripción |
 |---|---|---|
-| `GET` | `/routes` | Lista paginada (`search`, `status`) |
+| `GET` | `/routes` | Lista paginada (`search`, `status`, `missing_driver`) |
 | `GET` | `/routes/options` | Lista ligera `{id, label}` para desplegables (máx. 500) |
 | `POST` | `/routes` | Crea ruta y calcula geometría con OSRM |
-| `GET` | `/routes/{id}` | Detalle con geometría, puntos y camión asignado |
+| `GET` | `/routes/{id}` | Detalle con geometría, puntos, camión (legado), conductor y calendario |
+| `PUT` | `/routes/{id}/driver` | Asigna o quita el **conductor dueño** y su calendario semanal (G4) |
 | `PUT` | `/routes/{id}` | Actualiza puntos/estado (recalcula geometría) |
 | `DELETE` | `/routes/{id}` | Elimina ruta (`204`) |
 | `POST` | `/routes/{id}/calculate` | Recalcula geometría |
@@ -341,11 +342,28 @@ Con `ROUTE_GEOMETRY_ASYNC=true`, `POST/PUT /routes` responde de inmediato con
 geometría simplificada (máx. 400 puntos); `GET /routes/{id}` y `/iot/config`
 devuelven la geometría completa.
 
-### Asignar ruta
+### Asignar ruta (vínculo legado con camión)
 
 ```json
 {"truck_id": 1}
 ```
+
+> `POST /routes/{id}/assign` es el vínculo **legado** con el camión. La
+> propiedad canónica de la ruta es el conductor (`PUT /routes/{id}/driver`).
+
+### Asignar conductor y calendario semanal (G4)
+
+```json
+{"driver_id": 1, "weekdays": [1, 4]}
+```
+
+- `weekdays` usa la convención `0=domingo … 6=sábado`, sin repeticiones.
+- El conductor debe estar **activo y con un camión asignado** (`422`).
+- Solo puede existir **una ruta por conductor y día** (`409` con el día en
+  conflicto, p. ej. *"El conductor ya tiene otra ruta asignada el lunes"*).
+- `driver_id: null` quita al conductor y limpia su calendario.
+- `GET /routes?missing_driver=true` lista las rutas aún sin conductor: son los
+  vínculos legado (`truck_id`) pendientes de migrar al nuevo modelo.
 
 ---
 

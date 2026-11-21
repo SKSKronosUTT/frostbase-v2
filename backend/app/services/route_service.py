@@ -3,10 +3,17 @@ import logging
 from sqlalchemy.orm import Session
 
 from app.models.route import DeliveryPoint, Route
+from app.repositories import driver as driver_repo
 from app.repositories import routes as routes_repo
 from app.repositories import trucks as trucks_repo
 from app.schemas.common import OptionOut, Page
-from app.schemas.route import DeliveryPointIn, RouteCreate, RouteOut, RouteUpdate
+from app.schemas.route import (
+    DeliveryPointIn,
+    RouteCreate,
+    RouteDriverIn,
+    RouteOut,
+    RouteUpdate,
+)
 from app.services import routing
 from app.services.serializers import serialize_route
 
@@ -66,11 +73,17 @@ def list_routes(
     *,
     search: str | None,
     status: str | None,
+    missing_driver: bool | None = None,
     page: int,
     page_size: int,
 ) -> Page[RouteOut]:
     routes, total = routes_repo.list_paginated(
-        db, search=search, status=status, page=page, page_size=page_size
+        db,
+        search=search,
+        status=status,
+        missing_driver=missing_driver,
+        page=page,
+        page_size=page_size,
     )
     return Page(
         items=[serialize_route(route) for route in routes],
@@ -218,3 +231,68 @@ def assign_route(db: Session, route_id: int, truck_id: int) -> RouteOut:
     db.flush()
     route = _get_or_fail(db, route.id)
     return serialize_route(route)
+
+
+class RouteConflictError(Exception):
+    """Conflicto de calendario: el conductor ya tiene ruta ese día."""
+
+
+def assign_driver(
+    db: Session,
+    route_id: int,
+    payload: RouteDriverIn,
+    *,
+    admin_id: int | None = None,
+) -> RouteOut:
+    """Asigna (o quita) el conductor dueño de la ruta y su calendario (G4).
+
+    Reglas de G0/G4:
+
+    - La ruta pertenece al conductor; el camión queda como vínculo legado.
+    - El conductor debe estar activo y con un camión asignado.
+    - Una sola ruta por conductor y día de la semana (índice único + validación
+      previa con mensaje claro).
+    - ``driver_id = null`` quita al conductor y limpia el calendario.
+    """
+    route = _get_or_fail(db, route_id)
+
+    if payload.driver_id is None:
+        route.assigned_driver_id = None
+        routes_repo.clear_delivery_days(db, route)
+        routes_repo.save(db, route)
+        route = _get_or_fail(db, route.id)
+        return serialize_route(route)
+
+    driver = driver_repo.get_by_id(db, payload.driver_id)
+    if driver is None:
+        raise RouteValidationError("El conductor seleccionado no existe")
+    if not driver.is_active:
+        raise RouteValidationError("El conductor está inactivo")
+    if driver_repo.active_assignment(db, driver.id) is None:
+        raise RouteValidationError("El conductor no tiene un camión asignado")
+
+    conflicts = routes_repo.conflicting_delivery_days(
+        db, driver.id, payload.weekdays, except_route_id=route.id
+    )
+    if conflicts:
+        days = ", ".join(_weekday_label(day) for day in conflicts)
+        raise RouteConflictError(f"El conductor ya tiene otra ruta asignada el {days}")
+
+    route.assigned_driver_id = driver.id
+    routes_repo.replace_delivery_days(db, route, driver.id, payload.weekdays)
+    routes_repo.save(db, route)
+    route = _get_or_fail(db, route.id)
+    logger.info(
+        "route_driver_assigned route_id=%s driver_id=%s days=%s admin_id=%s",
+        route.id,
+        driver.id,
+        payload.weekdays,
+        admin_id,
+    )
+    return serialize_route(route)
+
+
+def _weekday_label(weekday: int) -> str:
+    from app.schemas.route import WEEKDAY_LABELS  # noqa: PLC0415
+
+    return WEEKDAY_LABELS[weekday]

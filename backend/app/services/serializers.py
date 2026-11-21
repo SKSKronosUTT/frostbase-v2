@@ -11,6 +11,7 @@ from app.schemas.alert import AlertOut
 from app.schemas.device import DeviceOut
 from app.schemas.reading import ReadingOut
 from app.schemas.route import (
+    AssignedDriverOut,
     AssignedTruckOut,
     DeliveryPointOut,
     RouteBrief,
@@ -91,6 +92,7 @@ def serialize_route_brief_geometry(
 
 def serialize_route(route: Route, warning: str | None = None) -> RouteOut:
     truck = route.truck
+    driver = route.assigned_driver
     return RouteOut(
         id=route.id,
         name=route.name,
@@ -108,6 +110,12 @@ def serialize_route(route: Route, warning: str | None = None) -> RouteOut:
             if truck
             else None
         ),
+        assigned_driver=(
+            AssignedDriverOut(id=driver.id, full_name=driver.full_name)
+            if driver
+            else None
+        ),
+        delivery_days=[day.weekday for day in route.delivery_days],
         created_at=ensure_utc(route.created_at),
         updated_at=ensure_utc(route.updated_at),
         warning=warning,

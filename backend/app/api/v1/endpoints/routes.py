@@ -10,6 +10,7 @@ from app.schemas.route import (
     AssignTruckIn,
     DeliveryPointIn,
     RouteCreate,
+    RouteDriverIn,
     RouteOut,
     RouteUpdate,
 )
@@ -38,11 +39,17 @@ def list_routes(
     _: CurrentAdmin,
     search: str | None = Query(default=None, max_length=100),
     status_filter: RouteStatusFilter | None = Query(default=None, alias="status"),
+    missing_driver: bool | None = Query(default=None),
     page: int = Query(default=1, ge=1, le=10000),
     page_size: int = Query(default=20, ge=1, le=100),
 ) -> Page[RouteOut]:
     return route_service.list_routes(
-        db, search=search, status=status_filter, page=page, page_size=page_size
+        db,
+        search=search,
+        status=status_filter,
+        missing_driver=missing_driver,
+        page=page,
+        page_size=page_size,
     )
 
 
@@ -182,4 +189,28 @@ def assign_route(
     except route_service.RouteValidationError as exc:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc)
+        ) from exc
+
+
+@router.put("/{route_id}/driver", response_model=RouteOut)
+def assign_route_driver(
+    route_id: int,
+    payload: RouteDriverIn,
+    db: DbSession,
+    admin: CurrentAdmin,
+) -> RouteOut:
+    """Asigna (o quita) el conductor dueño de la ruta y su calendario (G4)."""
+    try:
+        return route_service.assign_driver(db, route_id, payload, admin_id=admin.id)
+    except route_service.RouteNotFoundError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)
+        ) from exc
+    except route_service.RouteValidationError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=str(exc)
+        ) from exc
+    except route_service.RouteConflictError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT, detail=str(exc)
         ) from exc

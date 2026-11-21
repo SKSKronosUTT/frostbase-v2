@@ -62,6 +62,46 @@ class AssignedTruckOut(BaseModel):
     model: str
 
 
+class AssignedDriverOut(BaseModel):
+    id: int
+    full_name: str
+
+
+WEEKDAY_LABELS = (
+    "domingo",
+    "lunes",
+    "martes",
+    "miércoles",
+    "jueves",
+    "viernes",
+    "sábado",
+)
+
+
+def _validate_weekdays(weekdays: list[int]) -> list[int]:
+    if len(set(weekdays)) != len(weekdays):
+        raise ValueError("los días de entrega no pueden repetirse")
+    for weekday in weekdays:
+        if not 0 <= weekday <= 6:
+            raise ValueError(f"día inválido: {weekday} (0=domingo … 6=sábado)")
+    return sorted(weekdays)
+
+
+class RouteDriverIn(BaseModel):
+    """Asignación de conductor y calendario semanal de la ruta (G4).
+
+    ``driver_id = null`` quita al conductor y su calendario.
+    """
+
+    driver_id: int | None = None
+    weekdays: list[int] = Field(default_factory=list, max_length=7)
+
+    @field_validator("weekdays")
+    @classmethod
+    def _valid_weekdays(cls, weekdays: list[int]) -> list[int]:
+        return _validate_weekdays(weekdays)
+
+
 class RouteOut(BaseModel):
     id: int
     name: str
@@ -70,6 +110,8 @@ class RouteOut(BaseModel):
     geometry: list | None = None
     points: list[DeliveryPointOut]
     truck: AssignedTruckOut | None = None
+    assigned_driver: AssignedDriverOut | None = None
+    delivery_days: list[int] = []
     created_at: datetime
     updated_at: datetime
     warning: str | None = None
