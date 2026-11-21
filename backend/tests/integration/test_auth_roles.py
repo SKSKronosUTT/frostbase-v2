@@ -94,9 +94,7 @@ def test_driver_me_returns_profile_and_requires_session(client, driver_session):
     assert body["truck"] is None
     assert body["must_change_password"] is True
 
-    anonymous = client.post(
-        "/api/v1/auth/logout", headers=_csrf_headers(client)
-    )
+    anonymous = client.post("/api/v1/auth/logout", headers=_csrf_headers(client))
     assert anonymous.status_code == 204
     assert client.get("/api/v1/driver/me").status_code == 401
 
