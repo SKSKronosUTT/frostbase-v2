@@ -58,9 +58,10 @@ form.addEventListener("submit", async (event) => {
 
   setButtonLoading(submitButton, true, "Verificando…");
   try {
-    await login(user, secret);
+    const session = await login(user, secret);
     notify.success("Sesión iniciada correctamente.");
-    setTimeout(() => window.location.replace(safeNext()), 250);
+    const target = session.role === "driver" ? "driver.html" : safeNext();
+    setTimeout(() => window.location.replace(target), 250);
   } catch (error) {
     notify.error(error.message || "No se pudo iniciar sesión.");
     password.focus();

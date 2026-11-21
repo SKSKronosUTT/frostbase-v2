@@ -19,6 +19,7 @@ const PAGES = [
   "route-detail.html",
   "alerts.html",
   "settings.html",
+  "driver.html",
 ];
 
 function hashedName(name, content) {

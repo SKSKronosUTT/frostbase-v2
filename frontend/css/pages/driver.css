@@ -1,0 +1,80 @@
+/* Portal del conductor (G2: página base; el panel completo llega en G5). */
+
+body.driver-page {
+  min-height: 100vh;
+  background: var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.driver-theme-toggle {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  width: 40px;
+  height: 40px;
+  border: 2px solid var(--border-ink);
+  border-radius: 0;
+  background: var(--surface);
+  color: var(--text-muted);
+  box-shadow: 3px 3px 0 var(--ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.driver-shell {
+  width: min(460px, 100%);
+}
+
+.driver-card__head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 22px 24px;
+  border-bottom: 3px solid var(--border-ink);
+}
+
+.driver-card__logo {
+  border: 2px solid var(--border-ink);
+  background: var(--surface);
+  padding: 4px;
+  box-shadow: 3px 3px 0 var(--ink);
+}
+
+.driver-card__subtitle {
+  margin-top: 4px;
+  color: var(--text-muted);
+  font-size: 13px;
+  word-break: break-all;
+}
+
+.driver-shell .detail-list {
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.driver-card__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 0 24px 8px;
+}
+
+.driver-card__note {
+  padding: 14px 24px 20px;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+@media (max-width: 480px) {
+  body.driver-page {
+    padding: 14px;
+    padding-top: 64px;
+    align-items: flex-start;
+  }
+}

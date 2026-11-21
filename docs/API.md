@@ -95,14 +95,37 @@ en `Report-Only`.
 
 ## Autenticación
 
+Login **compartido por rol**: el mismo `POST /auth/login` y el mismo formulario
+sirven para administradores (usuario o correo) y conductores (correo). La
+respuesta indica el rol (`role: "admin" | "driver"`) y el perfil
+correspondiente (`admin` o `driver`). La cookie de sesión (`frostbase_token`)
+es la misma; el JWT lleva el rol en el claim `type` (`admin`/`driver`).
+
 | Método | Ruta | Descripción |
 |---|---|---|
-| `POST` | `/auth/login` | Inicia sesión |
+| `POST` | `/auth/login` | Inicia sesión (admin o conductor) |
 | `POST` | `/auth/logout` | Cierra sesión (`204`) |
-| `POST` | `/auth/refresh` | Renueva la cookie de sesión |
-| `GET` | `/auth/me` | Perfil del administrador actual |
-| `PUT` | `/auth/preferences` | Actualiza preferencia de tema (`light`/`dark`) |
-| `POST` | `/auth/change-password` | Cambia la contraseña y revoca los JWT anteriores |
+| `POST` | `/auth/refresh` | Renueva la cookie de sesión del rol actual |
+| `GET` | `/auth/me` | Perfil del administrador actual (solo rol `admin`) |
+| `GET` | `/auth/session` | Rol y perfil de la sesión actual (admin o conductor) |
+| `PUT` | `/auth/preferences` | Actualiza preferencia de tema (`light`/`dark`, admin) |
+| `POST` | `/auth/change-password` | Cambia la contraseña (admin o conductor) y revoca los JWT anteriores |
+
+### Roles y acceso
+
+- Endpoints administrativos (`/trucks`, `/routes`, `/alerts`, `/settings`, …):
+  requieren token `admin`. Un conductor recibe `403`.
+- Endpoints del conductor (`/driver/*`): requieren token `driver`. Un
+  administrador recibe `403`. El ID del conductor siempre viene del token.
+- Un conductor inactivo (`is_active = false`) no puede iniciar sesión y sus
+  sesiones previas quedan revocadas (`token_version`).
+- Mensaje de login fallado siempre genérico: `Usuario o contraseña incorrectos`.
+
+### Conductor
+
+| Método | Ruta | Descripción |
+|---|---|---|
+| `GET` | `/driver/me` | Perfil del conductor con su camión asignado (o `null`) |
 
 ### Ejemplo de login
 
