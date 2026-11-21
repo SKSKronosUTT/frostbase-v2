@@ -172,7 +172,7 @@ test("alta de conductor con contraseña temporal y baja lógica", async ({
 }) => {
   const api = page.context().request;
   const csrf = await csrfToken(page.context());
-  const suffix = Date.now().toString().slice(-6);
+  const suffix = `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
 
   await page.goto("/drivers.html");
   await page.getByRole("button", { name: "Nuevo conductor" }).click();
@@ -204,9 +204,7 @@ test("alta de conductor con contraseña temporal y baja lógica", async ({
   expect((await login.json()).role).toBe("driver");
 
   // Baja lógica desde el panel y reactivación desde el filtro de inactivos.
-  const listed = await api.get(
-    `/api/v1/drivers?search=elena.${suffix}&active=true`
-  );
+  const listed = await api.get(`/api/v1/drivers?search=elena.${suffix}&active=true`);
   expect(listed.ok(), await listed.text()).toBeTruthy();
   const [driver] = (await listed.json()).items;
   expect(driver).toBeTruthy();
@@ -215,9 +213,7 @@ test("alta de conductor con contraseña temporal y baja lógica", async ({
     .locator(`[data-driver-action="deactivate"][data-id="${driver.id}"]`)
     .click();
   await page.getByRole("button", { name: "Desactivar" }).click();
-  await expect(
-    page.getByText(`elena.${suffix}@frostbase.local`)
-  ).toHaveCount(0);
+  await expect(page.getByText(`elena.${suffix}@frostbase.local`)).toHaveCount(0);
 
   const inactiveLogin = await driverApi.post("/api/v1/auth/login", {
     data: {
@@ -228,9 +224,7 @@ test("alta de conductor con contraseña temporal y baja lógica", async ({
   expect(inactiveLogin.status()).toBe(401);
 
   await page.locator("#driverActiveFilter").selectOption("false");
-  await page
-    .locator(`[data-driver-action="restore"][data-id="${driver.id}"]`)
-    .click();
+  await page.locator(`[data-driver-action="restore"][data-id="${driver.id}"]`).click();
   await expect(
     page.locator(`[data-driver-action="restore"][data-id="${driver.id}"]`)
   ).toHaveCount(0);
@@ -247,6 +241,33 @@ test("alta de conductor con contraseña temporal y baja lógica", async ({
     (item) => item.email === `elena.${suffix}@frostbase.local`
   );
   expect(stillInactive).toBeUndefined();
+
+  // Edición: asignar un camión desde el mismo formulario (regresión de api.patch).
+  const plate = `E2E-DT-${suffix}`;
+  const createdTruck = await api.post("/api/v1/trucks", {
+    headers: { "X-CSRF-Token": csrf },
+    data: {
+      brand: "E2E",
+      model: "Conductor",
+      year: 2024,
+      plate,
+      status: "disponible",
+    },
+  });
+  expect(createdTruck.status()).toBe(201);
+
+  await page.locator(`[data-driver-action="truck"][data-id="${driver.id}"]`).click();
+  await expect(page.locator("#driverModal")).toBeVisible();
+  await page
+    .locator("#driverTruckSelect")
+    .selectOption(String((await createdTruck.json()).id));
+  await page.locator("#driverSubmit").click();
+  await expect(page.locator("#driverModal")).toBeHidden();
+  await expect(page.getByText(plate).first()).toBeVisible();
+
+  await api.delete(`/api/v1/trucks/${(await createdTruck.json()).id}`, {
+    headers: { "X-CSRF-Token": csrf },
+  });
 
   await driverContext.close();
 });
