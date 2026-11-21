@@ -1,4 +1,5 @@
 import { logout } from "../core/auth.js";
+import { escapeHtml } from "../core/helpers.js";
 import { toggleTheme } from "../core/theme.js";
 
 const NAV_ITEMS = [
@@ -33,7 +34,7 @@ function render(admin) {
     <a class="sidebar__brand" href="dashboard.html" aria-label="FrostBase, ir al panel de control">
       <span class="brand-logo">
         <img src="assets/logo.png" alt="Logotipo FrostBase" class="brand-logo__img"
-             onerror="this.classList.add('is-hidden'); this.parentElement.classList.add('brand-logo--placeholder');">
+             width="40" height="40" />
       </span>
       <span class="brand-name">FrostBase</span>
     </a>
@@ -50,7 +51,7 @@ function render(admin) {
     <div class="sidebar__footer">
       <div class="sidebar__user">
         <span class="sidebar__user-avatar"><i class="fa-solid fa-user-shield"></i></span>
-        <span class="sidebar__user-name">${escapeText(admin?.username || "Administrador")}</span>
+        <span class="sidebar__user-name">${escapeHtml(admin?.username || "Administrador")}</span>
       </div>
       <button class="nav-link nav-link--button" id="themeToggle" type="button">
         <i class="fa-solid fa-moon"></i>
@@ -62,6 +63,14 @@ function render(admin) {
       </button>
     </div>
   `;
+
+  const brandImg = sidebar.querySelector(".brand-logo__img");
+  if (brandImg) {
+    brandImg.addEventListener("error", () => {
+      brandImg.classList.add("is-hidden");
+      brandImg.parentElement?.classList.add("brand-logo--placeholder");
+    });
+  }
 
   sidebar.querySelector("#logoutButton").addEventListener("click", logout);
   sidebar
@@ -91,12 +100,6 @@ function render(admin) {
       link.addEventListener("click", close);
     });
   }
-}
-
-function escapeText(value) {
-  const div = document.createElement("div");
-  div.textContent = value;
-  return div.innerHTML;
 }
 
 export function renderSidebar(admin) {

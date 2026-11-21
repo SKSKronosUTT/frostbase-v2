@@ -5,7 +5,7 @@ from starlette.concurrency import run_in_threadpool
 
 from app.api.deps import CurrentAdmin, DbSession
 from app.core.config import settings
-from app.schemas.common import Page
+from app.schemas.common import OptionOut, Page
 from app.schemas.route import (
     AssignTruckIn,
     DeliveryPointIn,
@@ -68,6 +68,15 @@ async def create_route(
         geometry=geometry,
         warning=warning,
     )
+
+
+@router.get("/options", response_model=list[OptionOut])
+def list_route_options(
+    db: DbSession,
+    _: CurrentAdmin,
+    search: str | None = Query(default=None, max_length=100),
+) -> list[OptionOut]:
+    return route_service.list_route_options(db, search=search)
 
 
 @router.get("/{route_id}", response_model=RouteOut)

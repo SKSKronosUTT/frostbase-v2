@@ -1,0 +1,40 @@
+.PHONY: dev up down test lint build seed e2e openapi
+
+PYTHON ?= backend/.venv/bin/python
+COMPOSE ?= docker compose
+TRUCKS ?= 3
+DEVICES ?= 2
+
+dev:
+	$(COMPOSE) up -d --build
+
+up:
+	$(COMPOSE) up -d
+
+down:
+	$(COMPOSE) down
+
+test:
+	$(COMPOSE) -f compose.test.yml up -d --wait
+	cd backend && $(PYTHON) -m pytest --cov=app --cov-report=term-missing --cov-fail-under=70
+	$(COMPOSE) -f compose.test.yml down
+
+lint:
+	cd backend && $(PYTHON) -m ruff check .
+	cd backend && $(PYTHON) -m ruff format --check .
+	cd backend && $(PYTHON) -m mypy app
+	cd frontend && npx --yes eslint@8 js
+	cd frontend && npx --yes prettier@3 --check js css
+	cd frontend && npm run check:css && npm run check:html
+
+build:
+	cd frontend && npm run build
+
+seed:
+	cd backend && $(PYTHON) -m scripts.seed_demo --trucks $(TRUCKS) --devices $(DEVICES)
+
+e2e:
+	cd frontend && npx playwright test
+
+openapi:
+	cd backend && $(PYTHON) -m scripts.export_openapi

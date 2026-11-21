@@ -15,6 +15,8 @@ import {
   toIsoOrNull,
   truckStatusMeta,
 } from "../core/helpers.js";
+import { renderPagination } from "../components/pagination.js";
+import { renderTableState, setAriaBusy } from "../components/feedback.js";
 import {
   createMap,
   fitToLatLngs,
@@ -69,14 +71,15 @@ function renderDetail() {
 
   const status = truckStatusMeta(truck.status);
   const deviceOnline = truck.device?.is_online;
+  const deviceLabel = truck.device
+    ? deviceOnline
+      ? "Dispositivo en línea"
+      : "Dispositivo desconectado"
+    : "Sin dispositivo";
   qs("#heroBadges").innerHTML = `
     <span class="badge ${status.className}">${status.label}</span>
     <span class="status-dot ${deviceOnline ? "is-online" : "is-offline"}">${
-      truck.device
-        ? deviceOnline
-          ? "Dispositivo en línea"
-          : "Dispositivo desconectado"
-        : "Sin dispositivo"
+      deviceLabel
     }</span>
     ${
       truck.active_alerts > 0
@@ -95,7 +98,7 @@ function renderDetail() {
 
   if (!reading) {
     qs("#currentReading").innerHTML = `
-      <div class="empty-state" style="grid-column: 1 / -1; padding: 22px 10px;">
+      <div class="empty-state empty-state--medium empty-state--full">
         <div class="empty-state__icon"><i class="fa-solid fa-satellite-dish"></i></div>
         <strong>Sin lecturas recibidas</strong>
         <p>Este camión todavía no tiene datos de temperatura o humedad.</p>
@@ -126,9 +129,9 @@ function renderDetail() {
           " %"
         )}</div>
       </div>
-      <div class="reading-tile" style="grid-column: 1 / -1;">
+      <div class="reading-tile reading-tile--full">
         <div class="reading-tile__label"><i class="fa-regular fa-clock"></i> Última lectura del dispositivo</div>
-        <div class="reading-tile__meta" style="margin-top: 0; font-size: 12px; color: var(--text);">
+        <div class="reading-tile__meta reading-tile__meta--plain">
           ${formatDateTime(reading.reading_timestamp)} · recibida ${timeAgo(reading.received_at)}
         </div>
       </div>
@@ -158,11 +161,11 @@ function renderDetail() {
           device.created_at
         )}</dd></div>
       </dl>
-      <p class="settings-note" style="margin-top: 12px;">El estado del dispositivo es independiente del estado operativo del camión.</p>
+      <p class="settings-note settings-note--spaced">El estado del dispositivo es independiente del estado operativo del camión.</p>
     `;
   } else {
     qs("#deviceInfo").innerHTML = `
-      <div class="empty-state" style="padding: 20px 8px;">
+      <div class="empty-state empty-state--small">
         <div class="empty-state__icon"><i class="fa-solid fa-microchip"></i></div>
         <strong>Sin dispositivo asociado</strong>
         <p>Asocia un ESP32-S3 desde la sección Flota para recibir lecturas.</p>
@@ -179,13 +182,13 @@ function renderDetail() {
         }">${truck.route.status === "activa" ? "Activa" : "Inactiva"}</span></dd></div>
         <div class="detail-row"><dt>Puntos de entrega</dt><dd>${truck.route.points.length}</dd></div>
       </dl>
-      <a class="btn btn--ghost btn--sm btn--block" style="margin-top: 12px;" href="route-detail.html?id=${
+      <a class="btn btn--ghost btn--sm btn--block btn--spaced-top" href="route-detail.html?id=${
         truck.route.id
       }">Ver detalle de la ruta</a>
     `;
   } else {
     qs("#routeInfo").innerHTML = `
-      <div class="empty-state" style="padding: 20px 8px;">
+      <div class="empty-state empty-state--small">
         <div class="empty-state__icon"><i class="fa-solid fa-route"></i></div>
         <strong>Sin ruta asignada</strong>
         <p>Asigna una ruta para ver su geometría en el mapa.</p>
@@ -284,13 +287,16 @@ function renderReadings(data) {
   } registrada${data.total === 1 ? "" : "s"}`;
 
   if (!rows.length) {
-    qs("#readingsBody").innerHTML = `<tr><td colspan="5">
-      <div class="empty-state" style="padding: 26px 12px;">
-        <div class="empty-state__icon"><i class="fa-solid fa-chart-line"></i></div>
-        <strong>Sin lecturas en el periodo</strong>
-        <p>Ajusta los filtros de fecha o espera nuevas lecturas del dispositivo.</p>
-      </div>
-    </td></tr>`;
+    renderTableState(
+      qs("#readingsBody"),
+      `<tr><td colspan="5">
+        <div class="empty-state empty-state--medium">
+          <div class="empty-state__icon"><i class="fa-solid fa-chart-line"></i></div>
+          <strong>Sin lecturas en el periodo</strong>
+          <p>Ajusta los filtros de fecha o espera nuevas lecturas del dispositivo.</p>
+        </div>
+      </td></tr>`
+    );
     qs("#readingsPagination").innerHTML = "";
     return;
   }
@@ -311,50 +317,36 @@ function renderReadings(data) {
       return `
         <tr>
           <td>${formatDateTime(reading.reading_timestamp)}</td>
-          <td class="${tempAlert ? "text-danger" : ""}" style="font-variant-numeric: tabular-nums;">${formatTemp(
+          <td class="cell-num ${tempAlert ? "text-danger" : ""}">${formatTemp(
             reading.temperature
           )}</td>
-          <td class="${humAlert ? "text-danger" : ""}" style="font-variant-numeric: tabular-nums;">${formatHum(
+          <td class="cell-num ${humAlert ? "text-danger" : ""}">${formatHum(
             reading.humidity
           )}</td>
-          <td class="cell-muted" style="font-variant-numeric: tabular-nums;">${gps}</td>
+          <td class="cell-muted cell-num">${gps}</td>
           <td class="cell-muted">${timeAgo(reading.received_at)}</td>
         </tr>
       `;
     })
     .join("");
 
-  const totalPages = Math.max(1, Math.ceil(data.total / state.readingsPageSize));
-  const start = (data.page - 1) * state.readingsPageSize + 1;
-  const end = Math.min(data.page * state.readingsPageSize, data.total);
-  qs("#readingsPagination").innerHTML = `
-    <span class="pagination__info">Mostrando ${start}–${end} de ${data.total}</span>
-    <div class="pagination__controls">
-      <button class="icon-button" type="button" data-reading-page="${
-        data.page - 1
-      }" ${data.page <= 1 ? "disabled" : ""} aria-label="Anterior"><i class="fa-solid fa-chevron-left"></i></button>
-      <span class="pagination__page">Página ${data.page} de ${totalPages}</span>
-      <button class="icon-button" type="button" data-reading-page="${
-        data.page + 1
-      }" ${data.page >= totalPages ? "disabled" : ""} aria-label="Siguiente"><i class="fa-solid fa-chevron-right"></i></button>
-    </div>
-  `;
-  qs("#readingsPagination")
-    .querySelectorAll("[data-reading-page]")
-    .forEach((button) => {
-      button.addEventListener("click", () => {
-        if (button.disabled) return;
-        state.readingsPage = Number(button.dataset.readingPage);
-        loadReadings();
-      });
-    });
+  renderPagination(qs("#readingsPagination"), {
+    page: data.page,
+    total: data.total,
+    pageSize: state.readingsPageSize,
+    itemLabel: "lecturas",
+    onChange: (page) => {
+      state.readingsPage = page;
+      loadReadings();
+    },
+  });
 }
 
 function renderAlerts(data) {
   const alerts = data.items;
   if (!alerts.length) {
     qs("#alertsList").innerHTML = `
-      <div class="empty-state" style="padding: 20px 8px;">
+      <div class="empty-state empty-state--small">
         <div class="empty-state__icon"><i class="fa-solid fa-shield-heart"></i></div>
         <strong>Sin alertas registradas</strong>
         <p>Este camión no ha superado los rangos configurados.</p>
@@ -374,21 +366,19 @@ function renderAlerts(data) {
             ? formatTemp(alert.value)
             : formatHum(alert.value);
       return `
-        <div class="detail-row" style="align-items: center;">
+        <div class="detail-row detail-row--center">
           <div>
-            <div style="font-size: 12.5px; font-weight: 600;"><i class="fa-solid ${
+            <div class="alert-mini__title"><i class="fa-solid ${
               type.icon
-            }" style="color: var(--text-soft); margin-right: 5px;"></i>${
-              type.label
-            }</div>
-            <div class="muted" style="font-size: 11px;">${timeAgo(alert.started_at)} · ${value}</div>
+            } alert-mini__icon"></i>${type.label}</div>
+            <div class="muted text-xs">${timeAgo(alert.started_at)} · ${value}</div>
           </div>
           <span class="badge ${status.className}">${status.label}</span>
         </div>
       `;
     })
     .join("")}</div>
-    <a class="btn btn--ghost btn--sm btn--block" style="margin-top: 12px;" href="alerts.html?truck_id=${
+    <a class="btn btn--ghost btn--sm btn--block btn--spaced-top" href="alerts.html?truck_id=${
       truckId
     }">Ver todas las alertas</a>`;
 }
@@ -417,16 +407,25 @@ async function loadReadings() {
   if (state.readingsFrom) params.set("date_from", state.readingsFrom);
   if (state.readingsTo) params.set("date_to", state.readingsTo);
   try {
+    setAriaBusy(qs("#readingsBody"), true);
     const data = await api.get(`/readings/truck/${truckId}?${params.toString()}`);
     renderReadings(data);
   } catch (error) {
-    qs("#readingsBody").innerHTML = `<tr><td colspan="5">
-      <div class="empty-state" style="padding: 24px 10px;">
-        <div class="empty-state__icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
-        <strong>No se pudieron cargar las lecturas</strong>
-        <p>${escapeHtml(error.message)}</p>
-      </div>
-    </td></tr>`;
+    if (error?.cancelled) return;
+    renderTableState(
+      qs("#readingsBody"),
+      `<tr><td colspan="5">
+        <div class="empty-state empty-state--medium">
+          <div class="empty-state__icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+          <strong>No se pudieron cargar las lecturas</strong>
+          <p>${escapeHtml(error.message)}</p>
+          <button class="btn btn--ghost btn--sm" type="button" data-retry>Reintentar</button>
+        </div>
+      </td></tr>`,
+      { onRetry: loadReadings }
+    );
+  } finally {
+    setAriaBusy(qs("#readingsBody"), false);
   }
 }
 
@@ -435,11 +434,17 @@ async function loadAlerts() {
     const data = await api.get(`/alerts?truck_id=${truckId}&page=1&page_size=5`);
     renderAlerts(data);
   } catch (error) {
-    qs("#alertsList").innerHTML = `<div class="empty-state" style="padding: 20px 8px;">
-      <div class="empty-state__icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
-      <strong>No se pudieron cargar las alertas</strong>
-      <p>${escapeHtml(error.message)}</p>
-    </div>`;
+    if (error?.cancelled) return;
+    qs("#alertsList").innerHTML = `
+      <div class="empty-state empty-state--small">
+        <div class="empty-state__icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+        <strong>No se pudieron cargar las alertas</strong>
+        <p>${escapeHtml(error.message)}</p>
+        <button class="btn btn--ghost btn--sm" type="button" data-retry>Reintentar</button>
+      </div>`;
+    qs("#alertsList")
+      .querySelector("[data-retry]")
+      ?.addEventListener("click", loadAlerts);
   }
 }
 

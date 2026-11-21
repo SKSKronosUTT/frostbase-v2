@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from app.models.route import DeliveryPoint, Route
 from app.repositories import routes as routes_repo
 from app.repositories import trucks as trucks_repo
-from app.schemas.common import Page
+from app.schemas.common import OptionOut, Page
 from app.schemas.route import DeliveryPointIn, RouteCreate, RouteOut, RouteUpdate
 from app.services import routing
 from app.services.serializers import serialize_route
@@ -82,6 +82,13 @@ def list_routes(
 
 def get_route(db: Session, route_id: int) -> RouteOut:
     return serialize_route(_get_or_fail(db, route_id))
+
+
+def list_route_options(db: Session, *, search: str | None = None) -> list[OptionOut]:
+    return [
+        OptionOut(id=route_id, label=name)
+        for route_id, name in routes_repo.list_options(db, search=search)
+    ]
 
 
 def get_route_points(db: Session, route_id: int) -> list[tuple[float, float]]:

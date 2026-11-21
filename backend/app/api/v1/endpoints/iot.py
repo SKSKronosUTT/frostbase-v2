@@ -3,6 +3,7 @@ from typing import Annotated
 from fastapi import APIRouter, Header, HTTPException, Request, Response, status
 
 from app.api.deps import DbSession, authenticate_device_or_401
+from app.core.config import settings
 from app.core.ratelimit import RateLimit
 from app.schemas.iot import (
     IoTConfigResponse,
@@ -15,8 +16,12 @@ from app.services.serializers import serialize_alert
 
 router = APIRouter(prefix="/iot", tags=["IoT"])
 
-_reading_device_limiter = RateLimit("iot:readings:device", limit=30, window_seconds=60)
-_reading_ip_limiter = RateLimit("iot:readings:ip", limit=120, window_seconds=60)
+_reading_device_limiter = RateLimit(
+    "iot:readings:device", limit=settings.iot_device_rate_limit, window_seconds=60
+)
+_reading_ip_limiter = RateLimit(
+    "iot:readings:ip", limit=settings.iot_ip_rate_limit, window_seconds=60
+)
 _config_device_limiter = RateLimit("iot:config:device", limit=60, window_seconds=60)
 _config_ip_limiter = RateLimit("iot:config:ip", limit=120, window_seconds=60)
 

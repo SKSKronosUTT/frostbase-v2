@@ -9,12 +9,30 @@ const password = qs("#password");
 const submitButton = qs("#loginButton");
 const passwordToggle = qs("#passwordToggle");
 
+function safeNext() {
+  const next = new URLSearchParams(window.location.search).get("next");
+  if (!next) return "dashboard.html";
+  try {
+    const target = new URL(next, window.location.href);
+    if (target.origin !== window.location.origin) return "dashboard.html";
+    return target.pathname.split("/").pop() + target.search;
+  } catch (error) {
+    return "dashboard.html";
+  }
+}
+
+const brandLogo = qs(".login-brand__logo img");
+brandLogo?.addEventListener("error", () => {
+  brandLogo.style.display = "none";
+  brandLogo.parentElement?.classList.add("login-brand__logo--placeholder");
+});
+
 initTheme();
 
 qs("#themeToggle").addEventListener("click", () => toggleTheme(null));
 
 getMe()
-  .then(() => window.location.replace("dashboard.html"))
+  .then(() => window.location.replace(safeNext()))
   .catch(() => {});
 
 passwordToggle.addEventListener("click", () => {
@@ -42,7 +60,7 @@ form.addEventListener("submit", async (event) => {
   try {
     await login(user, secret);
     notify.success("Sesión iniciada correctamente.");
-    setTimeout(() => window.location.replace("dashboard.html"), 250);
+    setTimeout(() => window.location.replace(safeNext()), 250);
   } catch (error) {
     notify.error(error.message || "No se pudo iniciar sesión.");
     password.focus();

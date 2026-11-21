@@ -1,0 +1,82 @@
+/* Generado por frontend/tools/vendor_assets.py. No editar a mano. */
+@font-face {
+  font-family: "Font Awesome 6 Free";
+  font-style: normal;
+  font-weight: 900;
+  font-display: block;
+  src: url("fa-solid.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Font Awesome 6 Free";
+  font-style: normal;
+  font-weight: 400;
+  font-display: block;
+  src: url("fa-regular.woff2") format("woff2");
+}
+.fa-solid, .fa-regular, .fa {
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-font-smoothing: antialiased;
+  display: inline-block;
+  font-style: normal;
+  font-variant: normal;
+  line-height: 1;
+  text-rendering: auto;
+}
+.fa-solid { font-family: "Font Awesome 6 Free"; font-weight: 900; }
+.fa-regular { font-family: "Font Awesome 6 Free"; font-weight: 400; }
+.fa-solid.fa-arrow-down::before { content: "\f063"; }
+.fa-solid.fa-arrow-left::before { content: "\f060"; }
+.fa-solid.fa-arrow-right::before { content: "\f061"; }
+.fa-solid.fa-arrow-right-to-bracket::before { content: "\f090"; }
+.fa-solid.fa-arrow-up::before { content: "\f062"; }
+.fa-solid.fa-arrows-left-right-to-line::before { content: "\e4ba"; }
+.fa-solid.fa-bars::before { content: "\f0c9"; }
+.fa-solid.fa-bell::before, .fa-regular.fa-bell::before { content: "\f0f3"; }
+.fa-solid.fa-chart-line::before { content: "\f201"; }
+.fa-solid.fa-chevron-left::before { content: "\f053"; }
+.fa-solid.fa-chevron-right::before { content: "\f054"; }
+.fa-solid.fa-circle-check::before, .fa-regular.fa-circle-check::before { content: "\f058"; }
+.fa-solid.fa-circle-exclamation::before { content: "\f06a"; }
+.fa-solid.fa-circle-info::before { content: "\f05a"; }
+.fa-solid.fa-clock::before, .fa-regular.fa-clock::before { content: "\f017"; }
+.fa-solid.fa-clock-rotate-left::before { content: "\f1da"; }
+.fa-solid.fa-cloud::before { content: "\f0c2"; }
+.fa-solid.fa-cloud-sun::before { content: "\f6c4"; }
+.fa-solid.fa-copy::before, .fa-regular.fa-copy::before { content: "\f0c5"; }
+.fa-solid.fa-droplet::before { content: "\f043"; }
+.fa-solid.fa-eye::before, .fa-regular.fa-eye::before { content: "\f06e"; }
+.fa-solid.fa-eye-slash::before, .fa-regular.fa-eye-slash::before { content: "\f070"; }
+.fa-solid.fa-face-smile::before, .fa-regular.fa-face-smile::before { content: "\f118"; }
+.fa-solid.fa-filter::before { content: "\f0b0"; }
+.fa-solid.fa-fire::before { content: "\f06d"; }
+.fa-solid.fa-floppy-disk::before, .fa-regular.fa-floppy-disk::before { content: "\f0c7"; }
+.fa-solid.fa-gear::before { content: "\f013"; }
+.fa-solid.fa-hand-pointer::before, .fa-regular.fa-hand-pointer::before { content: "\f25a"; }
+.fa-solid.fa-house::before { content: "\f015"; }
+.fa-solid.fa-key::before { content: "\f084"; }
+.fa-solid.fa-list-ol::before { content: "\f0cb"; }
+.fa-solid.fa-location-dot::before { content: "\f3c5"; }
+.fa-solid.fa-lock::before { content: "\f023"; }
+.fa-solid.fa-magnifying-glass::before { content: "\f002"; }
+.fa-solid.fa-map-location-dot::before { content: "\f5a0"; }
+.fa-solid.fa-microchip::before { content: "\f2db"; }
+.fa-solid.fa-moon::before, .fa-regular.fa-moon::before { content: "\f186"; }
+.fa-solid.fa-pen::before { content: "\f304"; }
+.fa-solid.fa-plug-circle-check::before { content: "\e55c"; }
+.fa-solid.fa-plug-circle-xmark::before { content: "\e560"; }
+.fa-solid.fa-plus::before { content: "\2b"; }
+.fa-solid.fa-right-from-bracket::before { content: "\f2f5"; }
+.fa-solid.fa-route::before { content: "\f4d7"; }
+.fa-solid.fa-satellite-dish::before { content: "\f7c0"; }
+.fa-solid.fa-shield-heart::before { content: "\e574"; }
+.fa-solid.fa-sun::before, .fa-regular.fa-sun::before { content: "\f185"; }
+.fa-solid.fa-temperature-half::before { content: "\f2c9"; }
+.fa-solid.fa-temperature-low::before { content: "\f76b"; }
+.fa-solid.fa-trash::before { content: "\f1f8"; }
+.fa-solid.fa-triangle-exclamation::before { content: "\f071"; }
+.fa-solid.fa-truck::before { content: "\f0d1"; }
+.fa-solid.fa-truck-fast::before { content: "\f48b"; }
+.fa-solid.fa-user::before, .fa-regular.fa-user::before { content: "\f007"; }
+.fa-solid.fa-user-shield::before { content: "\f505"; }
+.fa-solid.fa-wind::before { content: "\f72e"; }
+.fa-solid.fa-xmark::before { content: "\f00d"; }

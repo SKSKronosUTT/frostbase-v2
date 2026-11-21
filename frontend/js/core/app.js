@@ -4,11 +4,11 @@ import { renderSidebar } from "../components/sidebar.js";
 import { initTheme } from "./theme.js";
 import { qs, setButtonLoading } from "./helpers.js";
 import { notify } from "./notifications.js";
+import { activateModal } from "../components/modal.js";
 
 const MIN_PASSWORD_LENGTH = 12;
 
 function buildPasswordModal(mandatory) {
-  const previouslyFocused = document.activeElement;
   const overlay = document.createElement("div");
   overlay.className = "modal-overlay";
   overlay.id = "passwordChangeOverlay";
@@ -66,27 +66,24 @@ function buildPasswordModal(mandatory) {
 
   const form = qs("#passwordChangeForm", overlay);
   const submit = qs("#passwordChangeSubmit", overlay);
+  let deactivate = () => {};
 
   const close = ({ force = false } = {}) => {
     if (mandatory && !force) return;
     document.body.classList.remove("modal-open");
     overlay.classList.add("modal-overlay--leaving");
+    deactivate();
     setTimeout(() => overlay.remove(), 160);
-    document.removeEventListener("keydown", onKeyDown);
-    if (previouslyFocused && previouslyFocused.focus) previouslyFocused.focus();
   };
 
-  const onKeyDown = (event) => {
-    if (event.key === "Escape" && !mandatory) close();
-  };
-
-  overlay.addEventListener("click", (event) => {
-    if (event.target === overlay && !mandatory) close();
+  deactivate = activateModal(overlay, {
+    onClose: () => close(),
+    closeOnBackdrop: !mandatory,
   });
+
   qs("#passwordChangeClose", overlay)?.addEventListener("click", () => close());
   qs("#passwordChangeCancel", overlay)?.addEventListener("click", () => close());
   qs("#passwordChangeLogout", overlay)?.addEventListener("click", () => logout());
-  document.addEventListener("keydown", onKeyDown);
 
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
@@ -127,16 +124,39 @@ function buildPasswordModal(mandatory) {
 
   setTimeout(() => qs("#currentPassword", overlay)?.focus(), 30);
 }
-
 export function openPasswordChangeModal({ mandatory = false } = {}) {
   if (document.getElementById("passwordChangeOverlay")) return;
   buildPasswordModal(mandatory);
+}
+
+export function setupConnectionBadge() {
+  const badge = document.getElementById("connectionBadge");
+  const label = document.getElementById("connectionText");
+  if (!badge) return;
+
+  const apply = (online) => {
+    badge.classList.toggle("live-indicator--offline", !online);
+    badge.classList.toggle("live-indicator--online", online);
+    if (label) label.textContent = online ? "En vivo" : "Sin conexión";
+    badge.setAttribute(
+      "aria-label",
+      online ? "Conexión activa con el servidor" : "Sin conexión con el servidor"
+    );
+  };
+
+  apply(navigator.onLine);
+  window.addEventListener("frostbase:connection", (event) =>
+    apply(event.detail.online)
+  );
+  window.addEventListener("online", () => apply(true));
+  window.addEventListener("offline", () => apply(false));
 }
 
 export async function initProtectedPage() {
   const admin = await requireAuth();
   renderSidebar(admin);
   initTheme(admin.theme);
+  setupConnectionBadge();
   document.documentElement.classList.add("is-ready");
   if (admin.must_change_password) {
     openPasswordChangeModal({ mandatory: true });
@@ -148,19 +168,39 @@ export function setupPolling(callback, intervalMs) {
   let timer = null;
   let running = false;
   let stopped = false;
+  let failures = 0;
+  let delay = intervalMs;
+
+  const schedule = (nextDelay) => {
+    window.clearTimeout(timer);
+    if (!stopped) timer = window.setTimeout(run, nextDelay);
+  };
 
   const run = async () => {
-    if (running || stopped || document.hidden) return;
+    if (stopped || running) return;
+    if (document.hidden) {
+      schedule(intervalMs);
+      return;
+    }
     running = true;
     try {
       await callback();
+      failures = 0;
+      delay = intervalMs;
+    } catch (error) {
+      if (!error?.cancelled) {
+        failures += 1;
+        delay = Math.min(intervalMs * 2 ** failures, 60000);
+      } else {
+        delay = intervalMs;
+      }
     } finally {
       running = false;
+      schedule(delay);
     }
   };
 
   run();
-  timer = window.setInterval(run, intervalMs);
 
   const onVisibility = () => {
     if (!document.hidden) run();
@@ -169,7 +209,7 @@ export function setupPolling(callback, intervalMs) {
 
   const stop = () => {
     stopped = true;
-    window.clearInterval(timer);
+    window.clearTimeout(timer);
     document.removeEventListener("visibilitychange", onVisibility);
   };
 

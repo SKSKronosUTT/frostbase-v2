@@ -3,27 +3,20 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow" />
+  <meta name="description" content="Detalle de un camión: lecturas, dispositivo, ruta y alertas." />
   <title>Detalle del camión | FrostBase</title>
   <link rel="icon" href="assets/logo.png" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" />
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <link rel="stylesheet" href="css/variables.css" />
-  <link rel="stylesheet" href="css/global.css" />
+  <link rel="preload" href="assets/fonts/outfit-latin.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="stylesheet" href="css/fonts.css" />
+  <link rel="stylesheet" href="assets/vendors/fontawesome/fa-subset.css" />
+  <link rel="stylesheet" href="assets/vendors/leaflet/leaflet.css" />
+  <link rel="stylesheet" href="css/tokens.css" />
+  <link rel="stylesheet" href="css/base.css" />
   <link rel="stylesheet" href="css/components.css" />
   <link rel="stylesheet" href="css/layout.css" />
   <link rel="stylesheet" href="css/pages/truck-detail.css" />
-  <link rel="stylesheet" href="css/bauhaus.css" />
-  <script>
-    (function () {
-      try {
-        var stored = localStorage.getItem("frostbase-theme");
-        if (stored === "dark" || stored === "light") document.documentElement.dataset.theme = stored;
-      } catch (error) {}
-    })();
-  </script>
+  <script src="js/core/theme-boot.js"></script>
 </head>
 <body data-page="truck-detail">
   <div class="app-shell">
@@ -33,7 +26,7 @@
         <div class="page-header__title">
           <div class="breadcrumb">
             <a href="trucks.html">Flota</a>
-            <i class="fa-solid fa-chevron-right" style="font-size: 8px;"></i>
+            <i class="fa-solid fa-chevron-right icon-xs"></i>
             <span>Detalle</span>
           </div>
           <h1 id="detailTitle">Detalle del camión</h1>
@@ -56,7 +49,7 @@
         <div class="detail-hero__badges" id="heroBadges"></div>
       </section>
 
-      <div class="detail-layout" style="margin-top: 18px;">
+      <div class="detail-layout detail-layout--spaced">
         <div class="detail-column">
           <article class="card detail-map-card">
             <header class="card__header">
@@ -64,9 +57,9 @@
               <span class="section-header__meta" id="mapUpdated">—</span>
             </header>
             <div class="card__body">
-              <div class="map map--detail" id="truckMap"></div>
+              <div class="map map--detail" id="truckMap" role="application" aria-label="Mapa de ubicación de la flota"></div>
               <div class="map-legend">
-                <span class="map-legend__item"><i class="fa-solid fa-truck" style="color: var(--color-electric);"></i> Unidad</span>
+                <span class="map-legend__item"><i class="fa-solid fa-truck legend-icon legend-icon--electric"></i> Unidad</span>
                 <span class="map-legend__item"><span class="map-legend__line"></span> Ruta asignada</span>
                 <span class="map-legend__item muted" id="gpsText">Sin coordenadas</span>
               </div>
@@ -156,7 +149,7 @@
   </div>
 
   <div class="toast-root" id="toastRoot" aria-live="polite"></div>
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="assets/vendors/leaflet/leaflet.js"></script>
   <script type="module" src="js/pages/truck-detail.js"></script>
 </body>
 </html>

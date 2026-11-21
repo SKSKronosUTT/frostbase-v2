@@ -65,3 +65,100 @@
     flex-basis: 170px;
   }
 }
+
+.temp-card {
+  flex: 0 0 188px;
+  scroll-snap-align: start;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 13px 14px;
+  background: var(--surface-soft);
+  cursor: pointer;
+  transition:
+    border-color var(--transition),
+    background var(--transition);
+}
+
+.temp-card:hover {
+  border-color: var(--border-strong);
+  background: var(--surface);
+}
+
+.temp-card--alert {
+  border-color: rgba(240, 91, 101, 0.4);
+  background: var(--danger-soft);
+}
+
+.temp-card__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.temp-card__plate {
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.temp-card__status {
+  font-size: 10px;
+  padding: 2px 7px;
+}
+
+.temp-card__value {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  margin: 8px 0 4px;
+}
+
+.temp-card__value strong {
+  font-size: 21px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.temp-card__unit {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.temp-card__meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  font-size: 11.5px;
+  color: var(--text-muted);
+}
+
+.temp-card__meta i {
+  font-size: 10px;
+  margin-right: 3px;
+}
+
+.map--dashboard {
+  height: 430px;
+}
+
+/* ===== Consolidado desde bauhaus.css (T4.5) ===== */
+.temp-card {
+  border: 2px solid var(--border-ink);
+  border-radius: 0;
+  background: var(--surface);
+  box-shadow: 3px 3px 0 var(--ink);
+}
+
+.temp-card:hover {
+  border-color: var(--border-ink);
+  background: var(--surface);
+  transform: translateY(-2px);
+  box-shadow: 5px 5px 0 var(--ink);
+}
+
+.temp-card--alert {
+  border-color: var(--danger);
+  background: var(--danger-soft);
+}

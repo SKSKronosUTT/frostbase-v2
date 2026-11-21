@@ -8,6 +8,15 @@ COPY backend/requirements.lock ./requirements.lock
 RUN pip install --no-cache-dir --prefix=/install --require-hashes -r requirements.lock
 
 
+FROM node:20-slim AS frontend-builder
+
+WORKDIR /app/frontend
+COPY frontend/package.json frontend/package-lock.json ./
+RUN npm ci --omit=optional
+COPY frontend/ ./
+RUN npm run build
+
+
 FROM python:3.12.8-slim AS runtime
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -22,7 +31,8 @@ WORKDIR /app/backend
 
 COPY --from=builder /install /usr/local
 COPY --chown=app:app backend/ /app/backend/
-COPY --chown=app:app frontend/ /app/frontend/
+COPY --from=frontend-builder --chown=app:app /app/frontend/build/ /app/frontend/build/
+COPY --chown=app:app frontend/assets/logo.png /app/frontend/assets/logo.png
 COPY --chown=app:app docker/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN sed -i 's/\r$//' /usr/local/bin/entrypoint.sh \
     && chmod +x /usr/local/bin/entrypoint.sh

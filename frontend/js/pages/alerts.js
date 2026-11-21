@@ -13,6 +13,15 @@ import {
   timeAgo,
   toIsoOrNull,
 } from "../core/helpers.js";
+import { activateModal } from "../components/modal.js";
+import { renderPagination } from "../components/pagination.js";
+import {
+  emptyRow,
+  renderTableState,
+  setAriaBusy,
+  tableError,
+  tableSkeleton,
+} from "../components/feedback.js";
 
 const params = new URLSearchParams(window.location.search);
 
@@ -31,12 +40,18 @@ const tableBody = qs("#alertsTableBody");
 const pagination = qs("#alertsPagination");
 
 function openModal() {
-  qs("#alertModal").classList.remove("hidden");
+  const modal = qs("#alertModal");
+  modal.classList.remove("hidden");
   document.body.classList.add("modal-open");
+  modal._deactivate?.();
+  modal._deactivate = activateModal(modal, { onClose: closeModal });
 }
 
 function closeModal() {
-  qs("#alertModal").classList.add("hidden");
+  const modal = qs("#alertModal");
+  modal.classList.add("hidden");
+  modal._deactivate?.();
+  modal._deactivate = null;
   document.body.classList.remove("modal-open");
 }
 
@@ -58,13 +73,15 @@ function rangeLabel(alert) {
 
 function renderRows(alerts) {
   if (!alerts.length) {
-    tableBody.innerHTML = `<tr><td colspan="7">
-      <div class="empty-state">
-        <div class="empty-state__icon"><i class="fa-solid fa-shield-heart"></i></div>
-        <strong>Sin alertas para estos filtros</strong>
-        <p>Cuando una lectura salga de los rangos configurados aparecerá aquí automáticamente.</p>
-      </div>
-    </td></tr>`;
+    renderTableState(
+      tableBody,
+      emptyRow(
+        7,
+        "fa-shield-heart",
+        "Sin alertas para estos filtros",
+        "Cuando una lectura salga de los rangos configurados aparecerá aquí automáticamente."
+      )
+    );
     return;
   }
   tableBody.innerHTML = alerts
@@ -81,7 +98,7 @@ function renderRows(alerts) {
         <tr>
           <td>
             <div>${formatDateTime(alert.started_at)}</div>
-            <div class="muted" style="font-size: 11px;">${timeAgo(alert.started_at)}</div>
+            <div class="muted text-xs">${timeAgo(alert.started_at)}</div>
           </td>
           <td>${
             alert.truck_id
@@ -109,32 +126,16 @@ function renderRows(alerts) {
     .join("");
 }
 
-function renderPagination() {
-  const totalPages = Math.max(1, Math.ceil(state.total / state.pageSize));
-  if (!state.total) {
-    pagination.innerHTML = "";
-    return;
-  }
-  const start = (state.page - 1) * state.pageSize + 1;
-  const end = Math.min(state.page * state.pageSize, state.total);
-  pagination.innerHTML = `
-    <span class="pagination__info">Mostrando ${start}–${end} de ${state.total}</span>
-    <div class="pagination__controls">
-      <button class="icon-button" type="button" data-page="${state.page - 1}" ${
-        state.page <= 1 ? "disabled" : ""
-      } aria-label="Anterior"><i class="fa-solid fa-chevron-left"></i></button>
-      <span class="pagination__page">Página ${state.page} de ${totalPages}</span>
-      <button class="icon-button" type="button" data-page="${state.page + 1}" ${
-        state.page >= totalPages ? "disabled" : ""
-      } aria-label="Siguiente"><i class="fa-solid fa-chevron-right"></i></button>
-    </div>
-  `;
-  pagination.querySelectorAll("[data-page]").forEach((button) => {
-    button.addEventListener("click", () => {
-      if (button.disabled) return;
-      state.page = Number(button.dataset.page);
+function renderPaginationControls() {
+  renderPagination(pagination, {
+    page: state.page,
+    total: state.total,
+    pageSize: state.pageSize,
+    itemLabel: "alertas",
+    onChange: (page) => {
+      state.page = page;
       loadAlerts();
-    });
+    },
   });
 }
 
@@ -150,6 +151,8 @@ async function loadAlerts() {
   if (state.to) query.set("date_to", state.to);
 
   try {
+    setAriaBusy(tableBody, true);
+    renderTableState(tableBody, tableSkeleton(7, 6, 7));
     const data = await api.get(`/alerts?${query.toString()}`);
     state.total = data.total;
     const totalPages = Math.max(1, Math.ceil(data.total / state.pageSize));
@@ -158,7 +161,7 @@ async function loadAlerts() {
       return loadAlerts();
     }
     renderRows(data.items);
-    renderPagination();
+    renderPaginationControls();
     qs("#alertsCount").textContent = `${data.total} alerta${
       data.total === 1 ? "" : "s"
     } encontrada${data.total === 1 ? "" : "s"}`;
@@ -169,29 +172,24 @@ async function loadAlerts() {
       <span class="chip">En esta página: <strong>${active}</strong> activas · <strong>${resolved}</strong> resueltas</span>
     `;
   } catch (error) {
-    tableBody.innerHTML = `<tr><td colspan="7">
-      <div class="empty-state">
-        <div class="empty-state__icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
-        <strong>No se pudieron cargar las alertas</strong>
-        <p>${escapeHtml(error.message)}</p>
-      </div>
-    </td></tr>`;
+    renderTableState(tableBody, tableError(7, error.message), {
+      onRetry: loadAlerts,
+    });
     notify.error(error.message, { title: "Error al cargar alertas" });
+  } finally {
+    setAriaBusy(tableBody, false);
   }
 }
 
 async function loadTrucks() {
   try {
-    const data = await api.get("/trucks?page=1&page_size=100");
+    const trucks = await api.get("/trucks/options");
     const select = qs("#alertTruck");
     select.innerHTML =
       '<option value="">Todos</option>' +
-      data.items
+      trucks
         .map(
-          (truck) =>
-            `<option value="${truck.id}">${escapeHtml(truck.plate)} · ${escapeHtml(
-              truck.brand
-            )} ${escapeHtml(truck.model)}</option>`
+          (truck) => `<option value="${truck.id}">${escapeHtml(truck.label)}</option>`
         )
         .join("");
     select.value = state.truckId;
@@ -215,14 +213,10 @@ async function showAlert(alertId) {
 
     const isActive = alert.status === "activa";
     qs("#alertModalBody").innerHTML = `
-      <div class="alert-detail-hero" style="${
-        isActive
-          ? ""
-          : "background: var(--success-soft); border-color: rgba(39,198,163,.24);"
+      <div class="alert-detail-hero ${
+        isActive ? "alert-detail-hero--active" : "alert-detail-hero--resolved"
       }">
-        <i class="fa-solid ${isActive ? "fa-fire" : "fa-circle-check"}" style="${
-          isActive ? "" : "color: var(--success);"
-        }"></i>
+        <i class="fa-solid ${isActive ? "fa-fire" : "fa-circle-check"}"></i>
         <div>
           <strong>${isActive ? "Alerta activa" : "Alerta resuelta"}</strong>
           <p>${escapeHtml(alert.message || type.label)}</p>
@@ -315,11 +309,6 @@ function wireEvents() {
   });
   document.querySelectorAll("[data-close='alertModal']").forEach((button) => {
     button.addEventListener("click", closeModal);
-  });
-  document.addEventListener("keydown", (event) => {
-    if (event.key === "Escape" && !qs("#alertModal").classList.contains("hidden")) {
-      closeModal();
-    }
   });
 }
 

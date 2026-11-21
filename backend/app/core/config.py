@@ -56,6 +56,13 @@ class Settings(BaseSettings):
     dashboard_fresh_minutes: int = 10
     disconnect_check_seconds: int = 30
     enable_inprocess_watcher: bool = False
+    readings_retention_days: int = 90
+    resolved_alerts_retention_days: int = 365
+    retention_check_seconds: int = 86400
+    iot_device_rate_limit: int = 30
+    iot_ip_rate_limit: int = 120
+    login_ip_rate_limit: int = 5
+    login_identifier_rate_limit: int = 10
 
     osrm_base_url: str = "https://router.project-osrm.org"
     osrm_timeout_seconds: float = 5.0
@@ -109,7 +116,9 @@ class Settings(BaseSettings):
     def frontend_path(self) -> Path:
         if self.frontend_dir:
             return Path(self.frontend_dir).resolve()
-        return (Path(__file__).resolve().parents[3] / "frontend").resolve()
+        root = Path(__file__).resolve().parents[3] / "frontend"
+        build = root / "build"
+        return build if (build / "index.html").exists() else root
 
     @property
     def cors_origin_list(self) -> list[str]:

@@ -155,6 +155,7 @@ ser igual a la actual ni contener el nombre de usuario.
 | Método | Ruta | Descripción |
 |---|---|---|
 | `GET` | `/trucks` | Lista paginada (`search`, `status`, `page`, `page_size`) |
+| `GET` | `/trucks/options` | Lista ligera `{id, label}` para desplegables (máx. 500) |
 | `POST` | `/trucks` | Crea camión |
 | `GET` | `/trucks/{id}` | Detalle con ruta, dispositivo, última lectura y umbrales |
 | `PUT` | `/trucks/{id}` | Actualiza camión |
@@ -229,6 +230,7 @@ Respuesta (`201`):
 | Método | Ruta | Descripción |
 |---|---|---|
 | `GET` | `/routes` | Lista paginada (`search`, `status`) |
+| `GET` | `/routes/options` | Lista ligera `{id, label}` para desplegables (máx. 500) |
 | `POST` | `/routes` | Crea ruta y calcula geometría con OSRM |
 | `GET` | `/routes/{id}` | Detalle con geometría, puntos y camión asignado |
 | `PUT` | `/routes/{id}` | Actualiza puntos/estado (recalcula geometría) |

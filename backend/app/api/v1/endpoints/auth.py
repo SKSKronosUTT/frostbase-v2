@@ -18,8 +18,12 @@ from app.services import auth_service
 
 router = APIRouter(prefix="/auth", tags=["Autenticación"])
 
-_login_ip_limiter = RateLimit("login:ip", limit=5, window_seconds=60)
-_login_identifier_limiter = RateLimit("login:identifier", limit=10, window_seconds=900)
+_login_ip_limiter = RateLimit(
+    "login:ip", limit=settings.login_ip_rate_limit, window_seconds=60
+)
+_login_identifier_limiter = RateLimit(
+    "login:identifier", limit=settings.login_identifier_rate_limit, window_seconds=900
+)
 
 
 def _set_session_cookie(response: Response, admin: Admin) -> None:

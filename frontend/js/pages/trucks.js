@@ -11,6 +11,15 @@ import {
   timeAgo,
   truckStatusMeta,
 } from "../core/helpers.js";
+import { activateModal } from "../components/modal.js";
+import { renderPagination } from "../components/pagination.js";
+import {
+  emptyRow,
+  renderTableState,
+  setAriaBusy,
+  tableError,
+  tableSkeleton,
+} from "../components/feedback.js";
 
 const state = {
   page: 1,
@@ -47,61 +56,17 @@ function updateFleetTotals() {
 function openModal(modal) {
   modal.classList.remove("hidden");
   document.body.classList.add("modal-open");
+  modal._deactivate?.();
+  modal._deactivate = activateModal(modal, { onClose: () => closeModal(modal) });
 }
 
 function closeModal(modal) {
   modal.classList.add("hidden");
+  modal._deactivate?.();
+  modal._deactivate = null;
   if (!document.querySelector(".modal-overlay:not(.hidden)")) {
     document.body.classList.remove("modal-open");
   }
-}
-
-function renderPagination(container, page, total, pageSize, onChange) {
-  const totalPages = Math.max(1, Math.ceil(total / pageSize));
-  if (!total) {
-    container.innerHTML = "";
-    return;
-  }
-  const start = (page - 1) * pageSize + 1;
-  const end = Math.min(page * pageSize, total);
-  container.innerHTML = `
-    <span class="pagination__info">Mostrando ${start}–${end} de ${total}</span>
-    <div class="pagination__controls">
-      <button class="icon-button" type="button" data-page="${page - 1}" ${
-        page <= 1 ? "disabled" : ""
-      } aria-label="Página anterior"><i class="fa-solid fa-chevron-left"></i></button>
-      <span class="pagination__page">Página ${page} de ${totalPages}</span>
-      <button class="icon-button" type="button" data-page="${page + 1}" ${
-        page >= totalPages ? "disabled" : ""
-      } aria-label="Página siguiente"><i class="fa-solid fa-chevron-right"></i></button>
-    </div>
-  `;
-  container.querySelectorAll("[data-page]").forEach((button) => {
-    button.addEventListener("click", () => {
-      if (button.disabled) return;
-      onChange(Number(button.dataset.page));
-    });
-  });
-}
-
-function tableError(colspan, message) {
-  return `<tr><td colspan="${colspan}">
-    <div class="empty-state">
-      <div class="empty-state__icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
-      <strong>No se pudo cargar la información</strong>
-      <p>${escapeHtml(message)}</p>
-    </div>
-  </td></tr>`;
-}
-
-function emptyRow(colspan, icon, title, description) {
-  return `<tr><td colspan="${colspan}">
-    <div class="empty-state">
-      <div class="empty-state__icon"><i class="fa-solid ${icon}"></i></div>
-      <strong>${escapeHtml(title)}</strong>
-      <p>${escapeHtml(description)}</p>
-    </div>
-  </td></tr>`;
 }
 
 function truckRows(items) {
@@ -164,6 +129,8 @@ function truckRows(items) {
 
 async function loadTrucks() {
   try {
+    setAriaBusy(trucksBody, true);
+    renderTableState(trucksBody, tableSkeleton(8, 5, 8));
     const params = new URLSearchParams({
       page: state.page,
       page_size: state.pageSize,
@@ -177,31 +144,38 @@ async function loadTrucks() {
       state.page = totalPages;
       return loadTrucks();
     }
-    trucksBody.innerHTML = data.items.length
-      ? truckRows(data.items)
-      : emptyRow(
-          8,
-          "fa-truck",
-          "Sin camiones registrados",
-          "Registra tu primer camión para comenzar a monitorear la flota."
-        );
+    renderTableState(
+      trucksBody,
+      data.items.length
+        ? truckRows(data.items)
+        : emptyRow(
+            8,
+            "fa-truck",
+            "Sin camiones registrados",
+            "Registra tu primer camión para comenzar a monitorear la flota."
+          )
+    );
     qs("#trucksCount").textContent = `${data.total} resultado${
       data.total === 1 ? "" : "s"
     }`;
-    renderPagination(
-      trucksPagination,
-      state.page,
-      data.total,
-      state.pageSize,
-      (page) => {
+    renderPagination(trucksPagination, {
+      page: state.page,
+      total: data.total,
+      pageSize: state.pageSize,
+      itemLabel: "camiones",
+      onChange: (page) => {
         state.page = page;
         loadTrucks();
-      }
-    );
+      },
+    });
     updateFleetTotals();
   } catch (error) {
-    trucksBody.innerHTML = tableError(8, error.message);
+    renderTableState(trucksBody, tableError(8, error.message), {
+      onRetry: loadTrucks,
+    });
     notify.error(error.message, { title: "Error al cargar camiones" });
+  } finally {
+    setAriaBusy(trucksBody, false);
   }
 }
 
@@ -242,6 +216,8 @@ function deviceRows(items) {
 
 async function loadDevices() {
   try {
+    setAriaBusy(devicesBody, true);
+    renderTableState(devicesBody, tableSkeleton(6, 5, 6));
     const params = new URLSearchParams({
       page: state.devicesPage,
       page_size: state.devicesPageSize,
@@ -255,45 +231,48 @@ async function loadDevices() {
       state.devicesPage = totalPages;
       return loadDevices();
     }
-    devicesBody.innerHTML = data.items.length
-      ? deviceRows(data.items)
-      : emptyRow(
-          6,
-          "fa-microchip",
-          "Sin dispositivos registrados",
-          "Registra un ESP32-S3 para recibir lecturas de temperatura, humedad y GPS."
-        );
+    renderTableState(
+      devicesBody,
+      data.items.length
+        ? deviceRows(data.items)
+        : emptyRow(
+            6,
+            "fa-microchip",
+            "Sin dispositivos registrados",
+            "Registra un ESP32-S3 para recibir lecturas de temperatura, humedad y GPS."
+          )
+    );
     qs("#devicesCount").textContent = `${data.total} dispositivo${
       data.total === 1 ? "" : "s"
     }`;
-    renderPagination(
-      devicesPagination,
-      state.devicesPage,
-      data.total,
-      state.devicesPageSize,
-      (page) => {
+    renderPagination(devicesPagination, {
+      page: state.devicesPage,
+      total: data.total,
+      pageSize: state.devicesPageSize,
+      itemLabel: "dispositivos",
+      onChange: (page) => {
         state.devicesPage = page;
         loadDevices();
-      }
-    );
+      },
+    });
     updateFleetTotals();
   } catch (error) {
-    devicesBody.innerHTML = tableError(6, error.message);
+    renderTableState(devicesBody, tableError(6, error.message), {
+      onRetry: loadDevices,
+    });
     notify.error(error.message, { title: "Error al cargar dispositivos" });
+  } finally {
+    setAriaBusy(devicesBody, false);
   }
 }
 
 async function ensureReferences() {
-  const [routesData, devices, trucks] = await Promise.all([
-    api.get("/routes?page=1&page_size=100"),
+  const [routes, devices, trucks] = await Promise.all([
+    api.get("/routes/options"),
     api.get("/devices/all"),
-    api.get("/trucks?page=1&page_size=100"),
+    api.get("/trucks/options"),
   ]);
-  return {
-    routes: routesData.items,
-    devices,
-    trucks: trucks.items,
-  };
+  return { routes, devices, trucks };
 }
 
 function fillTruckOptions(select, trucks, selectedId = null) {
@@ -304,9 +283,7 @@ function fillTruckOptions(select, trucks, selectedId = null) {
         (truck) =>
           `<option value="${truck.id}" ${
             String(truck.id) === String(selectedId) ? "selected" : ""
-          }>${escapeHtml(truck.plate)} · ${escapeHtml(truck.brand)} ${escapeHtml(
-            truck.model
-          )}</option>`
+          }>${escapeHtml(truck.label)}</option>`
       )
       .join("");
 }
@@ -321,12 +298,9 @@ async function openTruckModal(truckId = null) {
     routeSelect.innerHTML =
       '<option value="">Sin ruta</option>' +
       references.routes
-        .map((route) => {
-          const assigned = route.truck ? ` · asignada a ${route.truck.plate}` : "";
-          return `<option value="${route.id}" data-assigned-plate="${
-            route.truck ? escapeHtml(route.truck.plate) : ""
-          }">${escapeHtml(route.name)}${escapeHtml(assigned)}</option>`;
-        })
+        .map(
+          (route) => `<option value="${route.id}">${escapeHtml(route.label)}</option>`
+        )
         .join("");
 
     const deviceSelect = qs("#truckDevice");
@@ -387,18 +361,26 @@ async function submitTruck(event) {
   };
 
   const button = qs("#truckSubmit");
-  const routeSelect = qs("#truckRoute");
-  const selectedRoute = routeSelect.selectedOptions[0];
-  const assignedPlate = selectedRoute?.dataset.assignedPlate || "";
   const currentPlate = payload.plate;
-  if (payload.route_id && assignedPlate && assignedPlate !== currentPlate) {
-    const accepted = await confirmDialog({
-      title: "Reasignar ruta",
-      message: `La ruta está asignada al camión ${assignedPlate}. Si continúas, ese camión quedará sin ruta y se asignará a ${currentPlate}.`,
-      confirmText: "Reasignar",
-      danger: false,
-    });
-    if (!accepted) return;
+  if (payload.route_id) {
+    try {
+      const route = await api.get(`/routes/${payload.route_id}`);
+      const assignedPlate = route.truck?.plate || "";
+      if (assignedPlate && assignedPlate !== currentPlate) {
+        const accepted = await confirmDialog({
+          title: "Reasignar ruta",
+          message: `La ruta está asignada al camión ${assignedPlate}. Si continúas, ese camión quedará sin ruta y se asignará a ${currentPlate}.`,
+          confirmText: "Reasignar",
+          danger: false,
+        });
+        if (!accepted) return;
+      }
+    } catch (error) {
+      notify.error(error.message, {
+        title: "No se pudo verificar la ruta",
+      });
+      return;
+    }
   }
 
   setButtonLoading(button, true, "Guardando…");
@@ -631,13 +613,6 @@ function wireEvents() {
     overlay.addEventListener("click", (event) => {
       if (event.target === overlay) closeModal(overlay);
     });
-  });
-
-  document.addEventListener("keydown", (event) => {
-    if (event.key !== "Escape") return;
-    document
-      .querySelectorAll(".modal-overlay:not(.hidden)")
-      .forEach((modal) => closeModal(modal));
   });
 
   qs("#copySecretButton").addEventListener("click", copySecret);

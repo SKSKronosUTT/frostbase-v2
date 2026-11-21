@@ -8,7 +8,7 @@ from app.repositories import devices as devices_repo
 from app.repositories import readings as readings_repo
 from app.repositories import routes as routes_repo
 from app.repositories import trucks as trucks_repo
-from app.schemas.common import Page
+from app.schemas.common import OptionOut, Page
 from app.schemas.truck import TruckCreate, TruckDetailOut, TruckOut, TruckUpdate
 from app.services import alert_service, settings_service
 from app.services.serializers import serialize_truck
@@ -100,6 +100,13 @@ def list_trucks(
         for truck in trucks
     ]
     return Page(items=items, total=total, page=page, page_size=page_size)
+
+
+def list_truck_options(db: Session, *, search: str | None = None) -> list[OptionOut]:
+    return [
+        OptionOut(id=truck_id, label=label)
+        for truck_id, label in trucks_repo.list_options(db, search=search)
+    ]
 
 
 def get_truck_detail(db: Session, truck_id: int) -> TruckDetailOut:

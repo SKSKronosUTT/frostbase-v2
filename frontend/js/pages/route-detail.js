@@ -69,7 +69,7 @@ function renderRoute(route) {
         `
         )
         .join("")}</div>`
-    : '<div class="empty-state" style="padding: 20px 8px;"><div class="empty-state__icon"><i class="fa-solid fa-location-dot"></i></div><strong>Sin puntos</strong></div>';
+    : '<div class="empty-state empty-state--small"><div class="empty-state__icon"><i class="fa-solid fa-location-dot"></i></div><strong>Sin puntos</strong></div>';
 
   const hasGeometry = Array.isArray(route.geometry) && route.geometry.length > 1;
   qs("#geometryWarning").classList.toggle("hidden", hasGeometry);

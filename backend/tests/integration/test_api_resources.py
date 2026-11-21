@@ -121,6 +121,31 @@ def test_dashboard_endpoints(client, login, create_truck, monkeypatch):
     assert weather.json()["available"] is True
 
 
+def test_options_endpoints_return_id_and_label(client, login, create_truck):
+    assert login().status_code == 200
+    truck_id = create_truck(plate="OPT-001")
+
+    trucks = client.get("/api/v1/trucks/options")
+    assert trucks.status_code == 200
+    assert any(
+        item["id"] == truck_id and "OPT-001" in item["label"] for item in trucks.json()
+    )
+
+    routes = client.get("/api/v1/routes/options")
+    assert routes.status_code == 200
+    assert isinstance(routes.json(), list)
+
+
+def test_static_cache_headers_and_csp(client):
+    response = client.get("/health/live")
+    assert response.headers["Content-Security-Policy"].startswith("default-src 'self'")
+    assert "Report-Only" not in response.headers
+
+    page = client.get("/login.html")
+    assert page.status_code == 200
+    assert page.headers["Cache-Control"] == "no-cache"
+
+
 def test_route_geometry_async_flag(client, login, csrf_headers, monkeypatch):
     from app.core.config import settings
 
