@@ -2,16 +2,19 @@ import secrets
 
 from fastapi import APIRouter, HTTPException, Request, Response, status
 
-from app.api.deps import CurrentAdmin, DbSession
+from app.api.deps import CurrentAdmin, CurrentPrincipal, DbSession
 from app.core.config import settings
 from app.core.ratelimit import RateLimit, client_ip
 from app.core.security import create_access_token
 from app.models.admin import Admin
+from app.models.driver import Driver
 from app.schemas.auth import (
     AdminOut,
+    DriverOut,
     LoginRequest,
     LoginResponse,
     PasswordChangeRequest,
+    SessionResponse,
     ThemeUpdate,
 )
 from app.services import auth_service
@@ -26,8 +29,17 @@ _login_identifier_limiter = RateLimit(
 )
 
 
-def _set_session_cookie(response: Response, admin: Admin) -> None:
-    token = create_access_token(str(admin.id), token_version=admin.token_version)
+def _principal_role(principal: Admin | Driver) -> str:
+    return "admin" if isinstance(principal, Admin) else "driver"
+
+
+def _set_session_cookie(response: Response, principal: Admin | Driver) -> None:
+    role = _principal_role(principal)
+    token = create_access_token(
+        str(principal.id),
+        token_version=principal.token_version,
+        token_type=role,  # type: ignore[arg-type]
+    )
     max_age = settings.access_token_expire_minutes * 60
     response.set_cookie(
         key=settings.cookie_name,
@@ -49,6 +61,12 @@ def _set_session_cookie(response: Response, admin: Admin) -> None:
     )
 
 
+def _session_response(principal: Admin | Driver) -> SessionResponse:
+    if isinstance(principal, Admin):
+        return SessionResponse(role="admin", admin=AdminOut.model_validate(principal))
+    return SessionResponse(role="driver", driver=DriverOut.model_validate(principal))
+
+
 @router.post("/login", response_model=LoginResponse)
 def login(
     payload: LoginRequest, request: Request, response: Response, db: DbSession
@@ -66,7 +84,7 @@ def login(
     _login_identifier_limiter.check(request, response, extra=identifier)
 
     try:
-        admin = auth_service.authenticate(
+        principal = auth_service.authenticate_principal(
             db, payload.identifier, payload.password, client_ip=client_ip(request)
         )
     except auth_service.AuthenticationError as exc:
@@ -78,8 +96,11 @@ def login(
         ) from exc
 
     auth_service.clear_login_failures(identifier)
-    _set_session_cookie(response, admin)
-    return LoginResponse(admin=AdminOut.model_validate(admin))
+    _set_session_cookie(response, principal)
+
+    if isinstance(principal, Admin):
+        return LoginResponse(role="admin", admin=AdminOut.model_validate(principal))
+    return LoginResponse(role="driver", driver=DriverOut.model_validate(principal))
 
 
 @router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
@@ -88,15 +109,21 @@ def logout(response: Response) -> None:
     response.delete_cookie(settings.csrf_cookie_name, path="/")
 
 
-@router.post("/refresh", response_model=AdminOut)
-def refresh(response: Response, admin: CurrentAdmin) -> AdminOut:
-    _set_session_cookie(response, admin)
-    return AdminOut.model_validate(admin)
+@router.post("/refresh", response_model=SessionResponse)
+def refresh(response: Response, principal: CurrentPrincipal) -> SessionResponse:
+    _set_session_cookie(response, principal)
+    return _session_response(principal)
 
 
 @router.get("/me", response_model=AdminOut)
 def me(admin: CurrentAdmin) -> AdminOut:
     return AdminOut.model_validate(admin)
+
+
+@router.get("/session", response_model=SessionResponse)
+def session(principal: CurrentPrincipal) -> SessionResponse:
+    """Rol de la sesión actual (login compartido admin/conductor)."""
+    return _session_response(principal)
 
 
 @router.put("/preferences", response_model=AdminOut)
@@ -107,17 +134,22 @@ def update_preferences(
     return AdminOut.model_validate(updated)
 
 
-@router.post("/change-password", response_model=AdminOut)
+@router.post("/change-password", response_model=SessionResponse)
 def change_password(
     payload: PasswordChangeRequest,
     response: Response,
-    admin: CurrentAdmin,
+    principal: CurrentPrincipal,
     db: DbSession,
-) -> AdminOut:
+) -> SessionResponse:
     try:
-        updated = auth_service.change_password(
-            db, admin, payload.current_password, payload.new_password
-        )
+        if isinstance(principal, Admin):
+            updated: Admin | Driver = auth_service.change_password(
+                db, principal, payload.current_password, payload.new_password
+            )
+        else:
+            updated = auth_service.change_driver_password(
+                db, principal, payload.current_password, payload.new_password
+            )
     except auth_service.AuthenticationError as exc:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)
@@ -129,4 +161,4 @@ def change_password(
 
     # La versión del token cambió: se reemite la cookie de esta sesión.
     _set_session_cookie(response, updated)
-    return AdminOut.model_validate(updated)
+    return _session_response(updated)

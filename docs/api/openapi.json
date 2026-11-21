@@ -783,6 +783,168 @@
         "title": "DeviceUpdate",
         "type": "object"
       },
+      "DriverMeOut": {
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "email": {
+            "title": "Email",
+            "type": "string"
+          },
+          "first_name": {
+            "title": "First Name",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "last_login": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Login"
+          },
+          "last_name": {
+            "title": "Last Name",
+            "type": "string"
+          },
+          "middle_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Middle Name"
+          },
+          "must_change_password": {
+            "default": false,
+            "title": "Must Change Password",
+            "type": "boolean"
+          },
+          "phone": {
+            "title": "Phone",
+            "type": "string"
+          },
+          "truck": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DriverTruckBrief"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "first_name",
+          "last_name",
+          "email",
+          "phone",
+          "created_at"
+        ],
+        "title": "DriverMeOut",
+        "type": "object"
+      },
+      "DriverOut": {
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "email": {
+            "title": "Email",
+            "type": "string"
+          },
+          "first_name": {
+            "title": "First Name",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "last_login": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Login"
+          },
+          "last_name": {
+            "title": "Last Name",
+            "type": "string"
+          },
+          "middle_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Middle Name"
+          },
+          "must_change_password": {
+            "default": false,
+            "title": "Must Change Password",
+            "type": "boolean"
+          },
+          "phone": {
+            "title": "Phone",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "first_name",
+          "last_name",
+          "email",
+          "phone",
+          "created_at"
+        ],
+        "title": "DriverOut",
+        "type": "object"
+      },
+      "DriverTruckBrief": {
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "plate": {
+            "title": "Plate",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "plate"
+        ],
+        "title": "DriverTruckBrief",
+        "type": "object"
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -964,11 +1126,36 @@
       "LoginResponse": {
         "properties": {
           "admin": {
-            "$ref": "#/components/schemas/AdminOut"
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AdminOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "driver": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DriverOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "role": {
+            "enum": [
+              "admin",
+              "driver"
+            ],
+            "title": "Role",
+            "type": "string"
           }
         },
         "required": [
-          "admin"
+          "role"
         ],
         "title": "LoginResponse",
         "type": "object"
@@ -1595,6 +1782,44 @@
           "points"
         ],
         "title": "RouteUpdate",
+        "type": "object"
+      },
+      "SessionResponse": {
+        "description": "Perfil de la sesión actual tras refresh o cambio de contraseña.",
+        "properties": {
+          "admin": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AdminOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "driver": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DriverOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "role": {
+            "enum": [
+              "admin",
+              "driver"
+            ],
+            "title": "Role",
+            "type": "string"
+          }
+        },
+        "required": [
+          "role"
+        ],
+        "title": "SessionResponse",
         "type": "object"
       },
       "SettingsOut": {
@@ -2539,7 +2764,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AdminOut"
+                  "$ref": "#/components/schemas/SessionResponse"
                 }
               }
             },
@@ -2687,7 +2912,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AdminOut"
+                  "$ref": "#/components/schemas/SessionResponse"
                 }
               }
             },
@@ -2695,6 +2920,28 @@
           }
         },
         "summary": "Refresh",
+        "tags": [
+          "Autenticación"
+        ]
+      }
+    },
+    "/api/v1/auth/session": {
+      "get": {
+        "description": "Rol de la sesión actual (login compartido admin/conductor).",
+        "operationId": "session_api_v1_auth_session_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Session",
         "tags": [
           "Autenticación"
         ]
@@ -3086,6 +3333,27 @@
         "summary": "Rotate Key",
         "tags": [
           "Dispositivos IoT"
+        ]
+      }
+    },
+    "/api/v1/driver/me": {
+      "get": {
+        "operationId": "me_api_v1_driver_me_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DriverMeOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Me",
+        "tags": [
+          "Conductor"
         ]
       }
     },

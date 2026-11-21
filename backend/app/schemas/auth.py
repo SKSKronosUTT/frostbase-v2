@@ -3,6 +3,8 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
+from app.schemas.driver import DriverOut
+
 MIN_PASSWORD_LENGTH = 12
 
 
@@ -46,4 +48,14 @@ class PasswordChangeRequest(BaseModel):
 
 
 class LoginResponse(BaseModel):
-    admin: AdminOut
+    role: Literal["admin", "driver"]
+    admin: AdminOut | None = None
+    driver: DriverOut | None = None
+
+
+class SessionResponse(BaseModel):
+    """Perfil de la sesión actual tras refresh o cambio de contraseña."""
+
+    role: Literal["admin", "driver"]
+    admin: AdminOut | None = None
+    driver: DriverOut | None = None

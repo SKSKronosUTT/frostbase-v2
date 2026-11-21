@@ -4,12 +4,16 @@ import threading
 import time
 from collections import deque
 
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.core.security import hash_password, verify_password
 from app.models.admin import Admin
+from app.models.driver import Driver
+from app.models.login_identity import LoginIdentity
 from app.repositories import admin as admin_repo
+from app.repositories import driver as driver_repo
 from app.utils.time import utcnow
 
 logger = logging.getLogger("frostbase.auth")
@@ -98,6 +102,36 @@ def ensure_initial_admin(db: Session) -> Admin | None:
     return admin
 
 
+def ensure_login_identity(
+    db: Session, *, email: str, account_type: str, account_id: int
+) -> None:
+    """Mantiene el registro global de correos de acceso (G1/G2).
+
+    Un correo no puede existir a la vez como administrador y como conductor.
+    Se invoca en la misma transacción que crea o reactiva la cuenta.
+    """
+    normalized = email.strip().lower()
+    existing = db.scalar(select(LoginIdentity).where(LoginIdentity.email == normalized))
+    if existing is None:
+        db.add(
+            LoginIdentity(
+                email=normalized, account_type=account_type, account_id=account_id
+            )
+        )
+    else:
+        existing.account_type = account_type
+        existing.account_id = account_id
+    db.flush()
+
+
+def sync_login_identities(db: Session) -> None:
+    """Sincroniza las identidades de los administradores existentes."""
+    for admin in db.scalars(select(Admin)):
+        ensure_login_identity(
+            db, email=admin.email, account_type="admin", account_id=admin.id
+        )
+
+
 def authenticate(
     db: Session, identifier: str, password: str, client_ip: str | None = None
 ) -> Admin:
@@ -122,6 +156,76 @@ def authenticate(
         client_ip or "unknown",
     )
     return admin
+
+
+def authenticate_principal(
+    db: Session, identifier: str, password: str, client_ip: str | None = None
+) -> Admin | Driver:
+    """Login compartido por rol: administrador (usuario o correo) y conductor.
+
+    El mensaje de error es siempre el mismo (no revela si el correo existe,
+    si pertenece a un conductor inactivo o si la contraseña es incorrecta).
+    """
+    admin = admin_repo.get_by_identifier(db, identifier)
+    if admin is not None:
+        if verify_password(password, admin.password_hash):
+            admin.last_login = utcnow()
+            db.add(admin)
+            db.flush()
+            logger.info(
+                "login_ok identifier=%s ip=%s role=admin",
+                _normalize_identifier(identifier),
+                client_ip or "unknown",
+            )
+            return admin
+        logger.warning(
+            "login_failed identifier=%s ip=%s role=admin result=denied",
+            _normalize_identifier(identifier),
+            client_ip or "unknown",
+        )
+        raise AuthenticationError("Usuario o contraseña incorrectos")
+
+    driver = driver_repo.get_by_email(db, identifier)
+    password_hash = driver.password_hash if driver is not None else _DUMMY_HASH
+    is_valid = verify_password(password, password_hash)
+    if driver is None or not is_valid or not driver.is_active:
+        logger.warning(
+            "login_failed identifier=%s ip=%s role=driver result=denied",
+            _normalize_identifier(identifier),
+            client_ip or "unknown",
+        )
+        raise AuthenticationError("Usuario o contraseña incorrectos")
+
+    driver.last_login = utcnow()
+    db.add(driver)
+    db.flush()
+    logger.info(
+        "login_ok identifier=%s ip=%s role=driver",
+        _normalize_identifier(identifier),
+        client_ip or "unknown",
+    )
+    return driver
+
+
+def change_driver_password(
+    db: Session, driver: Driver, current_password: str, new_password: str
+) -> Driver:
+    if not verify_password(current_password, driver.password_hash):
+        raise AuthenticationError("La contraseña actual no es correcta")
+    if new_password.lower() == current_password.lower():
+        raise PasswordPolicyError("La nueva contraseña debe ser distinta de la actual")
+    if driver.email.lower() in new_password.lower():
+        raise PasswordPolicyError(
+            "La nueva contraseña no puede contener el correo del conductor"
+        )
+
+    driver.password_hash = hash_password(new_password)
+    driver.must_change_password = False
+    driver.token_version += 1
+    db.add(driver)
+    db.flush()
+    logger.info("Contraseña actualizada para el conductor %s", driver.email)
+    return driver
 
 
 def change_password(
