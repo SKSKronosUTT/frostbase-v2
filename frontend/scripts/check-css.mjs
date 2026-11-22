@@ -25,7 +25,7 @@ function selectors(text) {
     if (part.startsWith("@") || /^(from|to|\d+%)$/.test(part)) continue;
     for (const selector of part.split(",")) {
       const normalized = selector.replace(/\s+/g, " ").trim();
-      if (normalized) found.push(normalized);
+      if (normalized && !/^(from|to|\d+%)$/.test(normalized)) found.push(normalized);
     }
   }
   return found;

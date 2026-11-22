@@ -1,20 +1,20 @@
-/* Portal del conductor (G2: página base; el panel completo llega en G5). */
+/* Portal del conductor (G5): contenedor en vivo, ruta del día y alertas. */
 
 body.driver-page {
   min-height: 100vh;
   background: var(--bg);
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  padding: 20px;
+  padding: 16px 14px 40px;
 }
 
 .driver-theme-toggle {
   position: fixed;
-  top: 16px;
-  right: 16px;
-  width: 40px;
-  height: 40px;
+  top: 14px;
+  right: 14px;
+  width: 38px;
+  height: 38px;
   border: 2px solid var(--border-ink);
   border-radius: 0;
   background: var(--surface);
@@ -23,58 +23,270 @@ body.driver-page {
   display: flex;
   align-items: center;
   justify-content: center;
+  z-index: 10;
 }
 
 .driver-shell {
-  width: min(460px, 100%);
+  width: min(560px, 100%);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
 }
 
-.driver-card__head {
+/* ===== Cabecera ===== */
+
+.driver-header {
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding: 22px 24px;
-  border-bottom: 3px solid var(--border-ink);
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 
-.driver-card__logo {
+.driver-header__user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.driver-header__logo {
   border: 2px solid var(--border-ink);
   background: var(--surface);
-  padding: 4px;
-  box-shadow: 3px 3px 0 var(--ink);
+  padding: 3px;
+  box-shadow: 2px 2px 0 var(--ink);
 }
 
-.driver-card__subtitle {
-  margin-top: 4px;
-  color: var(--text-muted);
-  font-size: 13px;
+.driver-header__user strong {
+  display: block;
+  font-size: 16px;
+}
+
+.driver-header__user .muted {
+  font-size: 12px;
   word-break: break-all;
 }
 
-.driver-shell .detail-list {
-  padding: 20px 24px;
+.driver-header__meta {
   display: flex;
-  flex-direction: column;
-  gap: 12px;
+  align-items: center;
+  gap: 8px;
 }
 
-.driver-card__actions {
+.driver-truck-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border: 2px solid var(--border-ink);
+  background: var(--surface);
+  font-weight: 700;
+  font-size: 12px;
+  box-shadow: 2px 2px 0 var(--ink);
+}
+
+/* ===== Contenedor ===== */
+
+.driver-container-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 1px;
+  background: var(--border-ink);
+}
+
+.driver-metric {
+  background: var(--surface);
+  padding: 18px 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  text-align: center;
+}
+
+.driver-metric__label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+}
+
+.driver-metric__value {
+  font-size: 28px;
+  font-weight: 900;
+  letter-spacing: -0.03em;
+}
+
+.driver-metric--temp .driver-metric__value {
+  color: var(--accent-deep);
+}
+
+.driver-metric--hum .driver-metric__value {
+  color: var(--accent-mid);
+}
+
+.driver-metric__range {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.driver-connection {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  background: var(--surface-soft);
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.driver-connection__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--success);
+  animation: driver-pulse 2s ease-in-out infinite;
+}
+
+@keyframes driver-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.3;
+  }
+}
+
+/* ===== Ruta ===== */
+
+.driver-route-body {
+  padding: 16px 18px;
+}
+
+.driver-route-detail {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  padding: 0 24px 8px;
 }
 
-.driver-card__note {
-  padding: 14px 24px 20px;
-  color: var(--text-muted);
-  font-size: 12px;
+.driver-route-detail .detail-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 0;
 }
+
+/* ===== Alertas ===== */
+
+.driver-alerts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.driver-alert-item {
+  display: flex;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 2px solid var(--border);
+  background: var(--surface);
+}
+
+.driver-alert-item--active {
+  border-color: var(--danger);
+  background: var(--danger-soft);
+}
+
+.driver-alert-item__icon {
+  width: 36px;
+  height: 36px;
+  border: 2px solid var(--border-ink);
+  background: var(--surface);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.driver-alert-item--active .driver-alert-item__icon {
+  background: var(--danger);
+  color: #ffffff;
+  border-color: var(--border-ink);
+}
+
+.driver-alert-item__body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.driver-alert-item__title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.driver-alert-item__title strong {
+  font-size: 13px;
+}
+
+.driver-alert-item__msg {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.driver-alert-item .badge {
+  font-size: 10px;
+  padding: 2px 6px;
+}
+
+/* ===== Responsive ===== */
 
 @media (max-width: 480px) {
   body.driver-page {
-    padding: 14px;
-    padding-top: 64px;
+    padding: 12px 10px 32px;
+    padding-top: 58px;
+  }
+
+  .driver-shell {
+    gap: 10px;
+  }
+
+  .driver-container-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .driver-metric--status {
+    grid-column: 1 / -1;
+    border-top: 1px solid var(--border-ink);
+  }
+
+  .driver-metric__value {
+    font-size: 24px;
+  }
+
+  .driver-header {
+    flex-direction: column;
     align-items: flex-start;
+  }
+
+  .driver-header__meta {
+    width: 100%;
+    justify-content: space-between;
+  }
+}
+
+@media (max-width: 360px) {
+  .driver-container-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .driver-metric--status {
+    border-top: none;
   }
 }
