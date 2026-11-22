@@ -65,6 +65,7 @@ class Settings(BaseSettings):
     iot_ip_rate_limit: int = 120
     login_ip_rate_limit: int = 5
     login_identifier_rate_limit: int = 10
+    hash_concurrency: int = 2
 
     osrm_base_url: str = "https://router.project-osrm.org"
     osrm_timeout_seconds: float = 5.0

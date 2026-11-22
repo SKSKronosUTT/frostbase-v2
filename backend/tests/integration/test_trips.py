@@ -383,3 +383,71 @@ def test_trip_logs_written(client, driver_session, driver_setup):
         assert "order_started" in events
         assert "order_delivered" in events
         assert "trip_ended" in events
+
+
+def test_concurrent_trip_start_creates_only_one(client, driver_setup):
+    """G8: dos inicios simultaneos -> una sola fila de viaje.
+
+    Se usa el servicio con dos sesiones de BD independientes y una barrera
+    para maximizar la carrera; el indice unico parcial decide el ganador y
+    el perdedor devuelve el viaje existente.
+    """
+    import threading
+
+    from app.models.driver import Driver
+    from app.models.route import DeliveryPoint
+    from app.services import trip_service
+
+    driver_id, _, _, truck_id, _ = driver_setup
+    today = today_weekday()
+    with SessionLocal() as db:
+        route = Route(
+            name="Ruta G8 concurrencia", assigned_driver_id=driver_id, status="activa"
+        )
+        db.add(route)
+        db.flush()
+        db.add(RouteDeliveryDay(route_id=route.id, driver_id=driver_id, weekday=today))
+        for i in range(2):
+            db.add(
+                DeliveryPoint(
+                    route_id=route.id,
+                    name=f"Punto {i}",
+                    address=f"Calle {i}",
+                    latitude=32.5,
+                    longitude=-117.0,
+                    order_index=i,
+                )
+            )
+        db.commit()
+        route_id = route.id
+
+    barrier = threading.Barrier(2)
+    results: list[int] = []
+    errors: list[Exception] = []
+
+    def attempt():
+        try:
+            with SessionLocal() as db:
+                driver = db.get(Driver, driver_id)
+                barrier.wait(timeout=5)
+                trip = trip_service.start_trip(db, driver, route_id)
+                db.commit()
+                results.append(trip.id)
+        except Exception as exc:  # noqa: BLE001
+            errors.append(exc)
+
+    threads = [threading.Thread(target=attempt) for _ in range(2)]
+    for thread in threads:
+        thread.start()
+    for thread in threads:
+        thread.join(timeout=15)
+
+    assert not errors, errors
+    assert len(results) == 2
+    assert len(set(results)) == 1, "Se crearon dos viajes distintos"
+
+    from app.models.trip import Trip
+
+    with SessionLocal() as db:
+        trips = db.query(Trip).filter(Trip.driver_id == driver_id).all()
+        assert len(trips) == 1

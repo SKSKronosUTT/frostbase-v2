@@ -16,6 +16,7 @@ Reglas de negocio (decisiones G0):
 import logging
 
 from sqlalchemy import func, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.models.driver import Driver
@@ -146,7 +147,16 @@ def start_trip(db: Session, driver: Driver, route_id: int) -> Trip:
         started_at=utcnow(),
     )
     db.add(trip)
-    db.flush()
+    try:
+        db.flush()
+    except IntegrityError as exc:
+        # Carrera perdida: otra petición simultánea inició el viaje primero
+        # y ganó el índice único parcial. Se comporta como el reintento.
+        db.rollback()
+        existing = get_current_trip(db, driver)
+        if existing is not None:
+            return existing
+        raise TripConflictError("Ya tienes un viaje en curso") from exc
 
     for index, point in enumerate(sorted(route.points, key=lambda p: p.order_index)):
         order = TripOrder(
@@ -164,7 +174,6 @@ def start_trip(db: Session, driver: Driver, route_id: int) -> Trip:
     db.flush()
 
     truck.status = "en_ruta"
-    db.add(truck)
     db.add(truck)
 
     db.add(

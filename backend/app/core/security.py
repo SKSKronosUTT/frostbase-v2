@@ -15,6 +15,12 @@ password_hash = PasswordHash.recommended()
 
 ALGORITHM = "HS256"
 
+# G8 (RNF2): Argon2id reserva ~64 MB por hash (m=65536, p=4). Sin límite, una
+# tormenta de logins concurrentes agota la memoria del worker y el cgroup lo
+# mata. El semáforo limita cuántos hashes se calculan a la vez por proceso:
+# el resto espera su turno (más latencia, cero caída de workers).
+_HASH_SEMAPHORE = threading.BoundedSemaphore(max(1, settings.hash_concurrency))
+
 _DEVICE_CACHE_MAX = 4096
 _DEVICE_CACHE_TTL_SECONDS = 300
 _device_cache: TTLCache[str, int] = TTLCache(
@@ -24,14 +30,16 @@ _device_cache_lock = threading.Lock()
 
 
 def hash_password(password: str) -> str:
-    return password_hash.hash(password)
+    with _HASH_SEMAPHORE:
+        return password_hash.hash(password)
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    try:
-        return password_hash.verify(plain_password, hashed_password)
-    except Exception:
-        return False
+    with _HASH_SEMAPHORE:
+        try:
+            return password_hash.verify(plain_password, hashed_password)
+        except Exception:
+            return False
 
 
 def create_access_token(
