@@ -13,6 +13,7 @@ class SettingsOut(BaseModel):
     humidity_min: float
     humidity_max: float
     offline_timeout_seconds: int
+    door_open_grace_seconds: int
     weather_city: str
     weather_latitude: float
     weather_longitude: float
@@ -25,6 +26,7 @@ class SettingsUpdate(BaseModel):
     humidity_ideal: float = Field(ge=0, le=100)
     humidity_tolerance: float = Field(gt=0, le=50)
     offline_timeout_seconds: int = Field(ge=10, le=86400)
+    door_open_grace_seconds: int | None = Field(default=None, ge=5, le=600)
     weather_city: str = Field(min_length=1, max_length=120)
     weather_latitude: float = Field(ge=-90, le=90)
     weather_longitude: float = Field(ge=-180, le=180)

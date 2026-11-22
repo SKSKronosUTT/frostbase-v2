@@ -18,6 +18,8 @@ class DriverContainerOut(BaseModel):
     temperature_max: float | None = None
     humidity_min: float | None = None
     humidity_max: float | None = None
+    door_open: bool | None = None
+    door_event_at: datetime | None = None
 
 
 class DriverTruckCard(BaseModel):
@@ -66,6 +68,7 @@ class DriverAlertOut(BaseModel):
     started_at: datetime
     resolved_at: datetime | None = None
     status: str
+    acknowledged_at: datetime | None = None
 
 
 class DriverReadingOut(BaseModel):

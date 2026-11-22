@@ -847,6 +847,89 @@
         "title": "DeviceUpdate",
         "type": "object"
       },
+      "DoorEventIngest": {
+        "description": "Evento del Reed Switch: se envía solo cuando la puerta cambia.",
+        "properties": {
+          "device_id": {
+            "maxLength": 100,
+            "minLength": 3,
+            "title": "Device Id",
+            "type": "string"
+          },
+          "is_open": {
+            "title": "Is Open",
+            "type": "boolean"
+          },
+          "timestamp": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Timestamp"
+          }
+        },
+        "required": [
+          "device_id",
+          "is_open"
+        ],
+        "title": "DoorEventIngest",
+        "type": "object"
+      },
+      "DoorEventResponse": {
+        "properties": {
+          "door_open": {
+            "title": "Door Open",
+            "type": "boolean"
+          },
+          "duplicate": {
+            "default": false,
+            "title": "Duplicate",
+            "type": "boolean"
+          },
+          "event_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Event Id"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "success": {
+            "title": "Success",
+            "type": "boolean"
+          },
+          "truck_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Truck Id"
+          }
+        },
+        "required": [
+          "success",
+          "message",
+          "door_open"
+        ],
+        "title": "DoorEventResponse",
+        "type": "object"
+      },
       "DriverAdminOut": {
         "properties": {
           "birthdate": {
@@ -937,6 +1020,18 @@
       },
       "DriverAlertOut": {
         "properties": {
+          "acknowledged_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Acknowledged At"
+          },
           "alert_type": {
             "title": "Alert Type",
             "type": "string"
@@ -1023,6 +1118,29 @@
       "DriverContainerOut": {
         "description": "Estado del contenedor con umbrales efectivos y última lectura.",
         "properties": {
+          "door_event_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Door Event At"
+          },
+          "door_open": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Door Open"
+          },
           "humidity": {
             "anyOf": [
               {
@@ -3142,6 +3260,10 @@
       },
       "SettingsOut": {
         "properties": {
+          "door_open_grace_seconds": {
+            "title": "Door Open Grace Seconds",
+            "type": "integer"
+          },
           "humidity_ideal": {
             "title": "Humidity Ideal",
             "type": "number"
@@ -3206,6 +3328,7 @@
           "humidity_min",
           "humidity_max",
           "offline_timeout_seconds",
+          "door_open_grace_seconds",
           "weather_city",
           "weather_latitude",
           "weather_longitude",
@@ -3216,6 +3339,19 @@
       },
       "SettingsUpdate": {
         "properties": {
+          "door_open_grace_seconds": {
+            "anyOf": [
+              {
+                "maximum": 600.0,
+                "minimum": 5.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Door Open Grace Seconds"
+          },
           "humidity_ideal": {
             "maximum": 100.0,
             "minimum": 0.0,
@@ -4958,6 +5094,49 @@
         ]
       }
     },
+    "/api/v1/driver/alerts/{alert_id}/ack": {
+      "post": {
+        "description": "Reconoce una alerta propia (G7); la ajena responde ``404``.",
+        "operationId": "ack_alert_api_v1_driver_alerts__alert_id__ack_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "alert_id",
+            "required": true,
+            "schema": {
+              "title": "Alert Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DriverAlertOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Ack Alert",
+        "tags": [
+          "Conductor"
+        ]
+      }
+    },
     "/api/v1/driver/container/live": {
       "get": {
         "description": "Última lectura del contenedor con umbrales efectivos.",
@@ -6191,6 +6370,66 @@
           }
         },
         "summary": "Device Config",
+        "tags": [
+          "IoT"
+        ]
+      }
+    },
+    "/api/v1/iot/door": {
+      "post": {
+        "description": "Evento del Reed Switch de la puerta (G7).\n\nIdempotente por ``(device_id, event_time)``. Los eventos ``open`` quedan\npendientes; el watcher decide al vencer la gracia si son no autorizados.",
+        "operationId": "receive_door_event_api_v1_iot_door_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Device-Key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Device-Key"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DoorEventIngest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DoorEventResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Receive Door Event",
         "tags": [
           "IoT"
         ]

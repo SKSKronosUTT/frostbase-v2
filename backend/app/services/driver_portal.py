@@ -25,7 +25,7 @@ from app.schemas.driver_portal import (
     DriverRouteDetail,
     DriverTruckCard,
 )
-from app.services import settings_service
+from app.services import door_service, settings_service
 from app.services.route_links import effective_route_for_truck, routes_for_driver
 from app.utils.time import ensure_utc
 
@@ -33,6 +33,7 @@ logger = logging.getLogger("frostbase.driver_portal")
 
 CONTAINER_STATUS_OK = "ok"
 CONTAINER_STATUS_OUT_OF_RANGE = "out_of_range"
+CONTAINER_STATUS_DOOR_OPEN = "door_open"
 CONTAINER_STATUS_NO_DATA = "no_data"
 
 
@@ -170,13 +171,20 @@ def get_container_live(db: Session, driver: Driver) -> DriverContainerOut:
         .order_by(Reading.received_at.desc())
         .limit(1)
     )
+    door_state = door_service.latest_door_state(db, truck)
 
     if latest is None:
+        status = CONTAINER_STATUS_NO_DATA
+        if door_state is not None and door_state.is_open:
+            status = CONTAINER_STATUS_DOOR_OPEN
         return DriverContainerOut(
+            status=status,
             temperature_min=temp_min,
             temperature_max=temp_max,
             humidity_min=hum_min,
             humidity_max=hum_max,
+            door_open=door_state.is_open if door_state else None,
+            door_event_at=ensure_utc(door_state.event_time) if door_state else None,
         )
 
     status = CONTAINER_STATUS_OK
@@ -184,6 +192,8 @@ def get_container_live(db: Session, driver: Driver) -> DriverContainerOut:
         status = CONTAINER_STATUS_OUT_OF_RANGE
     elif latest.humidity < hum_min or latest.humidity > hum_max:
         status = CONTAINER_STATUS_OUT_OF_RANGE
+    elif door_state is not None and door_state.is_open:
+        status = CONTAINER_STATUS_DOOR_OPEN
 
     return DriverContainerOut(
         temperature=latest.temperature,
@@ -196,6 +206,8 @@ def get_container_live(db: Session, driver: Driver) -> DriverContainerOut:
         temperature_max=temp_max,
         humidity_min=hum_min,
         humidity_max=hum_max,
+        door_open=door_state.is_open if door_state else None,
+        door_event_at=ensure_utc(door_state.event_time) if door_state else None,
     )
 
 
@@ -311,6 +323,7 @@ def list_alerts(
             started_at=ensure_utc(alert.started_at),
             resolved_at=ensure_utc(alert.resolved_at),
             status=alert.status,
+            acknowledged_at=ensure_utc(alert.acknowledged_at),
         )
         for alert in alerts
     ]

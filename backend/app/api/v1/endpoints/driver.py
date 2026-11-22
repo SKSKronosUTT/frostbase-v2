@@ -30,7 +30,7 @@ from app.schemas.trip import (
     TripOut,
     TripStartIn,
 )
-from app.services import driver_portal, trip_service
+from app.services import door_service, driver_portal, trip_service
 
 router = APIRouter(prefix="/driver", tags=["Conductor"])
 
@@ -110,6 +110,29 @@ def alerts(
         db, driver, status=status_filter, page=page, page_size=page_size
     )
     return Page(items=items, total=total, page=page, page_size=page_size)
+
+
+@router.post("/alerts/{alert_id}/ack", response_model=DriverAlertOut)
+def ack_alert(alert_id: int, driver: CurrentDriver, db: DbSession) -> DriverAlertOut:
+    """Reconoce una alerta propia (G7); la ajena responde ``404``."""
+    alert = door_service.ack_alert(db, driver, alert_id)
+    if alert is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Alerta no encontrada",
+        )
+    return DriverAlertOut(
+        id=alert.id,
+        alert_type=alert.alert_type,
+        value=alert.value,
+        min_value=alert.min_value,
+        max_value=alert.max_value,
+        message=alert.message,
+        started_at=alert.started_at,
+        resolved_at=alert.resolved_at,
+        status=alert.status,
+        acknowledged_at=alert.acknowledged_at,
+    )
 
 
 # ===== Viajes y entregas (G6) =====

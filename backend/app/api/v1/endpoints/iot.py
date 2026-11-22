@@ -6,12 +6,19 @@ from app.api.deps import DbSession, authenticate_device_or_401
 from app.core.config import settings
 from app.core.ratelimit import RateLimit
 from app.schemas.iot import (
+    DoorEventIngest,
+    DoorEventResponse,
     IoTConfigResponse,
     IoTReadingResponse,
     IoTRouteConfig,
     ReadingIngest,
 )
-from app.services import reading_service, route_links, settings_service
+from app.services import (
+    door_service,
+    reading_service,
+    route_links,
+    settings_service,
+)
 from app.services.serializers import serialize_alert
 
 router = APIRouter(prefix="/iot", tags=["IoT"])
@@ -21,6 +28,12 @@ _reading_device_limiter = RateLimit(
 )
 _reading_ip_limiter = RateLimit(
     "iot:readings:ip", limit=settings.iot_ip_rate_limit, window_seconds=60
+)
+_door_device_limiter = RateLimit(
+    "iot:door:device", limit=settings.iot_device_rate_limit, window_seconds=60
+)
+_door_ip_limiter = RateLimit(
+    "iot:door:ip", limit=settings.iot_ip_rate_limit, window_seconds=60
 )
 _config_device_limiter = RateLimit("iot:config:device", limit=60, window_seconds=60)
 _config_ip_limiter = RateLimit("iot:config:ip", limit=120, window_seconds=60)
@@ -65,6 +78,48 @@ def receive_reading(
     )
 
 
+@router.post("/door", response_model=DoorEventResponse)
+def receive_door_event(
+    payload: DoorEventIngest,
+    request: Request,
+    response: Response,
+    db: DbSession,
+    x_device_key: Annotated[str | None, Header(alias="X-Device-Key")] = None,
+) -> DoorEventResponse:
+    """Evento del Reed Switch de la puerta (G7).
+
+    Idempotente por ``(device_id, event_time)``. Los eventos ``open`` quedan
+    pendientes; el watcher decide al vencer la gracia si son no autorizados.
+    """
+    _door_device_limiter.check(request, response, extra=payload.device_id.strip())
+    _door_ip_limiter.check(request, response)
+    device = authenticate_device_or_401(
+        db, device_id=payload.device_id, device_key=x_device_key
+    )
+    request.state.device_id = device.device_id
+    try:
+        event, duplicate = door_service.ingest_door_event(
+            db, device=device, payload=payload
+        )
+    except door_service.DeviceNotAssignedError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT, detail=str(exc)
+        ) from exc
+
+    return DoorEventResponse(
+        success=True,
+        message=(
+            "Evento duplicado; se conserva el existente"
+            if duplicate
+            else "Evento de puerta registrado correctamente"
+        ),
+        truck_id=event.truck_id,
+        door_open=event.is_open,
+        duplicate=duplicate,
+        event_id=event.id,
+    )
+
+
 @router.get("/config", response_model=IoTConfigResponse)
 def device_config(
     request: Request,
@@ -89,7 +144,6 @@ def device_config(
         db, device_id=x_device_id, device_key=x_device_key
     )
     request.state.device_id = device.device_id
-    setting = settings_service.get_settings(db)
     setting = settings_service.get_settings(db)
     route = (
         route_links.effective_route_for_truck(db, device.truck)

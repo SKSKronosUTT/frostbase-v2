@@ -18,6 +18,7 @@ def serialize_settings(setting: Setting) -> SettingsOut:
         humidity_min=setting.humidity_min,
         humidity_max=setting.humidity_max,
         offline_timeout_seconds=setting.offline_timeout_seconds,
+        door_open_grace_seconds=setting.door_open_grace_seconds,
         weather_city=setting.weather_city,
         weather_latitude=setting.weather_latitude,
         weather_longitude=setting.weather_longitude,
@@ -44,6 +45,8 @@ def update_settings(db: Session, payload: SettingsUpdate) -> SettingsOut:
     setting.humidity_ideal = payload.humidity_ideal
     setting.humidity_tolerance = payload.humidity_tolerance
     setting.offline_timeout_seconds = payload.offline_timeout_seconds
+    if payload.door_open_grace_seconds is not None:
+        setting.door_open_grace_seconds = payload.door_open_grace_seconds
     setting.weather_city = payload.weather_city
     setting.weather_latitude = payload.weather_latitude
     setting.weather_longitude = payload.weather_longitude
