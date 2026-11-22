@@ -1,8 +1,7 @@
 import { api, isCancelledError } from "../core/api.js";
 import { logout } from "../core/auth.js";
-import { openPasswordChangeModal } from "../core/app.js";
-import { setupPolling } from "../core/app.js";
-import { notify } from "../core/notifications.js";
+import { openPasswordChangeModal, setupPolling } from "../core/app.js";
+import { confirmDialog, notify } from "../core/notifications.js";
 import { initTheme, toggleTheme } from "../core/theme.js";
 import {
   escapeHtml,
@@ -10,8 +9,16 @@ import {
   formatTemp,
   formatHum,
   qs,
+  setButtonLoading,
   timeAgo,
 } from "../core/helpers.js";
+
+const BLOCKING_MESSAGES = {
+  NO_TRUCK: "No tienes un camión asignado. Contacta a tu administrador.",
+  NO_ROUTE_TODAY: "No tienes ruta programada para hoy.",
+  TRUCK_UNAVAILABLE: "Tu camión no está disponible.",
+  TRIP_IN_PROGRESS: "Ya tienes un viaje en curso.",
+};
 
 initTheme();
 
@@ -167,15 +174,203 @@ async function loadAlerts() {
   }
 }
 
+// ===== Viaje y entregas (G6) =====
+
+function renderTripStatus(data) {
+  const idle = qs("#tripIdle");
+  const active = qs("#tripActive");
+  const badge = qs("#tripBadge");
+  const startButton = qs("#startTripButton");
+  const blockingText = qs("#tripBlocking");
+
+  if (data.current_trip) {
+    // Hay un viaje en curso
+    idle.hidden = true;
+    active.hidden = false;
+    badge.textContent = "En curso";
+    badge.className = "badge badge--danger";
+    renderCurrentTrip(data.current_trip);
+  } else {
+    idle.hidden = false;
+    active.hidden = true;
+
+    if (data.can_start) {
+      startButton.hidden = false;
+      blockingText.hidden = true;
+      badge.textContent = "Listo";
+      badge.className = "badge badge--success";
+    } else {
+      startButton.hidden = true;
+      blockingText.hidden = false;
+      blockingText.textContent =
+        BLOCKING_MESSAGES[data.blocking_reason] || "No puedes iniciar un viaje.";
+      badge.textContent = "Sin viaje";
+      badge.className = "badge badge--muted";
+    }
+  }
+}
+
+function renderCurrentTrip(trip) {
+  const delivered = trip.orders_delivered;
+  const total = trip.orders.length;
+  const label = qs("#tripProgressLabel");
+  const fill = qs("#tripProgressFill");
+
+  label.textContent = `${delivered} de ${total} entregadas`;
+  fill.style.width = total > 0 ? `${(delivered / total) * 100}%` : "0%";
+
+  const list = qs("#ordersList");
+  list.innerHTML = trip.orders
+    .map((order) => {
+      const stateClass = `driver-order--${order.state}`;
+      const canStart = order.state === "pending" && trip.state === "in_progress";
+      const canDeliver = order.state === "in_delivery";
+      const canFail =
+        (order.state === "pending" || canDeliver) && trip.state === "in_progress";
+
+      return `
+        <div class="driver-order ${stateClass}">
+          <span class="driver-order__num">${order.order_index + 1}</span>
+          <div class="driver-order__body">
+            <div class="driver-order__name">${escapeHtml(order.name)}</div>
+            ${order.address ? `<div class="driver-order__address">${escapeHtml(order.address)}</div>` : ""}
+            ${order.failure_reason ? `<div class="driver-order__reason">Motivo: ${escapeHtml(order.failure_reason)}</div>` : ""}
+          </div>
+          <div class="driver-order__actions">
+            ${canStart ? `<button class="btn btn--primary btn--sm" type="button" data-order-action="start" data-order-id="${order.id}"><i class="fa-solid fa-play"></i></button>` : ""}
+            ${canDeliver ? `<button class="btn btn--success btn--sm" type="button" data-order-action="deliver" data-order-id="${order.id}"><i class="fa-solid fa-check"></i></button>` : ""}
+            ${canFail ? `<button class="btn btn--danger btn--sm" type="button" data-order-action="fail" data-order-id="${order.id}"><i class="fa-solid fa-xmark"></i></button>` : ""}
+          </div>
+        </div>
+      `;
+    })
+    .join("");
+
+  // Wire order buttons
+  list.querySelectorAll("[data-order-action]").forEach((button) => {
+    button.addEventListener("click", () =>
+      handleOrderAction(button.dataset.orderAction, Number(button.dataset.orderId))
+    );
+  });
+}
+
+async function handleOrderAction(action, orderId) {
+  const current = await api.get("/driver/trips/current");
+  if (!current) return;
+  const tripId = current.id;
+
+  if (action === "start") {
+    try {
+      await api.post(`/driver/trips/${tripId}/orders/${orderId}/start`);
+      notify.success("Entrega iniciada.");
+      await loadTripStatus();
+    } catch (error) {
+      notify.error(error.message, { title: "No se pudo iniciar la entrega" });
+    }
+  } else if (action === "deliver") {
+    try {
+      await api.post(`/driver/trips/${tripId}/orders/${orderId}/deliver`);
+      notify.success("Orden entregada.");
+      await loadTripStatus();
+    } catch (error) {
+      notify.error(error.message, { title: "No se pudo marcar la entrega" });
+    }
+  } else if (action === "fail") {
+    const reason = await askFailReason();
+    if (!reason) return;
+    try {
+      await api.post(`/driver/trips/${tripId}/orders/${orderId}/fail`, { reason });
+      notify.warning("Orden marcada como no entregada.");
+      await loadTripStatus();
+    } catch (error) {
+      notify.error(error.message, { title: "No se pudo marcar como fallida" });
+    }
+  }
+}
+
+async function askFailReason() {
+  return window.prompt("Motivo de la no entrega (obligatorio):", "Cliente cerrado");
+}
+
+async function startTrip() {
+  const button = qs("#startTripButton");
+  setButtonLoading(button, true, "Iniciando…");
+  try {
+    const status = await api.get("/driver/trips/can-start");
+    if (!status.can_start || !status.route_id) {
+      notify.warning(BLOCKING_MESSAGES[status.blocking_reason] || "No puedes iniciar.");
+      return;
+    }
+    await api.post("/driver/trips/start", { route_id: status.route_id });
+    notify.success("Viaje iniciado. Buen camino.");
+    await loadTripStatus();
+  } catch (error) {
+    notify.error(error.message, { title: "No se pudo iniciar el viaje" });
+  } finally {
+    setButtonLoading(button, false);
+  }
+}
+
+async function endTrip() {
+  const current = await api.get("/driver/trips/current");
+  if (!current) return;
+
+  const pending = current.orders_pending;
+  const message =
+    pending > 0
+      ? `Tienes ${pending} orden(es) sin entregar. Se marcarán como no entregadas. ¿Confirmas?`
+      : "¿Finalizar el viaje?";
+
+  const accepted = await confirmDialog({
+    title: "Finalizar viaje",
+    message,
+    confirmText: "Finalizar",
+    danger: true,
+  });
+  if (!accepted) return;
+
+  try {
+    await api.post(`/driver/trips/${current.id}/end`, {
+      confirm_pending: true,
+      failure_reason: pending > 0 ? "Finalizó el viaje sin entregar" : null,
+    });
+    notify.success("Viaje finalizado correctamente.");
+    await loadTripStatus();
+    await loadDashboard();
+  } catch (error) {
+    notify.error(error.message, { title: "No se pudo finalizar el viaje" });
+  }
+}
+
+async function loadTripStatus() {
+  try {
+    const current = await api.get("/driver/trips/current");
+    const canStart = await api.get("/driver/trips/can-start");
+    renderTripStatus({
+      current_trip: current,
+      can_start: canStart.can_start,
+      blocking_reason: canStart.blocking_reason,
+    });
+    if (current) {
+      renderCurrentTrip(current);
+    }
+  } catch (error) {
+    if (isCancelledError(error)) return;
+  }
+}
+
+// Wire trip buttons
+qs("#startTripButton").addEventListener("click", startTrip);
+qs("#endTripButton").addEventListener("click", endTrip);
+
 async function init() {
   // Verificar sesión; si es 401, api.js ya redirige al login.
   const me = await api.get("/driver/me").catch(() => null);
   if (!me) return;
 
-  await loadDashboard();
-  await loadAlerts();
+  await Promise.allSettled([loadDashboard(), loadAlerts(), loadTripStatus()]);
   setupPolling(async () => {
-    await Promise.allSettled([loadDashboard(), loadAlerts()]);
+    await Promise.allSettled([loadDashboard(), loadAlerts(), loadTripStatus()]);
   }, 5000);
 }
 

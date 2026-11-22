@@ -290,3 +290,133 @@ body.driver-page {
     border-top: none;
   }
 }
+
+/* ===== Viaje y entregas (G6) ===== */
+
+.driver-trip-start {
+  padding: 16px;
+  font-size: 15px;
+}
+
+.driver-trip-blocked {
+  margin-top: 10px;
+  font-size: 13px;
+  text-align: center;
+}
+
+.driver-trip-end {
+  margin-top: 12px;
+  padding: 14px;
+  font-size: 14px;
+}
+
+.driver-trip-progress {
+  margin-bottom: 14px;
+}
+
+.driver-trip-progress__label {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+
+.driver-trip-progress__bar {
+  height: 8px;
+  border: 2px solid var(--border-ink);
+  background: var(--surface-soft);
+}
+
+.driver-trip-progress__fill {
+  height: 100%;
+  background: var(--accent-mid);
+  transition: width 0.3s ease;
+}
+
+.driver-orders {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.driver-order {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 2px solid var(--border);
+  background: var(--surface);
+}
+
+.driver-order--in_delivery {
+  border-color: var(--accent-mid);
+  background: var(--electric-soft);
+}
+
+.driver-order--delivered {
+  border-color: var(--success);
+  background: var(--success-soft);
+}
+
+.driver-order--failed {
+  border-color: var(--danger);
+  background: var(--danger-soft);
+}
+
+.driver-order__num {
+  width: 28px;
+  height: 28px;
+  border: 2px solid var(--border-ink);
+  background: var(--surface);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 900;
+  flex-shrink: 0;
+}
+
+.driver-order--delivered .driver-order__num {
+  background: var(--success);
+  color: #ffffff;
+}
+
+.driver-order--failed .driver-order__num {
+  background: var(--danger);
+  color: #ffffff;
+}
+
+.driver-order__body {
+  flex: 1;
+  min-width: 0;
+}
+
+.driver-order__name {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.driver-order__address {
+  font-size: 11px;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.driver-order__reason {
+  font-size: 11px;
+  color: var(--danger);
+}
+
+.driver-order__actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.driver-order__actions button {
+  min-width: 40px;
+  min-height: 40px;
+}

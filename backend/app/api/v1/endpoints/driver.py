@@ -22,7 +22,15 @@ from app.schemas.driver_portal import (
     DriverRouteCard,
     DriverRouteDetail,
 )
-from app.services import driver_portal
+from app.schemas.trip import (
+    CanStartTripOut,
+    OrderFailIn,
+    TripEndIn,
+    TripOrderOut,
+    TripOut,
+    TripStartIn,
+)
+from app.services import driver_portal, trip_service
 
 router = APIRouter(prefix="/driver", tags=["Conductor"])
 
@@ -102,3 +110,152 @@ def alerts(
         db, driver, status=status_filter, page=page, page_size=page_size
     )
     return Page(items=items, total=total, page=page, page_size=page_size)
+
+
+# ===== Viajes y entregas (G6) =====
+
+
+@router.get("/trips/can-start", response_model=CanStartTripOut)
+def can_start(driver: CurrentDriver, db: DbSession) -> CanStartTripOut:
+    """Dice si el conductor puede iniciar un viaje y por qué no."""
+    return CanStartTripOut(**trip_service.can_start_trip(db, driver))
+
+
+@router.get("/trips/current", response_model=TripOut | None)
+def current_trip(driver: CurrentDriver, db: DbSession) -> TripOut | None:
+    """Viaje en curso, o ``null``."""
+    trip = trip_service.get_current_trip(db, driver)
+    return TripOut.from_trip(trip) if trip else None
+
+
+@router.post("/trips/start", response_model=TripOut, status_code=201)
+def start_trip(payload: TripStartIn, driver: CurrentDriver, db: DbSession) -> TripOut:
+    """Inicia un viaje creando las órdenes desde la ruta de hoy."""
+    try:
+        trip = trip_service.start_trip(db, driver, payload.route_id)
+    except trip_service.TripConflictError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT, detail=str(exc)
+        ) from exc
+    except trip_service.TripValidationError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=str(exc)
+        ) from exc
+    return TripOut.from_trip(trip)
+
+
+@router.post("/trips/{trip_id}/end", response_model=TripOut)
+def end_trip(
+    trip_id: int,
+    payload: TripEndIn,
+    driver: CurrentDriver,
+    db: DbSession,
+) -> TripOut:
+    """Finaliza un viaje; las órdenes pendientes requieren ``confirm_pending``."""
+    try:
+        trip = trip_service.end_trip(
+            db,
+            driver,
+            trip_id,
+            confirm_pending=payload.confirm_pending,
+            failure_reason=payload.failure_reason,
+        )
+    except trip_service.TripNotFoundError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)
+        ) from exc
+    except trip_service.TripConflictError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT, detail=str(exc)
+        ) from exc
+    return TripOut.from_trip(trip)
+
+
+@router.post("/trips/{trip_id}/orders/{order_id}/start", response_model=TripOrderOut)
+def start_order(
+    trip_id: int, order_id: int, driver: CurrentDriver, db: DbSession
+) -> TripOrderOut:
+    """Marca una orden como «en entrega»."""
+    try:
+        order = trip_service.start_order(db, driver, trip_id, order_id)
+    except trip_service.TripNotFoundError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)
+        ) from exc
+    except trip_service.TripConflictError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT, detail=str(exc)
+        ) from exc
+    return TripOrderOut.from_order(order)
+
+
+@router.post("/trips/{trip_id}/orders/{order_id}/deliver", response_model=TripOrderOut)
+def deliver_order(
+    trip_id: int, order_id: int, driver: CurrentDriver, db: DbSession
+) -> TripOrderOut:
+    """Marca una orden como entregada."""
+    try:
+        order = trip_service.deliver_order(db, driver, trip_id, order_id)
+    except trip_service.TripNotFoundError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)
+        ) from exc
+    except trip_service.TripConflictError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT, detail=str(exc)
+        ) from exc
+    return TripOrderOut.from_order(order)
+
+
+@router.post("/trips/{trip_id}/orders/{order_id}/fail", response_model=TripOrderOut)
+def fail_order(
+    trip_id: int,
+    order_id: int,
+    payload: OrderFailIn,
+    driver: CurrentDriver,
+    db: DbSession,
+) -> TripOrderOut:
+    """Marca una orden como fallida (motivo de texto libre obligatorio)."""
+    try:
+        order = trip_service.fail_order(db, driver, trip_id, order_id, payload.reason)
+    except trip_service.TripNotFoundError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)
+        ) from exc
+    except (trip_service.TripConflictError, trip_service.TripValidationError) as exc:
+        code = (
+            status.HTTP_409_CONFLICT
+            if isinstance(exc, trip_service.TripConflictError)
+            else status.HTTP_422_UNPROCESSABLE_CONTENT
+        )
+        raise HTTPException(status_code=code, detail=str(exc)) from exc
+    return TripOrderOut.from_order(order)
+
+
+@router.get("/trips", response_model=Page[TripOut])
+def list_trips(
+    driver: CurrentDriver,
+    db: DbSession,
+    page: int = Query(default=1, ge=1, le=10000),
+    page_size: int = Query(default=20, ge=1, le=100),
+) -> Page[TripOut]:
+    """Historial de viajes del conductor, paginado."""
+    trips, total = trip_service.list_trips(db, driver, page=page, page_size=page_size)
+    return Page(
+        items=[TripOut.from_trip(trip) for trip in trips],
+        total=total,
+        page=page,
+        page_size=page_size,
+    )
+
+
+@router.get("/trips/{trip_id}", response_model=TripOut)
+def trip_detail(trip_id: int, driver: CurrentDriver, db: DbSession) -> TripOut:
+    """Detalle de un viaje propio; el de otro conductor da ``404``."""
+    try:
+        trip = trip_service.get_trip_detail(db, driver, trip_id)
+    except trip_service.TripNotFoundError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)
+        ) from exc
+    return TripOut.from_trip(trip)
