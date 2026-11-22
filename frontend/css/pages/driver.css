@@ -420,3 +420,13 @@ body.driver-page {
   min-width: 40px;
   min-height: 40px;
 }
+
+/* ===== Puerta y alertas (G7) ===== */
+
+.driver-metric--door .badge {
+  justify-content: center;
+}
+
+.driver-alert-ack {
+  margin-top: 6px;
+}
