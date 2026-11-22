@@ -366,14 +366,14 @@ def test_driver_endpoints_require_admin(client, login, csrf_headers, create_driv
     )
 
 
-def test_driver_options_list_active_with_truck(
+def test_driver_options_include_drivers_without_truck(
     client, admin_headers, create_driver, create_truck
 ):
     driver_id, _, _ = create_driver(email="opcion@frostbase.local")
     truck_id = create_truck(plate="G3-O")
 
-    empty = client.get("/api/v1/drivers/options")
-    assert empty.json() == []
+    before = client.get("/api/v1/drivers/options")
+    assert before.json() == [{"id": driver_id, "label": "Carlos Rivera · sin camión"}]
 
     assert (
         client.put(
@@ -384,7 +384,7 @@ def test_driver_options_list_active_with_truck(
         == 200
     )
     options = client.get("/api/v1/drivers/options")
-    assert options.json() == [{"id": driver_id, "label": "Carlos Rivera"}]
+    assert options.json() == [{"id": driver_id, "label": "Carlos Rivera · G3-O"}]
 
 
 def test_driver_trips_history_endpoint(client, admin_headers, create_driver):

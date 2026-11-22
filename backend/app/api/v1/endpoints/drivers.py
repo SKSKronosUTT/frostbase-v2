@@ -80,10 +80,10 @@ def list_drivers(
 
 @router.get("/options", response_model=list[DriverOptionOut])
 def list_driver_options(db: DbSession, _: CurrentAdmin) -> list[DriverOptionOut]:
-    """Conductores activos con camión asignado (para selectores de rutas, G4)."""
+    """Conductores activos, con o sin camión (la etiqueta indica la placa)."""
     return [
         DriverOptionOut(id=driver_id, label=label)
-        for driver_id, label in driver_repo.options_with_truck(db)
+        for driver_id, label in driver_repo.list_options(db)
     ]
 
 

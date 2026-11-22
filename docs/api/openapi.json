@@ -4209,7 +4209,7 @@
     },
     "/api/v1/drivers/options": {
       "get": {
-        "description": "Conductores activos con camión asignado (para selectores de rutas, G4).",
+        "description": "Conductores activos, con o sin camión (la etiqueta indica la placa).",
         "operationId": "list_driver_options_api_v1_drivers_options_get",
         "responses": {
           "200": {

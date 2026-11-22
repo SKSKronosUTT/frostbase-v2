@@ -70,17 +70,33 @@ def test_assign_driver_and_weekly_calendar(client, admin_headers, driver_with_tr
     assert body["truck"] is None or body["truck"] is not None
 
 
-def test_assign_driver_requires_truck_and_active(client, admin_headers, create_driver):
+def test_assign_driver_without_truck_is_allowed(client, admin_headers, create_driver):
+    """G4 corregido: un conductor activo sin camión también puede tener rutas."""
     route = _create_route(client, admin_headers, name="Sin camión")
     driver_id, _, _ = create_driver(email="sin.camion@frostbase.local")
 
-    no_truck = client.put(
+    ok = client.put(
         f"/api/v1/routes/{route['id']}/driver",
         json={"driver_id": driver_id, "weekdays": [1]},
         headers=admin_headers(),
     )
-    assert no_truck.status_code == 422
-    assert "camión asignado" in no_truck.json()["detail"]
+    assert ok.status_code == 200
+    assert ok.json()["assigned_driver"]["id"] == driver_id
+
+
+def test_assign_inactive_driver_is_rejected(client, admin_headers, create_driver):
+    route = _create_route(client, admin_headers, name="Conductor inactivo")
+    driver_id, _, _ = create_driver(
+        email="inactivo.g4@frostbase.local", is_active=False
+    )
+
+    denied = client.put(
+        f"/api/v1/routes/{route['id']}/driver",
+        json={"driver_id": driver_id, "weekdays": [1]},
+        headers=admin_headers(),
+    )
+    assert denied.status_code == 422
+    assert "inactivo" in denied.json()["detail"]
 
 
 def test_invalid_weekdays_are_rejected(client, admin_headers, driver_with_truck):

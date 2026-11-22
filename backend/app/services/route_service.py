@@ -227,9 +227,12 @@ def assign_route(db: Session, route_id: int, truck_id: int) -> RouteOut:
         other.route_id = None
         db.add(other)
     truck.route_id = route.id
+    # Se sincroniza la relación en memoria: una re-consulta devolvería el
+    # valor precargado (stale) porque el objeto Route ya está en el identity
+    # map de la sesión.
+    route.truck = truck
     db.add(truck)
     db.flush()
-    route = _get_or_fail(db, route.id)
     return serialize_route(route)
 
 
@@ -249,7 +252,8 @@ def assign_driver(
     Reglas de G0/G4:
 
     - La ruta pertenece al conductor; el camión queda como vínculo legado.
-    - El conductor debe estar activo y con un camión asignado.
+    - El conductor debe estar activo (con o sin camión: la etiqueta del
+      selector indica la placa o «sin camión»).
     - Una sola ruta por conductor y día de la semana (índice único + validación
       previa con mensaje claro).
     - ``driver_id = null`` quita al conductor y limpia el calendario.
@@ -268,8 +272,6 @@ def assign_driver(
         raise RouteValidationError("El conductor seleccionado no existe")
     if not driver.is_active:
         raise RouteValidationError("El conductor está inactivo")
-    if driver_repo.active_assignment(db, driver.id) is None:
-        raise RouteValidationError("El conductor no tiene un camión asignado")
 
     conflicts = routes_repo.conflicting_delivery_days(
         db, driver.id, payload.weekdays, except_route_id=route.id

@@ -358,7 +358,8 @@ devuelven la geometría completa.
 ```
 
 - `weekdays` usa la convención `0=domingo … 6=sábado`, sin repeticiones.
-- El conductor debe estar **activo y con un camión asignado** (`422`).
+- El conductor debe estar **activo** (con o sin camión: la etiqueta del
+  selector indica la placa o «sin camión»). Un conductor inactivo da `422`.
 - Solo puede existir **una ruta por conductor y día** (`409` con el día en
   conflicto, p. ej. *"El conductor ya tiene otra ruta asignada el lunes"*).
 - `driver_id: null` quita al conductor y limpia su calendario.
