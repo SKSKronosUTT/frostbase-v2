@@ -889,6 +889,203 @@
         "title": "DriverAdminOut",
         "type": "object"
       },
+      "DriverAlertOut": {
+        "properties": {
+          "alert_type": {
+            "title": "Alert Type",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "max_value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Value"
+          },
+          "message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message"
+          },
+          "min_value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Min Value"
+          },
+          "resolved_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resolved At"
+          },
+          "started_at": {
+            "format": "date-time",
+            "title": "Started At",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          }
+        },
+        "required": [
+          "id",
+          "alert_type",
+          "started_at",
+          "status"
+        ],
+        "title": "DriverAlertOut",
+        "type": "object"
+      },
+      "DriverContainerOut": {
+        "description": "Estado del contenedor con umbrales efectivos y última lectura.",
+        "properties": {
+          "humidity": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Humidity"
+          },
+          "humidity_max": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Humidity Max"
+          },
+          "humidity_min": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Humidity Min"
+          },
+          "latitude": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latitude"
+          },
+          "longitude": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Longitude"
+          },
+          "received_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Received At"
+          },
+          "status": {
+            "default": "no_data",
+            "title": "Status",
+            "type": "string"
+          },
+          "temperature": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Temperature"
+          },
+          "temperature_max": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Temperature Max"
+          },
+          "temperature_min": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Temperature Min"
+          }
+        },
+        "title": "DriverContainerOut",
+        "type": "object"
+      },
       "DriverCreate": {
         "properties": {
           "birthdate": {
@@ -1065,6 +1262,63 @@
           "created_at"
         ],
         "title": "DriverCreatedOut",
+        "type": "object"
+      },
+      "DriverDashboardOut": {
+        "properties": {
+          "active_alerts": {
+            "default": 0,
+            "title": "Active Alerts",
+            "type": "integer"
+          },
+          "container": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DriverContainerOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "driver": {
+            "additionalProperties": true,
+            "title": "Driver",
+            "type": "object"
+          },
+          "routes": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/DriverRouteCard"
+            },
+            "title": "Routes",
+            "type": "array"
+          },
+          "today_route": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DriverRouteCard"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "truck": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DriverTruckCard"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "driver"
+        ],
+        "title": "DriverDashboardOut",
         "type": "object"
       },
       "DriverDeactivationOut": {
@@ -1346,6 +1600,58 @@
         "title": "DriverOut",
         "type": "object"
       },
+      "DriverReadingOut": {
+        "properties": {
+          "humidity": {
+            "title": "Humidity",
+            "type": "number"
+          },
+          "latitude": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latitude"
+          },
+          "longitude": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Longitude"
+          },
+          "reading_timestamp": {
+            "format": "date-time",
+            "title": "Reading Timestamp",
+            "type": "string"
+          },
+          "received_at": {
+            "format": "date-time",
+            "title": "Received At",
+            "type": "string"
+          },
+          "temperature": {
+            "title": "Temperature",
+            "type": "number"
+          }
+        },
+        "required": [
+          "temperature",
+          "humidity",
+          "received_at",
+          "reading_timestamp"
+        ],
+        "title": "DriverReadingOut",
+        "type": "object"
+      },
       "DriverRouteBrief": {
         "properties": {
           "id": {
@@ -1367,6 +1673,105 @@
           "status"
         ],
         "title": "DriverRouteBrief",
+        "type": "object"
+      },
+      "DriverRouteCard": {
+        "properties": {
+          "delivery_days": {
+            "default": [],
+            "items": {
+              "type": "integer"
+            },
+            "title": "Delivery Days",
+            "type": "array"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "points_count": {
+            "default": 0,
+            "title": "Points Count",
+            "type": "integer"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "status"
+        ],
+        "title": "DriverRouteCard",
+        "type": "object"
+      },
+      "DriverRouteDetail": {
+        "properties": {
+          "delivery_days": {
+            "default": [],
+            "items": {
+              "type": "integer"
+            },
+            "title": "Delivery Days",
+            "type": "array"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "geometry": {
+            "anyOf": [
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Geometry"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "points": {
+            "default": [],
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Points",
+            "type": "array"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "status"
+        ],
+        "title": "DriverRouteDetail",
         "type": "object"
       },
       "DriverTripOut": {
@@ -1426,6 +1831,68 @@
           "plate"
         ],
         "title": "DriverTruckBrief",
+        "type": "object"
+      },
+      "DriverTruckCard": {
+        "properties": {
+          "brand": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Brand"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "model": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model"
+          },
+          "plate": {
+            "title": "Plate",
+            "type": "string"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          },
+          "year": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Year"
+          }
+        },
+        "required": [
+          "id",
+          "plate"
+        ],
+        "title": "DriverTruckCard",
         "type": "object"
       },
       "DriverTruckIn": {
@@ -1880,6 +2347,48 @@
           "page_size"
         ],
         "title": "Page[DriverAdminOut]",
+        "type": "object"
+      },
+      "Page_DriverAlertOut_": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/DriverAlertOut"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          },
+          "page": {
+            "title": "Page",
+            "type": "integer"
+          },
+          "page_size": {
+            "title": "Page Size",
+            "type": "integer"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "page",
+          "page_size"
+        ],
+        "title": "Page[DriverAlertOut]",
         "type": "object"
       },
       "Page_DriverTripOut_": {
@@ -4042,6 +4551,176 @@
         ]
       }
     },
+    "/api/v1/driver/alerts": {
+      "get": {
+        "operationId": "alerts_api_v1_driver_alerts_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "activa",
+                    "resuelta"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "maximum": 10000,
+              "minimum": 1,
+              "title": "Page",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "page_size",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Page Size",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page_DriverAlertOut_"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Alerts",
+        "tags": [
+          "Conductor"
+        ]
+      }
+    },
+    "/api/v1/driver/container/live": {
+      "get": {
+        "description": "Última lectura del contenedor con umbrales efectivos.",
+        "operationId": "container_live_api_v1_driver_container_live_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DriverContainerOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Container Live",
+        "tags": [
+          "Conductor"
+        ]
+      }
+    },
+    "/api/v1/driver/container/readings": {
+      "get": {
+        "operationId": "container_readings_api_v1_driver_container_readings_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 60,
+              "maximum": 500,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/DriverReadingOut"
+                  },
+                  "title": "Response Container Readings Api V1 Driver Container Readings Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Container Readings",
+        "tags": [
+          "Conductor"
+        ]
+      }
+    },
+    "/api/v1/driver/dashboard": {
+      "get": {
+        "description": "Resumen de la pantalla principal en una sola llamada (G5).",
+        "operationId": "dashboard_api_v1_driver_dashboard_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DriverDashboardOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Dashboard",
+        "tags": [
+          "Conductor"
+        ]
+      }
+    },
     "/api/v1/driver/me": {
       "get": {
         "operationId": "me_api_v1_driver_me_get",
@@ -4058,6 +4737,105 @@
           }
         },
         "summary": "Me",
+        "tags": [
+          "Conductor"
+        ]
+      }
+    },
+    "/api/v1/driver/routes": {
+      "get": {
+        "description": "Rutas asignadas al conductor con sus días de entrega.",
+        "operationId": "list_routes_api_v1_driver_routes_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/DriverRouteCard"
+                  },
+                  "title": "Response List Routes Api V1 Driver Routes Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List Routes",
+        "tags": [
+          "Conductor"
+        ]
+      }
+    },
+    "/api/v1/driver/routes/today": {
+      "get": {
+        "description": "Ruta del día según el calendario semanal (America/Tijuana).",
+        "operationId": "route_today_api_v1_driver_routes_today_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/DriverRouteCard"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Response Route Today Api V1 Driver Routes Today Get"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Route Today",
+        "tags": [
+          "Conductor"
+        ]
+      }
+    },
+    "/api/v1/driver/routes/{route_id}": {
+      "get": {
+        "description": "Detalle de una ruta propia; la de otro conductor da ``404``.",
+        "operationId": "route_detail_api_v1_driver_routes__route_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "route_id",
+            "required": true,
+            "schema": {
+              "title": "Route Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DriverRouteDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Route Detail",
         "tags": [
           "Conductor"
         ]

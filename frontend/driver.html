@@ -7,7 +7,7 @@
     <meta name="robots" content="noindex, nofollow" />
     <meta
       name="description"
-      content="Portal del conductor de FrostBase: perfil, camión asignado y cambio de contraseña."
+      content="Portal del conductor: contenedor en vivo, ruta del día y alertas de la cadena de frío."
     />
     <link rel="icon" href="assets/logo.png" />
     <link
@@ -36,53 +36,94 @@
     </button>
 
     <main class="driver-shell">
-      <section class="driver-card card" aria-labelledby="driverTitle">
-        <header class="driver-card__head">
+      <!-- ===== Cabecera ===== -->
+      <header class="driver-header">
+        <div class="driver-header__user">
           <img
             src="assets/logo.png"
             alt="Logotipo FrostBase"
-            class="driver-card__logo"
-            width="48"
-            height="48"
+            class="driver-header__logo"
+            width="36"
+            height="36"
           />
           <div>
-            <h1 id="driverTitle">Portal del conductor</h1>
-            <p class="driver-card__subtitle" id="driverEmail">Cargando sesión…</p>
+            <strong id="driverName">—</strong>
+            <span class="muted" id="driverEmail">Cargando…</span>
           </div>
-        </header>
-
-        <dl class="detail-list">
-          <div class="detail-row">
-            <dt>Nombre</dt>
-            <dd id="driverName">—</dd>
-          </div>
-          <div class="detail-row">
-            <dt>Teléfono</dt>
-            <dd id="driverPhone">—</dd>
-          </div>
-          <div class="detail-row">
-            <dt>Camión asignado</dt>
-            <dd id="driverTruck">—</dd>
-          </div>
-        </dl>
-
-        <div class="driver-card__actions">
+        </div>
+        <div class="driver-header__meta">
+          <span class="driver-truck-chip" id="truckChip">
+            <i class="fa-solid fa-truck"></i> <span id="truckPlate">—</span>
+          </span>
           <button
-            class="btn btn--ghost btn--block"
+            class="btn btn--ghost btn--sm"
             id="changePasswordButton"
             type="button"
           >
-            <i class="fa-solid fa-key"></i> Cambiar contraseña
+            <i class="fa-solid fa-key"></i>
           </button>
-          <button class="btn btn--primary btn--block" id="logoutButton" type="button">
-            <i class="fa-solid fa-right-from-bracket"></i> Cerrar sesión
+          <button class="btn btn--primary btn--sm" id="logoutButton" type="button">
+            <i class="fa-solid fa-right-from-bracket"></i>
           </button>
         </div>
+      </header>
 
-        <p class="driver-card__note">
-          <i class="fa-solid fa-circle-info"></i>
-          El panel de monitoreo del conductor llegará en la siguiente fase.
-        </p>
+      <!-- ===== Contenedor en vivo ===== -->
+      <section
+        class="card driver-container-card"
+        aria-label="Contenedor en tiempo real"
+      >
+        <div class="driver-container-grid">
+          <div class="driver-metric driver-metric--temp">
+            <span class="driver-metric__label"
+              ><i class="fa-solid fa-temperature-half"></i> Temperatura</span
+            >
+            <span class="driver-metric__value" id="containerTemp">—</span>
+            <span class="driver-metric__range" id="containerTempRange">—</span>
+          </div>
+          <div class="driver-metric driver-metric--hum">
+            <span class="driver-metric__label"
+              ><i class="fa-solid fa-droplet"></i> Humedad</span
+            >
+            <span class="driver-metric__value" id="containerHum">—</span>
+            <span class="driver-metric__range" id="containerHumRange">—</span>
+          </div>
+          <div class="driver-metric driver-metric--status">
+            <span class="driver-metric__label">Estado</span>
+            <span class="badge" id="containerStatus">Sin datos</span>
+            <span class="driver-metric__range" id="containerLastSeen">—</span>
+          </div>
+        </div>
+        <div class="driver-connection" id="connectionIndicator" aria-live="polite">
+          <span class="driver-connection__dot"></span>
+          <span id="connectionText">En vivo</span>
+        </div>
+      </section>
+
+      <!-- ===== Ruta del día ===== -->
+      <section class="card driver-route-card" aria-label="Ruta del día">
+        <header class="card__header">
+          <h2 class="card__title"><i class="fa-solid fa-route"></i> Ruta de hoy</h2>
+          <span class="badge badge--muted" id="routeBadge">Sin ruta</span>
+        </header>
+        <div class="card__body driver-route-body" id="routeBody">
+          <p class="muted" id="routeEmptyText">No tienes ruta programada para hoy.</p>
+        </div>
+      </section>
+
+      <!-- ===== Alertas ===== -->
+      <section class="card driver-alerts-card" aria-label="Alertas del contenedor">
+        <header class="card__header">
+          <h2 class="card__title">
+            <i class="fa-solid fa-bell"></i> Alertas
+            <span class="badge badge--danger" id="activeAlertCount" hidden>0</span>
+          </h2>
+        </header>
+        <div class="card__body">
+          <div id="alertsList" class="driver-alerts-list">
+            <p class="muted">Sin alertas para mostrar.</p>
+          </div>
+        </div>
       </section>
     </main>
 
