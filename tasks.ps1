@@ -3,12 +3,13 @@
 
 param(
     [Parameter(Position = 0)]
-    [ValidateSet("dev", "up", "down", "test", "lint", "build", "seed", "e2e", "help")]
+    [ValidateSet("dev", "up", "down", "test", "lint", "build", "seed", "e2e", "backup", "help")]
     [string]$Task = "help",
     [switch]$Reset,
     [switch]$PrintKeys,
     [int]$Trucks = 3,
-    [int]$Devices = 2
+    [int]$Devices = 2,
+    [string]$Keep = "14"
 )
 
 $ErrorActionPreference = "Stop"
@@ -64,6 +65,9 @@ switch ($Task) {
         Push-Location $Frontend
         try { npx playwright test } finally { Pop-Location }
     }
+    "backup" {
+        Invoke-BackendPython @("-m", "scripts.backup_db", "--keep", $Keep)
+    }
     default {
         Write-Host "Tareas disponibles:"
         Write-Host "  .\tasks.ps1 dev            Levanta el stack con build"
@@ -72,5 +76,7 @@ switch ($Task) {
         Write-Host "  .\tasks.ps1 build          Genera frontend/build con assets hasheados"
         Write-Host "  .\tasks.ps1 seed -Reset -PrintKeys -Trucks 20 -Devices 10"
         Write-Host "  .\tasks.ps1 e2e            Playwright (requiere navegadores instalados)"
+        Write-Host "  .\tasks.ps1 backup         Respaldo pg_dump (-Fc) con retención (default 14)"
+        Write-Host "                           .\tasks.ps1 backup -Keep 30"
     }
 }

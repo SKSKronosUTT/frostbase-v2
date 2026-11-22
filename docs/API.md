@@ -128,6 +128,9 @@ es la misma; el JWT lleva el rol en el claim `type` (`admin`/`driver`).
 | `GET` | `/driver/me` | Perfil del conductor con su camión asignado (o `null`) |
 | `GET` | `/driver/dashboard` | Resumen: camión, ruta de hoy, contenedor y alertas activas |
 | `GET` | `/driver/container/live` | Última lectura con umbrales efectivos, estado de puerta (`door_open`, `door_event_at`) |
+
+`container.status`: `ok`, `out_of_range`, `door_open`, `no_signal` (última
+lectura más antigua que `offline_timeout_seconds`), `no_data`.
 | `GET` | `/driver/container/readings` | Lecturas recientes del contenedor (`limit` 1–500) |
 | `GET` | `/driver/routes` | Rutas propias con calendario semanal |
 | `GET` | `/driver/routes/{id}` | Detalle de una ruta propia (ajena → `404`) |

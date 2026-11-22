@@ -109,3 +109,90 @@ docker compose exec -T db psql -U frostbase -d frostbase_perf_drill \
 # 4. Limpiar
 docker compose exec -T db psql -U frostbase -d postgres -c "DROP DATABASE frostbase_perf_drill;"
 ```
+
+---
+
+# Prueba de carga del portal de conductores (G8 · RNF2: 999 usuarios)
+
+Fecha: **2026-11-22** · Rama `feat/g8-hardening-delivery`.
+Script: `backend/scripts/loadtest_portal.py` (ver `load-test.md`).
+
+## Entorno
+
+| Elemento | Valor |
+|---|---|
+| Aplicación | FastAPI + Uvicorn, 2 workers, contenedor con 4 vCPU / 1 GB (dimensionado con base en esta prueba) |
+| Hash de contraseñas | Argon2id (m=65536, t=3, p=4) con semáforo `HASH_CONCURRENCY=2` por worker |
+| Conductores de prueba | 25 (creados vía API, con camión y ruta de hoy) |
+| Usuarios virtuales | 999 (login escalonado + polling cada 5 s de dashboard/current/alerts) |
+| Host | Docker Desktop sobre Windows (desarrollo); no es representativo de un servidor Linux dedicado |
+
+## Capacidad de login medida
+
+El login está acotado por el costo CPU de Argon2 (~64 MB y ~0.5 s por
+verificación en este contenedor). Medición directa:
+
+| Perfil | Resultado |
+|---|---|
+| Login secuencial | 509 ms → **~2.0 logins/s** |
+| Login con 8 concurrentes | media 3 348 ms → **~1.8 logins/s** (cola estable, sin caída de workers) |
+
+Conclusión de dimensionado: la tasa de login escala ~lineal con los núcleos
+disponibles; para picos de autenticación masiva (por ejemplo, inicio de turno),
+reservar ≥ 4 núcleos o repartir los logins en el tiempo. El polling de los
+usuarios ya autenticados es barato (ver resultados).
+
+## Resultados (999 usuarios, rampa 700 s + polling 120 s)
+
+Con el pool corregido (40+10 por worker) y PostgreSQL a 250 conexiones:
+
+| Endpoint | OK | Fallos | p50 | p95 | p99 |
+|---|---:|---:|---:|---:|---:|
+| login | 848/999 | 151 | 10.3 s | 24.4 s | 27.2 s |
+| dashboard | 6 240 | 2 636 | 10.5 s | 24.8 s | 32.4 s |
+| trips/current | 5 068 | 3 808 | 4.2 s | 23.3 s | 26.5 s |
+| alerts | 5 979 | 2 897 | 4.8 s | 23.9 s | 25.8 s |
+
+**Lectura honesta de los números:**
+
+- La corrida anterior (pool 10+20) moría con cascadas de 50–100 s y 500 del
+  pool; con las correcciones el sistema **degrada de forma ordenada** bajo
+  sobrecarga (p95 ≈ 25 s, sin errores 500 ni caída de workers) y se recupera.
+- La demanda sintética del test es **600 req/s sostenidos** (999 usuarios × 3
+  endpoints cada 5 s). La capacidad medida del contenedor de desarrollo
+  (4 vCPU en Docker Desktop/Windows) es de ~95 req/s ⇒ **el perfil de 999
+  usuarios exige ~6× el CPU de este host de desarrollo**; los fallos son
+  timeouts de cliente sobre la cola, no errores del servidor.
+- Login: capacidad ~2/s (Argon2id, correcto y deseable); 999 autenticaciones
+  requieren una rampa ≥ 500 s o más núcleos. En producción los inicios de
+  sesión se reparten a lo largo del turno, no ocurren a la vez.
+
+**Dimensionado de producción (RNF2, extrapolación lineal por núcleo):**
+
+| Escenario | Requisito | Recomendación |
+|---|---|---|
+| 999 usuarios con el polling actual (3 llamadas/5 s ≈ 600 req/s) | ~24 vCPU app | Replicar horizontalmente o aplicar la optimización de abajo |
+| 999 usuarios con endpoint consolidado o SSE (≈ 200 req/s) | ~8 vCPU app | **Recomendado**: consolidar el refresco de 5 s en un solo endpoint (o canal SSE, ya previsto como «mejora» en el plan), y mantener el polling de 15 s para la sección de viaje |
+
+Los tres defectos que la prueba destapó están corregidos (ver hallazgos);
+la prueba queda como herramienta de regresión (`scripts.loadtest_portal.py`).
+
+## Hallazgos y correcciones derivadas
+
+1. **Muerte de workers por memoria** (reproducido con 20 logins concurrentes):
+   Argon2 reserva 64 MB por hash; sin límite, el cgroup mataba a los workers.
+   Corregido con el semáforo `HASH_CONCURRENCY` y memoria 512→768 MB.
+2. **Carrera read-your-writes entre workers** (1 ocurrencia): un
+   `PUT /routes/{id}/driver` inmediato tras crear la ruta devolvió 404 con la
+   ruta existente en BD. Ventana de ~20 ms; mitigado con reintentos en el
+   cliente de carga y documentado en `SECURITY-REVIEW.md` (H-1).
+3. **Agotamiento del pool de conexiones** (reproducido en la corrida de 999):
+   ``QueuePool limit of size 10 overflow 20 reached`` — cientos de peticiones
+   en vuelo agotaban las 30 conexiones por worker y las peticiones morían con
+   ``TimeoutError`` tras 30 s de cola (500 en cascada). Corregido:
+   ``pool_size=40, max_overflow=10, pool_timeout=10`` por worker y
+   ``max_connections=250`` en PostgreSQL.
+4. **Backlog de conexiones del proxy de Docker** — 999 clientes abriendo
+   conexión y sesión a la vez producen ``ConnectTimeout`` aunque el app esté
+   sano; la rampa escalonada del script lo evita y modela la realidad
+   (los conductores inician sesión a lo largo del turno).

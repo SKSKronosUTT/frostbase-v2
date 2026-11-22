@@ -200,7 +200,7 @@ Haz estas tres comprobaciones rápidas:
    Respuesta esperada:
 
    ```json
-   {"status":"ready","service":"FrostBase","schema":"0007_route_geometry_status"}
+   {"status":"ready","service":"FrostBase","schema":"0010_trips_orders_door"}
    ```
 
    `/health/live` solo comprueba el proceso; `/health/ready` verifica PostgreSQL y
@@ -213,6 +213,21 @@ Si algo falla, revisa [Problemas comunes](#problemas-comunes) o los logs:
 ```bash
 docker compose logs --tail 100 app
 ```
+
+---
+
+## Módulo de conductores
+
+Además del panel del administrador, FrostBase incluye un **portal para conductores** (`http://localhost:8050/driver.html`), pensado para el celular del conductor:
+
+- **Contenedor en vivo**: temperatura, humedad y estado de la **puerta** (abierta/cerrada) con umbrales efectivos del camión, refresco cada 5 s.
+- **Ruta de hoy** con calendario semanal por conductor.
+- **Viajes**: iniciar viaje (con motivo claro si está bloqueado), entregar orden por orden, marcar no entregadas con motivo obligatorio, finalizar con confirmación e historial.
+- **Alertas** de cadena de frío (temperatura, humedad, desconexión) y de **apertura de puerta no autorizada** durante el viaje; el conductor puede reconocerlas.
+
+El administrador gestiona conductores desde **Conductores** en el panel: alta con contraseña temporal visible una sola vez, edición, baja lógica (que invalida sus sesiones de inmediato), reset de contraseña y asignación de camión. Cada ruta pertenece a un conductor con días de la semana (0 = domingo).
+
+La documentación de endpoints está en `docs/API.md`; la revisión de seguridad y la prueba de carga (999 usuarios) en `docs/ops/`.
 
 ---
 
@@ -278,6 +293,11 @@ DEVICE_KEY=<cadena larga de ~43 caracteres; NO es la placa ABC-123-A>
 
 - Si cambiaste `APP_PORT`, actualiza también `FROSTBASE_API_URL` (por ejemplo, `http://localhost:8060/api/v1`).
 - Si perdiste la clave del dispositivo, usa el comando de rotación de arriba.
+- Para simular la **puerta del contenedor** (Reed Switch), agrega
+  `DOOR_OPEN_PROBABILITY=0.2` al `.env`: el simulador abrirá la puerta al azar
+  y la cerrará tras `DOOR_OPEN_CYCLES` lecturas (por defecto 3). Si el camión
+  está en un viaje sin entrega en curso, se generará la alerta de apertura no
+  autorizada tras el periodo de gracia (30 s por defecto).
 
 ### Si el simulador muestra `401 Unauthorized`
 
@@ -316,7 +336,7 @@ pytest -q
 pytest --cov=app --cov-report=term-missing
 ```
 
-Resultado esperado: **47 passed** y cobertura **≥ 70 %** (actual: 78 %). Para limpiar la base de pruebas:
+Resultado esperado: **137 passed** y cobertura **≥ 70 %** (actual: 84 %). Para limpiar la base de pruebas:
 
 ```bash
 docker compose -f compose.test.yml down
@@ -337,7 +357,8 @@ docker compose -f compose.test.yml down
 | Ver el estado | `docker compose ps` |
 | Restablecer la contraseña del admin | `docker compose exec app python -m scripts.reset_admin` |
 | Rotar la clave de un dispositivo | `docker compose exec app python -m scripts.rotate_device_key --device-id ESP32-FROST-001` |
-| Respaldar la base de datos | Ver [docs/ops/BACKUP-RESTORE.md](docs/ops/BACKUP-RESTORE.md) |
+| Respaldar la base de datos | `.\tasks.ps1 backup` (Linux: `make backup`) — ver [docs/ops/BACKUP-RESTORE.md](docs/ops/BACKUP-RESTORE.md) |
+| Prueba de carga del portal | `python -m scripts.loadtest_portal --users 999 --duration 60` (ver [docs/ops/perf-baseline.md](docs/ops/perf-baseline.md)) |
 
 > ⚠️ **Borrar todos los datos** (camiones, lecturas, alertas y usuarios) es destructivo:
 >
