@@ -56,6 +56,7 @@ class Settings(BaseSettings):
 
     dashboard_fresh_minutes: int = 10
     disconnect_check_seconds: int = 30
+    door_check_seconds: int = 5
     enable_inprocess_watcher: bool = False
     readings_retention_days: int = 90
     resolved_alerts_retention_days: int = 365

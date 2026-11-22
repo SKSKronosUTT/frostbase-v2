@@ -1,7 +1,8 @@
 """Simulador de dispositivo ESP32-S3 para FrostBase.
 
 Simula un único dispositivo asociado a un camión existente, enviando lecturas
-de temperatura, humedad y GPS a la API real de FrostBase cada 10 segundos.
+de temperatura, humedad y GPS a la API real de FrostBase cada 10 segundos, y
+eventos del Reed Switch de la puerta cuando DOOR_OPEN_PROBABILITY > 0.
 
 Uso:
     pip install -r requirements.txt
@@ -34,6 +35,8 @@ DEVICE_ID = os.getenv("DEVICE_ID", "ESP32-FROST-001")
 DEVICE_KEY = os.getenv("DEVICE_KEY", "")
 INTERVAL_SECONDS = float(os.getenv("INTERVAL_SECONDS", "10"))
 ANOMALY_PROBABILITY = float(os.getenv("ANOMALY_PROBABILITY", "0.01"))
+DOOR_OPEN_PROBABILITY = float(os.getenv("DOOR_OPEN_PROBABILITY", "0.0"))
+DOOR_OPEN_CYCLES = int(os.getenv("DOOR_OPEN_CYCLES", "3"))
 FIXED_LATITUDE = float(os.getenv("FIXED_LATITUDE", "32.5149"))
 FIXED_LONGITUDE = float(os.getenv("FIXED_LONGITUDE", "-117.0382"))
 SPEED_KMH = float(os.getenv("SPEED_KMH", "30"))
@@ -267,6 +270,32 @@ def send_reading(temperature: float, humidity: float, latitude: float, longitude
         return None
 
 
+def send_door_event(is_open: bool) -> dict | None:
+    """Envía un evento del Reed Switch (G7): cambia el estado de la puerta."""
+    payload = {
+        "device_id": DEVICE_ID,
+        "is_open": is_open,
+        "timestamp": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+    }
+    try:
+        response = requests.post(
+            f"{API_URL}/iot/door",
+            json=payload,
+            headers=HEADERS,
+            timeout=REQUEST_TIMEOUT,
+        )
+        if response.status_code == 401:
+            log_key_help()
+            return None
+        if response.status_code >= 400:
+            log(f"[ERROR] API respondió {response.status_code}: {response.text[:200]}")
+            return None
+        return response.json()
+    except requests.RequestException as exc:
+        log(f"[ERROR] No se pudo enviar el evento de puerta: {exc}")
+        return None
+
+
 def print_reading(
     config: dict,
     temperature: float,
@@ -311,6 +340,7 @@ def main() -> int:
 
     generator = ReadingGenerator(config)
     cycle = 0
+    door_cycles_left = 0
 
     while running:
         if cycle > 0 and cycle % CONFIG_REFRESH_CYCLES == 0:
@@ -319,6 +349,17 @@ def main() -> int:
                 config = refreshed
                 generator.configure(config)
                 log("[INFO] Configuración del dispositivo actualizada.")
+
+        # G7: puerta con Reed Switch — abre al azar y cierra tras N ciclos.
+        if door_cycles_left > 0:
+            door_cycles_left -= 1
+            if door_cycles_left == 0:
+                send_door_event(False)
+                log("[DOOR] Puerta cerrada.")
+        elif DOOR_OPEN_PROBABILITY > 0 and random.random() < DOOR_OPEN_PROBABILITY:
+            send_door_event(True)
+            door_cycles_left = max(1, DOOR_OPEN_CYCLES)
+            log("[DOOR] Puerta abierta (evento enviado al backend).")
 
         temperature, humidity, latitude, longitude, anomaly = generator.generate()
         if anomaly:

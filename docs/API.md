@@ -126,6 +126,22 @@ es la misma; el JWT lleva el rol en el claim `type` (`admin`/`driver`).
 | Método | Ruta | Descripción |
 |---|---|---|
 | `GET` | `/driver/me` | Perfil del conductor con su camión asignado (o `null`) |
+| `GET` | `/driver/dashboard` | Resumen: camión, ruta de hoy, contenedor y alertas activas |
+| `GET` | `/driver/container/live` | Última lectura con umbrales efectivos, estado de puerta (`door_open`, `door_event_at`) |
+| `GET` | `/driver/container/readings` | Lecturas recientes del contenedor (`limit` 1–500) |
+| `GET` | `/driver/routes` | Rutas propias con calendario semanal |
+| `GET` | `/driver/routes/{id}` | Detalle de una ruta propia (ajena → `404`) |
+| `GET` | `/driver/alerts` | Alertas del camión, paginado (`status` opcional) |
+| `POST` | `/driver/alerts/{id}/ack` | Reconoce una alerta propia (ajena → `404`, idempotente) |
+| `GET` | `/driver/trips/can-start` | Si puede iniciar viaje y por qué no (`blocking_reason`) |
+| `GET` | `/driver/trips/current` | Viaje en curso con órdenes, o `null` |
+| `POST` | `/driver/trips/start` | Inicia el viaje de hoy (idempotente) |
+| `POST` | `/driver/trips/{id}/end` | Finaliza; pendientes exigen `confirm_pending` |
+| `POST` | `/driver/trips/{id}/orders/{oid}/start` | Orden en entrega (solo una a la vez) |
+| `POST` | `/driver/trips/{id}/orders/{oid}/deliver` | Marca la orden entregada |
+| `POST` | `/driver/trips/{id}/orders/{oid}/fail` | Marca fallida; `reason` obligatorio |
+| `GET` | `/driver/trips` | Historial de viajes, paginado |
+| `GET` | `/driver/trips/{id}` | Detalle de un viaje propio (ajeno → `404`) |
 
 ### Ejemplo de login
 
@@ -418,10 +434,12 @@ La columna `trucks.route_id` se eliminará en G6 cuando el reporte esté vacío.
 | `GET` | `/alerts` | Lista paginada (`truck_id`, `alert_type`, `status`, `date_from`, `date_to`) |
 | `GET` | `/alerts/{id}` | Detalle de alerta |
 
-`alert_type`: `temperatura`, `humedad`, `desconexion`.
+`alert_type`: `temperatura`, `humedad`, `desconexion`, `puerta`.
 `status`: `activa`, `resuelta`.
 
 Una sola alerta activa por dispositivo y tipo. Se resuelve automáticamente cuando una lectura vuelve al rango o el dispositivo se reconecta. Las desconexiones se detectan con una tarea periódica que compara `last_seen` con el umbral `offline_timeout_seconds` configurado en el panel.
+
+La alerta `puerta` (G7) la crea el watcher cuando un evento de apertura supera el periodo de gracia (`door_open_grace_seconds`) durante un viaje en curso sin entregas activas, y se resuelve al recibir el evento de cierre. El conductor puede reconocerla desde su portal (`POST /driver/alerts/{id}/ack`), lo que queda registrado en `acknowledged_at`/`acknowledged_by`.
 
 ```json
 {
@@ -459,13 +477,14 @@ Una sola alerta activa por dispositivo y tipo. Se resuelve automáticamente cuan
   "humidity_ideal": 80.0,
   "humidity_tolerance": 5.0,
   "offline_timeout_seconds": 60,
+  "door_open_grace_seconds": 30,
   "weather_city": "Tijuana",
   "weather_latitude": 32.5149,
   "weather_longitude": -117.0382
 }
 ```
 
-Los límites se derivan: `min = ideal - tolerancia`, `max = ideal + tolerancia`. Rangos válidos: temperatura −50…30 °C (resultado −80…60), humedad 0…100 %, timeout 10…86400 s.
+Los límites se derivan: `min = ideal - tolerancia`, `max = ideal + tolerancia`. Rangos válidos: temperatura −50…30 °C (resultado −80…60), humedad 0…100 %, timeout 10…86400 s, gracia de puerta 5…600 s (opcional en el `PUT`; si se omite se conserva el valor actual).
 
 ---
 
@@ -474,6 +493,7 @@ Los límites se derivan: `min = ideal - tolerancia`, `max = ideal + tolerancia`.
 | Método | Ruta | Autenticación | Descripción |
 |---|---|---|---|
 | `POST` | `/iot/readings` | `X-Device-Key` | Registra lectura y evalúa alertas |
+| `POST` | `/iot/door` | `X-Device-Key` | Registra un evento del Reed Switch de la puerta |
 | `GET` | `/iot/config` | `X-Device-Id` + `X-Device-Key` | Devuelve camión, ruta y umbrales |
 
 Límites de abuso (ventana deslizante):
@@ -481,6 +501,7 @@ Límites de abuso (ventana deslizante):
 | Endpoint | Límite |
 |---|---|
 | `POST /iot/readings` | 30/min por `device_id` y 120/min por IP |
+| `POST /iot/door` | 30/min por `device_id` y 120/min por IP |
 | `GET /iot/config` | 60/min por `device_id` y 120/min por IP |
 
 Los límites se aplican **antes** de verificar la clave. Una respuesta `429`
@@ -527,6 +548,46 @@ La ingesta es **idempotente** por `(device_id, reading_timestamp)`. Si se reenv�
 el mismo payload, no se crea otra fila: la respuesta trae `duplicate: true`,
 `reading_id` de la lectura existente y `alerts: []`. Para que la idempotencia
 funcione, el dispositivo debe conservar el mismo `timestamp` al reintentar.
+
+### POST /iot/door
+
+El ESP32 envía un evento **inmediato** cada vez que el Reed Switch cambia de
+estado (abrir/cerrar). Igual que las lecturas, es idempotente por
+`(device_id, event_time)`.
+
+```json
+{
+  "device_id": "ESP32-FROST-001",
+  "is_open": true,
+  "timestamp": "2026-11-22T22:30:00Z"
+}
+```
+
+Respuesta:
+
+```json
+{
+  "success": true,
+  "message": "Evento de puerta registrado correctamente",
+  "truck_id": 1,
+  "door_open": true,
+  "duplicate": false,
+  "event_id": 42
+}
+```
+
+Semántica (G7):
+
+- `is_open: true` queda **pendiente**; no genera alerta por sí solo. El
+  watcher la evalúa al vencer el periodo de gracia configurable
+  (`door_open_grace_seconds`, 30 s por defecto, editable en `PUT /settings`).
+- La alerta `puerta` (apertura no autorizada) solo se crea si al vencer la
+  gracia la puerta sigue abierta, el camión tiene un viaje `in_progress` y
+  **ninguna** orden está `in_delivery`.
+- `is_open: false` resuelve de inmediato la alerta `puerta` activa del
+  dispositivo y cierra los eventos abiertos pendientes.
+- El conductor la ve en su portal en <10 s y puede reconocerla con
+  `POST /driver/alerts/{id}/ack`.
 
 ### Códigos HTTP de `/iot/*`
 

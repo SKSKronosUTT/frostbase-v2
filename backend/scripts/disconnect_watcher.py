@@ -1,9 +1,9 @@
-"""Servicio de vigilancia de desconexiones y retención (fuera del proceso web).
+"""Servicio de vigilancia fuera del proceso web: desconexiones, puertas y retención.
 
-Ejecuta el ciclo set-based de ``alert_service.check_disconnected_devices`` cada
-``DISCONNECT_CHECK_SECONDS`` y la retención de datos cada
-``RETENTION_CHECK_SECONDS``. Un advisory lock de PostgreSQL garantiza que solo
-una instancia trabaje aunque haya varias réplicas.
+Ejecuta el ciclo set-based de ``alert_service.check_disconnected_devices``, la
+evaluación de eventos de puerta vencidos (``door_service``, G7) y la retención
+de datos. Un advisory lock de PostgreSQL garantiza que solo una instancia
+trabaje aunque haya varias réplicas.
 
 Uso en contenedor:
     python -m scripts.disconnect_watcher
@@ -19,7 +19,7 @@ from sqlalchemy import text
 
 from app.core.config import settings
 from app.core.database import SessionLocal, engine
-from app.services import alert_service, settings_service
+from app.services import alert_service, door_service, settings_service
 from scripts.retention import run_retention
 
 LOCK_KEY = 7712027
@@ -55,6 +55,21 @@ def main() -> int:
                 except Exception:
                     logger.exception("Error en el ciclo de desconexiones")
 
+                # G7: eventos de puerta cuya gracia ya venció.
+                try:
+                    with SessionLocal() as db:
+                        setting = settings_service.get_settings(db)
+                        created = door_service.evaluate_pending_door_events(db, setting)
+                        db.commit()
+                except Exception:
+                    logger.exception("Error en el ciclo de puertas")
+                else:
+                    if created:
+                        logger.info(
+                            "Puerta: %s alerta(s) de apertura no autorizada",
+                            created,
+                        )
+
                 if time.monotonic() >= next_retention:
                     try:
                         with SessionLocal() as db:
@@ -66,7 +81,10 @@ def main() -> int:
                         3600, settings.retention_check_seconds
                     )
 
-                deadline = time.monotonic() + max(1, settings.disconnect_check_seconds)
+                deadline = time.monotonic() + max(
+                    1,
+                    min(settings.disconnect_check_seconds, settings.door_check_seconds),
+                )
                 while not stopping and time.monotonic() < deadline:
                     time.sleep(min(0.5, deadline - time.monotonic()))
         finally:

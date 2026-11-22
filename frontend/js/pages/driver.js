@@ -66,6 +66,9 @@ function renderDashboard(data) {
     } else if (c.status === "out_of_range") {
       badge.textContent = "Fuera de rango";
       badge.className = "badge badge--danger";
+    } else if (c.status === "door_open") {
+      badge.textContent = "Puerta abierta";
+      badge.className = "badge badge--danger";
     } else {
       badge.textContent = "Sin datos";
       badge.className = "badge badge--muted";
@@ -78,6 +81,19 @@ function renderDashboard(data) {
     qs("#containerStatus").textContent = "Sin datos";
     qs("#containerStatus").className = "badge badge--muted";
     qs("#containerLastSeen").textContent = "—";
+  }
+
+  // Estado de la puerta (G7): independiente de las lecturas.
+  const doorBadge = qs("#doorState");
+  const doorLast = qs("#doorLastEvent");
+  if (c && c.door_open !== null && c.door_open !== undefined) {
+    doorBadge.textContent = c.door_open ? "Abierta" : "Cerrada";
+    doorBadge.className = "badge " + (c.door_open ? "badge--danger" : "badge--success");
+    doorLast.textContent = c.door_event_at ? timeAgo(c.door_event_at) : "—";
+  } else {
+    doorBadge.textContent = "Sin datos";
+    doorBadge.className = "badge badge--muted";
+    doorLast.textContent = "—";
   }
 
   // Ruta de hoy
@@ -130,6 +146,7 @@ function renderAlerts(alerts) {
         icon: "fa-triangle-exclamation",
       };
       const is_active = alert.status === "activa";
+      const can_ack = is_active && !alert.acknowledged_at;
       return `
         <div class="driver-alert-item ${is_active ? "driver-alert-item--active" : ""}">
           <div class="driver-alert-item__icon">
@@ -141,6 +158,11 @@ function renderAlerts(alerts) {
               <span class="badge ${
                 is_active ? "badge--danger" : "badge--success"
               }">${is_active ? "Activa" : "Resuelta"}</span>
+              ${
+                alert.acknowledged_at
+                  ? '<span class="badge badge--muted">Reconocida</span>'
+                  : ""
+              }
             </div>
             <span class="muted text-xs">${timeAgo(alert.started_at)}${
               alert.value !== null && alert.value !== undefined
@@ -148,11 +170,33 @@ function renderAlerts(alerts) {
                 : ""
             }</span>
             ${alert.message ? `<p class="driver-alert-item__msg">${escapeHtml(alert.message)}</p>` : ""}
+            ${
+              can_ack
+                ? `<button class="btn btn--ghost btn--sm driver-alert-ack" type="button" data-ack-id="${alert.id}">
+                     <i class="fa-solid fa-check"></i> Reconocer
+                   </button>`
+                : ""
+            }
           </div>
         </div>
       `;
     })
     .join("");
+
+  list.querySelectorAll("[data-ack-id]").forEach((button) => {
+    button.addEventListener("click", () => ackAlert(Number(button.dataset.ackId)));
+  });
+}
+
+async function ackAlert(alertId) {
+  try {
+    await api.post(`/driver/alerts/${alertId}/ack`);
+    notify.success("Alerta reconocida.");
+    await loadAlerts();
+    await loadDashboard();
+  } catch (error) {
+    notify.error(error.message, { title: "No se pudo reconocer la alerta" });
+  }
 }
 
 async function loadDashboard() {
