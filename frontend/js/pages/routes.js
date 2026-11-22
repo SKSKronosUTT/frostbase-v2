@@ -363,6 +363,8 @@ function applyRoute(route, { fit = true } = {}) {
   updateHeader();
   renderWarning();
   renderMap({ fit });
+  // La marca «activa» de la lista debe seguir a la ruta abierta.
+  renderRoutesList();
   history.replaceState({}, "", `routes.html?id=${route.id}`);
 }
 
