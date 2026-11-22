@@ -473,3 +473,85 @@
   gap: 10px;
   flex-wrap: wrap;
 }
+
+/* ===== Camion derivado del conductor y conciliacion legada (G4.1) ===== */
+
+.route-truck-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border: 2px solid var(--border);
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.route-truck-status--ok {
+  border-color: var(--success);
+  background: var(--success-soft);
+  color: var(--text);
+}
+
+.route-truck-status--warn {
+  border-color: var(--warning);
+  background: var(--warning-soft);
+  color: var(--text);
+}
+
+#routeTruckInfo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.legacy-mismatch {
+  border: 2px solid var(--warning);
+  background: var(--warning-soft);
+  padding: 14px 16px;
+}
+
+.legacy-mismatch__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+  font-size: 13px;
+}
+
+.legacy-mismatch__list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.legacy-mismatch__row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+
+.legacy-mismatch__route {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.legacy-mismatch__route strong {
+  font-size: 13px;
+}
+
+.legacy-mismatch__route span {
+  font-size: 12px;
+}
+
+.legacy-mismatch__hint {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-muted);
+}

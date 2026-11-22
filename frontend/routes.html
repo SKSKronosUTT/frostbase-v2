@@ -61,6 +61,14 @@
               <option value="assigned">Con conductor</option>
             </select>
           </div>
+
+          <div class="legacy-mismatch hidden" id="legacyMismatchPanel">
+            <div class="legacy-mismatch__head">
+              <strong><i class="fa-solid fa-triangle-exclamation"></i> Conciliación de camiones legados</strong>
+              <span class="section-header__meta" id="legacyMismatchCount">—</span>
+            </div>
+            <div class="legacy-mismatch__list" id="legacyMismatchList"></div>
+          </div>
           <div class="routes-list" id="routesList">
             <div class="loading-block"><span class="spinner"></span> Cargando rutas…</div>
           </div>
@@ -133,18 +141,6 @@
               </div>
             </div>
 
-            <div class="route-assign" id="routeAssign">
-              <div class="form-field">
-                <label for="assignTruckSelect">Asignar a camión (vínculo legado)</label>
-                <select class="select" id="assignTruckSelect">
-                  <option value="">Sin camión asignado</option>
-                </select>
-              </div>
-              <button class="btn btn--ghost btn--sm" id="assignRouteButton" type="button">
-                <i class="fa-solid fa-truck"></i> Aplicar asignación
-              </button>
-            </div>
-
             <div class="route-assign" id="routeDriverAssign">
               <div class="form-field">
                 <label for="assignDriverSelect">Conductor de la ruta</label>
@@ -184,6 +180,16 @@
                   <i class="fa-solid fa-xmark"></i> Quitar conductor
                 </button>
               </div>
+            </div>
+
+            <div class="route-assign" id="routeTruckInfo">
+              <div class="route-truck-status" id="routeTruckStatus">
+                <i class="fa-solid fa-truck"></i>
+                <span id="routeTruckText">Sin camión del conductor</span>
+              </div>
+              <button class="btn btn--ghost btn--sm" id="changeTruckButton" type="button" hidden>
+                <i class="fa-solid fa-truck"></i> Asignar camión al conductor
+              </button>
             </div>
           </div>
         </section>
