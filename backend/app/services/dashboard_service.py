@@ -12,7 +12,7 @@ from app.schemas.dashboard import (
     DashboardSummary,
     DashboardTruck,
 )
-from app.services import settings_service
+from app.services import route_links, settings_service
 from app.services.serializers import (
     is_device_online,
     reading_status,
@@ -90,6 +90,9 @@ def get_trucks(db: Session) -> list[DashboardTruck]:
     trucks = trucks_repo.list_active(db)
     latest = readings_repo.get_latest_for_trucks(db, [truck.id for truck in trucks])
     active_counts = alerts_repo.active_counts_by_truck(db)
+    effective_routes = route_links.effective_routes_for_trucks(
+        db, [truck.id for truck in trucks]
+    )
 
     return [
         DashboardTruck(
@@ -109,7 +112,7 @@ def get_trucks(db: Session) -> list[DashboardTruck]:
                 truck.device, setting.offline_timeout_seconds
             ),
             reading_status=reading_status(latest.get(truck.id), setting),
-            route=serialize_route_brief_geometry(truck.route),
+            route=serialize_route_brief_geometry(effective_routes.get(truck.id)),
             active_alerts=active_counts.get(truck.id, 0),
         )
         for truck in trucks

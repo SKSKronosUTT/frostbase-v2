@@ -14,7 +14,7 @@ from app.schemas.route import (
     RouteOut,
     RouteUpdate,
 )
-from app.services import route_service, routing
+from app.services import route_links, route_service, routing
 
 router = APIRouter(prefix="/routes", tags=["Rutas"])
 
@@ -84,6 +84,17 @@ def list_route_options(
     search: str | None = Query(default=None, max_length=100),
 ) -> list[OptionOut]:
     return route_service.list_route_options(db, search=search)
+
+
+@router.get("/legacy-mismatch", response_model=list[dict])
+def legacy_mismatch(db: DbSession, _: CurrentAdmin) -> list[dict]:
+    """Reporte de conciliación del vínculo legado (G4.1).
+
+    Lista las rutas cuyo ``trucks.route_id`` difiere del camión derivado de
+    su dueño, con la acción sugerida y el botón de conversión segura
+    (``convertible=True`` solo si el camión legado está libre).
+    """
+    return route_links.legacy_mismatches(db)
 
 
 @router.get("/{route_id}", response_model=RouteOut)
@@ -176,19 +187,20 @@ async def calculate_route(route_id: int, db: DbSession, _: CurrentAdmin) -> Rout
         ) from exc
 
 
-@router.post("/{route_id}/assign", response_model=RouteOut)
+@router.post("/{route_id}/assign", response_model=RouteOut, deprecated=True)
 def assign_route(
     route_id: int, payload: AssignTruckIn, db: DbSession, _: CurrentAdmin
 ) -> RouteOut:
+    """Vínculo legado camión→ruta, en desuso (G4.1).
+
+    Responde ``409`` indicando el camino correcto: asigne el camión al
+    conductor dueño de la ruta.
+    """
     try:
         return route_service.assign_route(db, route_id, payload.truck_id)
-    except route_service.RouteNotFoundError as exc:
+    except route_service.RouteCoherenceError as exc:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)
-        ) from exc
-    except route_service.RouteValidationError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc)
+            status_code=status.HTTP_409_CONFLICT, detail=str(exc)
         ) from exc
 
 

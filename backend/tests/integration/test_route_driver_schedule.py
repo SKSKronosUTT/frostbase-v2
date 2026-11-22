@@ -238,7 +238,17 @@ def test_missing_driver_filter_finds_legacy_links(client, admin_headers, create_
     assert pending.status_code == 200
     names = [route["name"] for route in pending.json()["items"]]
     assert "Ruta legado sin conductor" in names
-    assert any(route["truck"] is not None for route in pending.json()["items"])
+    # El camión mostrado es el derivado (None: la ruta no tiene dueño).
+    assert all(route["truck"] is None for route in pending.json()["items"])
+
+    # El legado aparece en el reporte de conciliación (caso «sin dueño»).
+    report = {
+        row["route_name"]: row
+        for row in client.get("/api/v1/routes/legacy-mismatch").json()
+    }
+    assert "Ruta legado sin conductor" in report
+    assert report["Ruta legado sin conductor"]["case"] == "no_owner"
+    assert report["Ruta legado sin conductor"]["legacy_truck"]["plate"] == "G4-LEGACY"
 
     assigned = client.get("/api/v1/routes?missing_driver=false")
     for route in assigned.json()["items"]:

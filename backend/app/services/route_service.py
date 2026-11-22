@@ -86,7 +86,7 @@ def list_routes(
         page_size=page_size,
     )
     return Page(
-        items=[serialize_route(route) for route in routes],
+        items=[serialize_route(route, db=db) for route in routes],
         total=total,
         page=page,
         page_size=page_size,
@@ -94,7 +94,7 @@ def list_routes(
 
 
 def get_route(db: Session, route_id: int) -> RouteOut:
-    return serialize_route(_get_or_fail(db, route_id))
+    return serialize_route(_get_or_fail(db, route_id), db=db)
 
 
 def list_route_options(db: Session, *, search: str | None = None) -> list[OptionOut]:
@@ -132,7 +132,7 @@ def create_route(
     route.points = _build_points(payload.points)
     routes_repo.create(db, route)
     route = _get_or_fail(db, route.id)
-    return serialize_route(route, warning=warning)
+    return serialize_route(route, warning=warning, db=db)
 
 
 def update_route(
@@ -159,7 +159,7 @@ def update_route(
     routes_repo.replace_points(db, route, _build_points(payload.points))
     routes_repo.save(db, route)
     route = _get_or_fail(db, route.id)
-    return serialize_route(route, warning=warning)
+    return serialize_route(route, warning=warning, db=db)
 
 
 def calculate_route(
@@ -181,7 +181,7 @@ def calculate_route(
     route.geometry_status = "ready"
     routes_repo.save(db, route)
     route = _get_or_fail(db, route.id)
-    return serialize_route(route)
+    return serialize_route(route, db=db)
 
 
 async def calculate_geometry_background(route_id: int) -> None:
@@ -218,22 +218,22 @@ def delete_route(db: Session, route_id: int) -> None:
     routes_repo.delete(db, route)
 
 
+class RouteCoherenceError(Exception):
+    """Operación sobre el vínculo legado camión→ruta, en desuso (G4.1)."""
+
+
 def assign_route(db: Session, route_id: int, truck_id: int) -> RouteOut:
-    route = _get_or_fail(db, route_id)
-    truck = trucks_repo.get(db, truck_id)
-    if truck is None:
-        raise RouteValidationError("El camión seleccionado no existe")
-    for other in trucks_repo.trucks_using_route(db, route.id, except_id=truck.id):
-        other.route_id = None
-        db.add(other)
-    truck.route_id = route.id
-    # Se sincroniza la relación en memoria: una re-consulta devolvería el
-    # valor precargado (stale) porque el objeto Route ya está en el identity
-    # map de la sesión.
-    route.truck = truck
-    db.add(truck)
-    db.flush()
-    return serialize_route(route)
+    """Vínculo legado camión→ruta, **en desuso** (G4.1).
+
+    El camión de una ruta se deriva de su dueño: asigne el camión al
+    conductor (``PUT /drivers/{id}/truck``) y la ruta lo mostrará sola.
+    ``trucks.route_id`` queda de solo lectura hasta eliminarse en G6.
+    """
+    raise RouteCoherenceError(
+        "La ruta ya no se asigna al camión: asigne el camión al conductor "
+        "dueño de la ruta (PUT /drivers/{id}/truck) y la ruta lo mostrará "
+        "automáticamente"
+    )
 
 
 class RouteConflictError(Exception):
@@ -265,7 +265,7 @@ def assign_driver(
         routes_repo.clear_delivery_days(db, route)
         routes_repo.save(db, route)
         route = _get_or_fail(db, route.id)
-        return serialize_route(route)
+        return serialize_route(route, db=db)
 
     driver = driver_repo.get_by_id(db, payload.driver_id)
     if driver is None:
@@ -291,7 +291,7 @@ def assign_driver(
         payload.weekdays,
         admin_id,
     )
-    return serialize_route(route)
+    return serialize_route(route, db=db)
 
 
 def _weekday_label(weekday: int) -> str:
