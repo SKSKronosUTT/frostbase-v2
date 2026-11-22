@@ -240,6 +240,52 @@
         "title": "AssignedTruckOut",
         "type": "object"
       },
+      "CanStartTripOut": {
+        "properties": {
+          "blocking_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Blocking Reason"
+          },
+          "can_start": {
+            "title": "Can Start",
+            "type": "boolean"
+          },
+          "current_trip_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Current Trip Id"
+          },
+          "route_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Route Id"
+          }
+        },
+        "required": [
+          "can_start"
+        ],
+        "title": "CanStartTripOut",
+        "type": "object"
+      },
       "DashboardAlert": {
         "properties": {
           "alert_type": {
@@ -2223,6 +2269,21 @@
         "title": "OptionOut",
         "type": "object"
       },
+      "OrderFailIn": {
+        "properties": {
+          "reason": {
+            "maxLength": 500,
+            "minLength": 1,
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason"
+        ],
+        "title": "OrderFailIn",
+        "type": "object"
+      },
       "Page_AlertOut_": {
         "properties": {
           "items": {
@@ -2515,6 +2576,48 @@
           "page_size"
         ],
         "title": "Page[RouteOut]",
+        "type": "object"
+      },
+      "Page_TripOut_": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/TripOut"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          },
+          "page": {
+            "title": "Page",
+            "type": "integer"
+          },
+          "page_size": {
+            "title": "Page Size",
+            "type": "integer"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "page",
+          "page_size"
+        ],
+        "title": "Page[TripOut]",
         "type": "object"
       },
       "Page_TruckOut_": {
@@ -3190,6 +3293,233 @@
           "theme"
         ],
         "title": "ThemeUpdate",
+        "type": "object"
+      },
+      "TripEndIn": {
+        "properties": {
+          "confirm_pending": {
+            "default": false,
+            "title": "Confirm Pending",
+            "type": "boolean"
+          },
+          "failure_reason": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Failure Reason"
+          }
+        },
+        "title": "TripEndIn",
+        "type": "object"
+      },
+      "TripOrderOut": {
+        "properties": {
+          "address": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Address"
+          },
+          "delivered_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Delivered At"
+          },
+          "failure_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Failure Reason"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "latitude": {
+            "title": "Latitude",
+            "type": "number"
+          },
+          "longitude": {
+            "title": "Longitude",
+            "type": "number"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "order_index": {
+            "title": "Order Index",
+            "type": "integer"
+          },
+          "started_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Started At"
+          },
+          "state": {
+            "title": "State",
+            "type": "string"
+          },
+          "trip_id": {
+            "title": "Trip Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "trip_id",
+          "order_index",
+          "name",
+          "latitude",
+          "longitude",
+          "state"
+        ],
+        "title": "TripOrderOut",
+        "type": "object"
+      },
+      "TripOut": {
+        "properties": {
+          "driver_id": {
+            "title": "Driver Id",
+            "type": "integer"
+          },
+          "ended_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ended At"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "orders": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/TripOrderOut"
+            },
+            "title": "Orders",
+            "type": "array"
+          },
+          "orders_delivered": {
+            "default": 0,
+            "title": "Orders Delivered",
+            "type": "integer"
+          },
+          "orders_failed": {
+            "default": 0,
+            "title": "Orders Failed",
+            "type": "integer"
+          },
+          "orders_pending": {
+            "default": 0,
+            "title": "Orders Pending",
+            "type": "integer"
+          },
+          "route_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Route Id"
+          },
+          "route_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Route Name"
+          },
+          "started_at": {
+            "format": "date-time",
+            "title": "Started At",
+            "type": "string"
+          },
+          "state": {
+            "title": "State",
+            "type": "string"
+          },
+          "truck_id": {
+            "title": "Truck Id",
+            "type": "integer"
+          },
+          "truck_plate": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Truck Plate"
+          }
+        },
+        "required": [
+          "id",
+          "driver_id",
+          "truck_id",
+          "state",
+          "started_at"
+        ],
+        "title": "TripOut",
+        "type": "object"
+      },
+      "TripStartIn": {
+        "properties": {
+          "route_id": {
+            "title": "Route Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "route_id"
+        ],
+        "title": "TripStartIn",
         "type": "object"
       },
       "TruckCreate": {
@@ -4836,6 +5166,420 @@
           }
         },
         "summary": "Route Detail",
+        "tags": [
+          "Conductor"
+        ]
+      }
+    },
+    "/api/v1/driver/trips": {
+      "get": {
+        "description": "Historial de viajes del conductor, paginado.",
+        "operationId": "list_trips_api_v1_driver_trips_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "maximum": 10000,
+              "minimum": 1,
+              "title": "Page",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "page_size",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Page Size",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page_TripOut_"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Trips",
+        "tags": [
+          "Conductor"
+        ]
+      }
+    },
+    "/api/v1/driver/trips/can-start": {
+      "get": {
+        "description": "Dice si el conductor puede iniciar un viaje y por qué no.",
+        "operationId": "can_start_api_v1_driver_trips_can_start_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CanStartTripOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Can Start",
+        "tags": [
+          "Conductor"
+        ]
+      }
+    },
+    "/api/v1/driver/trips/current": {
+      "get": {
+        "description": "Viaje en curso, o ``null``.",
+        "operationId": "current_trip_api_v1_driver_trips_current_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/TripOut"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Response Current Trip Api V1 Driver Trips Current Get"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Current Trip",
+        "tags": [
+          "Conductor"
+        ]
+      }
+    },
+    "/api/v1/driver/trips/start": {
+      "post": {
+        "description": "Inicia un viaje creando las órdenes desde la ruta de hoy.",
+        "operationId": "start_trip_api_v1_driver_trips_start_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TripStartIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TripOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Start Trip",
+        "tags": [
+          "Conductor"
+        ]
+      }
+    },
+    "/api/v1/driver/trips/{trip_id}": {
+      "get": {
+        "description": "Detalle de un viaje propio; el de otro conductor da ``404``.",
+        "operationId": "trip_detail_api_v1_driver_trips__trip_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "trip_id",
+            "required": true,
+            "schema": {
+              "title": "Trip Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TripOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Trip Detail",
+        "tags": [
+          "Conductor"
+        ]
+      }
+    },
+    "/api/v1/driver/trips/{trip_id}/end": {
+      "post": {
+        "description": "Finaliza un viaje; las órdenes pendientes requieren ``confirm_pending``.",
+        "operationId": "end_trip_api_v1_driver_trips__trip_id__end_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "trip_id",
+            "required": true,
+            "schema": {
+              "title": "Trip Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TripEndIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TripOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "End Trip",
+        "tags": [
+          "Conductor"
+        ]
+      }
+    },
+    "/api/v1/driver/trips/{trip_id}/orders/{order_id}/deliver": {
+      "post": {
+        "description": "Marca una orden como entregada.",
+        "operationId": "deliver_order_api_v1_driver_trips__trip_id__orders__order_id__deliver_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "trip_id",
+            "required": true,
+            "schema": {
+              "title": "Trip Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "order_id",
+            "required": true,
+            "schema": {
+              "title": "Order Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TripOrderOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Deliver Order",
+        "tags": [
+          "Conductor"
+        ]
+      }
+    },
+    "/api/v1/driver/trips/{trip_id}/orders/{order_id}/fail": {
+      "post": {
+        "description": "Marca una orden como fallida (motivo de texto libre obligatorio).",
+        "operationId": "fail_order_api_v1_driver_trips__trip_id__orders__order_id__fail_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "trip_id",
+            "required": true,
+            "schema": {
+              "title": "Trip Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "order_id",
+            "required": true,
+            "schema": {
+              "title": "Order Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OrderFailIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TripOrderOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Fail Order",
+        "tags": [
+          "Conductor"
+        ]
+      }
+    },
+    "/api/v1/driver/trips/{trip_id}/orders/{order_id}/start": {
+      "post": {
+        "description": "Marca una orden como «en entrega».",
+        "operationId": "start_order_api_v1_driver_trips__trip_id__orders__order_id__start_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "trip_id",
+            "required": true,
+            "schema": {
+              "title": "Trip Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "order_id",
+            "required": true,
+            "schema": {
+              "title": "Order Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TripOrderOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Start Order",
         "tags": [
           "Conductor"
         ]
