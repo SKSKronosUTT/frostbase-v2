@@ -308,10 +308,11 @@ Respuesta (`201`):
 
 | Método | Ruta | Descripción |
 |---|---|---|
-| `GET` | `/routes` | Lista paginada (`search`, `status`) |
+| `GET` | `/routes` | Lista paginada (`search`, `status`, `missing_driver`) |
 | `GET` | `/routes/options` | Lista ligera `{id, label}` para desplegables (máx. 500) |
 | `POST` | `/routes` | Crea ruta y calcula geometría con OSRM |
-| `GET` | `/routes/{id}` | Detalle con geometría, puntos y camión asignado |
+| `GET` | `/routes/{id}` | Detalle con geometría, puntos, camión (legado), conductor y calendario |
+| `PUT` | `/routes/{id}/driver` | Asigna o quita el **conductor dueño** y su calendario semanal (G4) |
 | `PUT` | `/routes/{id}` | Actualiza puntos/estado (recalcula geometría) |
 | `DELETE` | `/routes/{id}` | Elimina ruta (`204`) |
 | `POST` | `/routes/{id}/calculate` | Recalcula geometría |
@@ -341,11 +342,61 @@ Con `ROUTE_GEOMETRY_ASYNC=true`, `POST/PUT /routes` responde de inmediato con
 geometría simplificada (máx. 400 puntos); `GET /routes/{id}` y `/iot/config`
 devuelven la geometría completa.
 
-### Asignar ruta
+### Asignar ruta (vínculo legado con camión)
 
 ```json
 {"truck_id": 1}
 ```
+
+> `POST /routes/{id}/assign` es el vínculo **legado** con el camión. La
+> propiedad canónica de la ruta es el conductor (`PUT /routes/{id}/driver`).
+
+### Asignar conductor y calendario semanal (G4)
+
+```json
+{"driver_id": 1, "weekdays": [1, 4]}
+```
+
+- `weekdays` usa la convención `0=domingo … 6=sábado`, sin repeticiones.
+- El conductor debe estar **activo** (con o sin camión). Un conductor inactivo da `422`.
+- Solo puede existir **una ruta por conductor y día** (`409` con el día en
+  conflicto, p. ej. *"El conductor ya tiene otra ruta asignada el lunes"*).
+- `driver_id: null` quita al conductor y limpia su calendario.
+- `GET /routes?missing_driver=true` lista las rutas aún sin conductor.
+
+### Camión de la ruta: derivado del conductor (G4.1)
+
+> **El camión de una ruta es el camión activo de su dueño** (regla única).
+> `RouteOut.truck` se calcula como `ruta → dueño activo → asignación activa → camión`.
+> El vínculo legado `trucks.route_id` está **en desuso** y nadie lo escribe ya.
+
+| Situación | Resultado |
+|---|---|
+| Dueño con camión T1 | La ruta muestra T1 por construcción |
+| Dueño sin camión | La ruta no muestra camión |
+| Sin dueño | La ruta no muestra camión |
+| Dueño inactivo | La ruta no muestra camión |
+
+**A la inversa**: la ruta de un camión se deriva como `camión → conductor activo →
+la de hoy (calendario, `America/Tijuana`) o la única`. Afecta a `/trucks` (detalle),
+`/dashboard/trucks` y `/iot/config`.
+
+### Escritores legados deprecados (G4.1)
+
+- `POST /routes/{id}/assign` → `409` con mensaje de migración.
+- `PUT /trucks/{id}` con `route_id` no nulo → `409` con mensaje de migración.
+
+### Reporte de conciliación
+
+`GET /routes/legacy-mismatch` (admin) lista las rutas cuyo vínculo legado difiere del derivado:
+
+| `case` | Situación | Acción sugerida |
+|---|---|---|
+| `owner_without_truck` | Dueño sin camión + legado libre | «Convertir en asignación» (`convertible: true`) |
+| `owner_truck_differs` | Dueño con T1 + legado T2 | «El legado sobra; la ruta ya muestra el derivado» |
+| `no_owner` | Ruta sin dueño con legado | «Asigne conductor; el camión saldrá de él» |
+
+La columna `trucks.route_id` se eliminará en G6 cuando el reporte esté vacío.
 
 ---
 

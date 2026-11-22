@@ -194,6 +194,24 @@
         "title": "AssignTruckIn",
         "type": "object"
       },
+      "AssignedDriverOut": {
+        "properties": {
+          "full_name": {
+            "title": "Full Name",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "full_name"
+        ],
+        "title": "AssignedDriverOut",
+        "type": "object"
+      },
       "AssignedTruckOut": {
         "properties": {
           "brand": {
@@ -2291,12 +2309,56 @@
         "title": "RouteCreate",
         "type": "object"
       },
+      "RouteDriverIn": {
+        "description": "Asignación de conductor y calendario semanal de la ruta (G4).\n\n``driver_id = null`` quita al conductor y su calendario.",
+        "properties": {
+          "driver_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Driver Id"
+          },
+          "weekdays": {
+            "items": {
+              "type": "integer"
+            },
+            "maxItems": 7,
+            "title": "Weekdays",
+            "type": "array"
+          }
+        },
+        "title": "RouteDriverIn",
+        "type": "object"
+      },
       "RouteOut": {
         "properties": {
+          "assigned_driver": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AssignedDriverOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "created_at": {
             "format": "date-time",
             "title": "Created At",
             "type": "string"
+          },
+          "delivery_days": {
+            "default": [],
+            "items": {
+              "type": "integer"
+            },
+            "title": "Delivery Days",
+            "type": "array"
           },
           "description": {
             "anyOf": [
@@ -4147,7 +4209,7 @@
     },
     "/api/v1/drivers/options": {
       "get": {
-        "description": "Conductores activos con camión asignado (para selectores de rutas, G4).",
+        "description": "Conductores activos, con o sin camión (la etiqueta indica la placa).",
         "operationId": "list_driver_options_api_v1_drivers_options_get",
         "responses": {
           "200": {
@@ -4971,6 +5033,22 @@
           },
           {
             "in": "query",
+            "name": "missing_driver",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Missing Driver"
+            }
+          },
+          {
+            "in": "query",
             "name": "page",
             "required": false,
             "schema": {
@@ -5056,6 +5134,33 @@
           }
         },
         "summary": "Create Route",
+        "tags": [
+          "Rutas"
+        ]
+      }
+    },
+    "/api/v1/routes/legacy-mismatch": {
+      "get": {
+        "description": "Reporte de conciliación del vínculo legado (G4.1).\n\nLista las rutas cuyo ``trucks.route_id`` difiere del camión derivado de\nsu dueño, con la acción sugerida y el botón de conversión segura\n(``convertible=True`` solo si el camión legado está libre).",
+        "operationId": "legacy_mismatch_api_v1_routes_legacy_mismatch_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "additionalProperties": true,
+                    "type": "object"
+                  },
+                  "title": "Response Legacy Mismatch Api V1 Routes Legacy Mismatch Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Legacy Mismatch",
         "tags": [
           "Rutas"
         ]
@@ -5242,6 +5347,8 @@
     },
     "/api/v1/routes/{route_id}/assign": {
       "post": {
+        "deprecated": true,
+        "description": "Vínculo legado camión→ruta, en desuso (G4.1).\n\nResponde ``409`` indicando el camino correcto: asigne el camión al\nconductor dueño de la ruta.",
         "operationId": "assign_route_api_v1_routes__route_id__assign_post",
         "parameters": [
           {
@@ -5329,6 +5436,59 @@
           }
         },
         "summary": "Calculate Route",
+        "tags": [
+          "Rutas"
+        ]
+      }
+    },
+    "/api/v1/routes/{route_id}/driver": {
+      "put": {
+        "description": "Asigna (o quita) el conductor dueño de la ruta y su calendario (G4).",
+        "operationId": "assign_route_driver_api_v1_routes__route_id__driver_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "route_id",
+            "required": true,
+            "schema": {
+              "title": "Route Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RouteDriverIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RouteOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Assign Route Driver",
         "tags": [
           "Rutas"
         ]

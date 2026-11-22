@@ -10,10 +10,11 @@ from app.schemas.route import (
     AssignTruckIn,
     DeliveryPointIn,
     RouteCreate,
+    RouteDriverIn,
     RouteOut,
     RouteUpdate,
 )
-from app.services import route_service, routing
+from app.services import route_links, route_service, routing
 
 router = APIRouter(prefix="/routes", tags=["Rutas"])
 
@@ -38,11 +39,17 @@ def list_routes(
     _: CurrentAdmin,
     search: str | None = Query(default=None, max_length=100),
     status_filter: RouteStatusFilter | None = Query(default=None, alias="status"),
+    missing_driver: bool | None = Query(default=None),
     page: int = Query(default=1, ge=1, le=10000),
     page_size: int = Query(default=20, ge=1, le=100),
 ) -> Page[RouteOut]:
     return route_service.list_routes(
-        db, search=search, status=status_filter, page=page, page_size=page_size
+        db,
+        search=search,
+        status=status_filter,
+        missing_driver=missing_driver,
+        page=page,
+        page_size=page_size,
     )
 
 
@@ -77,6 +84,17 @@ def list_route_options(
     search: str | None = Query(default=None, max_length=100),
 ) -> list[OptionOut]:
     return route_service.list_route_options(db, search=search)
+
+
+@router.get("/legacy-mismatch", response_model=list[dict])
+def legacy_mismatch(db: DbSession, _: CurrentAdmin) -> list[dict]:
+    """Reporte de conciliación del vínculo legado (G4.1).
+
+    Lista las rutas cuyo ``trucks.route_id`` difiere del camión derivado de
+    su dueño, con la acción sugerida y el botón de conversión segura
+    (``convertible=True`` solo si el camión legado está libre).
+    """
+    return route_links.legacy_mismatches(db)
 
 
 @router.get("/{route_id}", response_model=RouteOut)
@@ -169,17 +187,42 @@ async def calculate_route(route_id: int, db: DbSession, _: CurrentAdmin) -> Rout
         ) from exc
 
 
-@router.post("/{route_id}/assign", response_model=RouteOut)
+@router.post("/{route_id}/assign", response_model=RouteOut, deprecated=True)
 def assign_route(
     route_id: int, payload: AssignTruckIn, db: DbSession, _: CurrentAdmin
 ) -> RouteOut:
+    """Vínculo legado camión→ruta, en desuso (G4.1).
+
+    Responde ``409`` indicando el camino correcto: asigne el camión al
+    conductor dueño de la ruta.
+    """
     try:
         return route_service.assign_route(db, route_id, payload.truck_id)
+    except route_service.RouteCoherenceError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT, detail=str(exc)
+        ) from exc
+
+
+@router.put("/{route_id}/driver", response_model=RouteOut)
+def assign_route_driver(
+    route_id: int,
+    payload: RouteDriverIn,
+    db: DbSession,
+    admin: CurrentAdmin,
+) -> RouteOut:
+    """Asigna (o quita) el conductor dueño de la ruta y su calendario (G4)."""
+    try:
+        return route_service.assign_driver(db, route_id, payload, admin_id=admin.id)
     except route_service.RouteNotFoundError as exc:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)
         ) from exc
     except route_service.RouteValidationError as exc:
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc)
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=str(exc)
+        ) from exc
+    except route_service.RouteConflictError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT, detail=str(exc)
         ) from exc

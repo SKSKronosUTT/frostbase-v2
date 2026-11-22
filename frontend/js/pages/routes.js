@@ -16,7 +16,9 @@ import { listSkeleton, panelState, renderTableState } from "../components/feedba
 const state = {
   routes: [],
   trucks: [],
+  driverOptions: [],
   search: "",
+  driverFilter: "",
   page: 1,
   pageSize: 12,
   total: 0,
@@ -27,12 +29,16 @@ const state = {
   geometryStale: false,
   warning: null,
   routeTruck: null,
+  routeDriver: null,
+  routeDays: [],
   map: null,
   pointMarkers: [],
   line: null,
   fitPending: false,
   uid: 0,
 };
+
+const WEEKDAY_INITIALS = ["D", "L", "M", "X", "J", "V", "S"];
 
 const pointsList = qs("#pointsList");
 
@@ -93,27 +99,48 @@ function updateHeader() {
     state.geometry && !state.geometryStale
       ? "Geometría calculada"
       : "Sin geometría calculada";
+  const driverLabel = state.routeDriver
+    ? ` · Conductor: ${state.routeDriver.full_name}`
+    : " · Sin conductor";
+  const daysLabel = state.routeDays.length
+    ? ` (${state.routeDays.map((day) => WEEKDAY_INITIALS[day]).join("")})`
+    : "";
   const truckLabel = state.routeTruck
-    ? ` · Asignada a ${state.routeTruck.plate}`
-    : " · Sin camión asignado";
+    ? ` · Camión del conductor: ${state.routeTruck.plate}`
+    : "";
   qs("#routeEditorMeta").textContent = `${state.points.length} punto${
     state.points.length === 1 ? "" : "s"
-  } · ${geometryLabel}${truckLabel}`;
+  } · ${geometryLabel}${driverLabel}${daysLabel}${truckLabel}`;
   qs("#routePointsCount").textContent = `(${state.points.length})`;
   qs("#deleteRouteButton").classList.toggle("hidden", state.mode === "new");
   qs("#calculateRouteButton").classList.toggle("hidden", state.mode === "new");
-  qs("#routeAssign").classList.toggle("hidden", state.mode === "new");
+  qs("#routeTruckInfo").classList.toggle("hidden", state.mode === "new");
+  qs("#routeDriverAssign").classList.toggle("hidden", state.mode === "new");
 }
 
-function updateAssignOptions() {
-  const select = qs("#assignTruckSelect");
-  const currentValue = state.routeTruck ? String(state.routeTruck.id) : "";
-  select.innerHTML =
-    '<option value="">Sin camión asignado</option>' +
-    state.trucks
-      .map((truck) => `<option value="${truck.id}">${escapeHtml(truck.label)}</option>`)
-      .join("");
-  select.value = currentValue;
+function renderTruckInfo() {
+  const status = qs("#routeTruckStatus");
+  const text = qs("#routeTruckText");
+  const button = qs("#changeTruckButton");
+
+  if (state.routeTruck) {
+    status.className = "route-truck-status route-truck-status--ok";
+    text.textContent = `Camión del conductor: ${state.routeTruck.plate}`;
+    button.hidden = true;
+  } else if (state.routeDriver) {
+    status.className = "route-truck-status route-truck-status--warn";
+    text.textContent = "El conductor aún no tiene camión asignado.";
+    button.hidden = false;
+    button.textContent = "";
+    button.insertAdjacentHTML(
+      "afterbegin",
+      '<i class="fa-solid fa-truck"></i> Asignar camión al conductor'
+    );
+  } else {
+    status.className = "route-truck-status";
+    text.textContent = "Sin conductor: la ruta mostrará su camión cuando tenga dueño.";
+    button.hidden = true;
+  }
 }
 
 function renderPoints() {
@@ -231,6 +258,8 @@ function showEmptyEditor() {
   state.points = [];
   state.geometry = null;
   state.routeTruck = null;
+  state.routeDriver = null;
+  state.routeDays = [];
   state.pointMarkers.forEach(({ marker }) => marker.remove());
   state.pointMarkers = [];
   updateLine();
@@ -274,6 +303,15 @@ function renderRoutesList() {
         route.status === "activa"
           ? '<span class="badge badge--success">Activa</span>'
           : '<span class="badge badge--muted">Inactiva</span>';
+      const driver = route.assigned_driver
+        ? `<span><i class="fa-solid fa-user-shield"></i>${escapeHtml(
+            route.assigned_driver.full_name
+          )}${
+            route.delivery_days.length
+              ? ` · ${route.delivery_days.map((day) => WEEKDAY_INITIALS[day]).join("")}`
+              : ""
+          }</span>`
+        : '<span><i class="fa-solid fa-user-shield"></i>Sin conductor</span>';
       return `
         <button class="route-list-item ${
           route.id === state.routeId ? "is-active" : ""
@@ -284,10 +322,13 @@ function renderRoutesList() {
           </div>
           <div class="route-list-item__meta">
             <span><i class="fa-solid fa-location-dot"></i>${route.points.length} puntos</span>
+            ${driver}
             ${
               route.truck
-                ? `<span><i class="fa-solid fa-truck"></i>${escapeHtml(route.truck.plate)}</span>`
-                : '<span><i class="fa-solid fa-truck"></i>Sin asignar</span>'
+                ? `<span><i class="fa-solid fa-truck"></i>${escapeHtml(
+                    route.truck.plate
+                  )} (legado)</span>`
+                : ""
             }
           </div>
         </button>
@@ -325,15 +366,41 @@ function applyRoute(route, { fit = true } = {}) {
   state.geometryStale = false;
   state.warning = route.warning || null;
   state.routeTruck = route.truck || null;
+  state.routeDriver = route.assigned_driver || null;
+  state.routeDays = route.delivery_days || [];
   qs("#routeStatus").value = route.status;
   qs("#routeDescription").value = route.description || "";
-  updateAssignOptions();
+  updateDriverAssignForm();
+  renderTruckInfo();
   renderPoints();
   showEditor();
   updateHeader();
   renderWarning();
   renderMap({ fit });
+  // La marca «activa» de la lista debe seguir a la ruta abierta.
+  renderRoutesList();
   history.replaceState({}, "", `routes.html?id=${route.id}`);
+}
+
+function updateDriverAssignForm() {
+  const select = qs("#assignDriverSelect");
+  const current = state.routeDriver ? String(state.routeDriver.id) : "";
+  const options =
+    '<option value="">Sin conductor asignado</option>' +
+    state.driverOptions
+      .map(
+        (driver) =>
+          `<option value="${driver.id}" ${
+            String(driver.id) === current ? "selected" : ""
+          }>${escapeHtml(driver.label)}</option>`
+      )
+      .join("");
+  select.innerHTML = options;
+  select.value = current;
+
+  document.querySelectorAll("[data-weekday]").forEach((checkbox) => {
+    checkbox.checked = state.routeDays.includes(Number(checkbox.dataset.weekday));
+  });
 }
 
 function startNewRoute() {
@@ -344,9 +411,12 @@ function startNewRoute() {
   state.geometryStale = false;
   state.warning = null;
   state.routeTruck = null;
+  state.routeDriver = null;
+  state.routeDays = [];
   qs("#routeStatus").value = "activa";
   qs("#routeDescription").value = "";
-  updateAssignOptions();
+  renderTruckInfo();
+  updateDriverAssignForm();
   renderPoints();
   showEditor();
   updateHeader();
@@ -486,55 +556,9 @@ async function calculateRoute() {
   }
 }
 
-async function assignRoute() {
-  if (state.mode !== "edit" || !state.routeId) return;
-  const value = qs("#assignTruckSelect").value;
-  const targetTruckId = value ? Number(value) : null;
-
-  if (!targetTruckId && !state.routeTruck) {
-    notify.info("La ruta ya no tiene un camión asignado.");
-    return;
-  }
-  if (targetTruckId && state.routeTruck && state.routeTruck.id === targetTruckId) {
-    notify.info("La ruta ya está asignada a ese camión.");
-    return;
-  }
-  if (targetTruckId && state.routeTruck) {
-    const accepted = await confirmDialog({
-      title: "Reasignar ruta",
-      message: `La ruta está asignada al camión ${state.routeTruck.plate}. Si continúas, ese camión quedará sin ruta.`,
-      confirmText: "Reasignar",
-      danger: false,
-    });
-    if (!accepted) return;
-  }
-
-  const button = qs("#assignRouteButton");
-  setButtonLoading(button, true, "Aplicando…");
-  try {
-    if (!targetTruckId) {
-      await api.put(`/trucks/${state.routeTruck.id}`, { route_id: null });
-      const route = await api.get(`/routes/${state.routeId}`);
-      state.routeTruck = null;
-      syncRouteInList(route);
-      updateHeader();
-      updateAssignOptions();
-      notify.success("Ruta desasignada del camión.");
-    } else {
-      const route = await api.post(`/routes/${state.routeId}/assign`, {
-        truck_id: targetTruckId,
-      });
-      state.routeTruck = route.truck || null;
-      syncRouteInList(route);
-      updateHeader();
-      updateAssignOptions();
-      notify.success("Ruta asignada al camión correctamente.");
-    }
-  } catch (error) {
-    notify.error(error.message, { title: "No se pudo aplicar la asignación" });
-  } finally {
-    setButtonLoading(button, false);
-  }
+async function goToDriverEdit() {
+  if (!state.routeDriver) return;
+  window.location.href = `drivers.html?edit=${state.routeDriver.id}`;
 }
 
 async function deleteRoute() {
@@ -565,6 +589,8 @@ async function loadRoutes() {
       page_size: state.pageSize,
     });
     if (state.search) params.set("search", state.search);
+    if (state.driverFilter === "pending") params.set("missing_driver", "true");
+    if (state.driverFilter === "assigned") params.set("missing_driver", "false");
     const data = await api.get(`/routes?${params.toString()}`);
     state.total = data.total;
     state.routes = data.items;
@@ -588,12 +614,146 @@ async function loadRoutes() {
   }
 }
 
-async function loadTrucks() {
+async function loadDriverOptions() {
   try {
-    state.trucks = await api.get("/trucks/options");
-    updateAssignOptions();
+    state.driverOptions = await api.get("/drivers/options");
+    updateDriverAssignForm();
   } catch (error) {
-    notify.error(error.message, { title: "No se pudieron cargar los camiones" });
+    notify.error(error.message, { title: "No se pudieron cargar los conductores" });
+  }
+}
+
+async function loadLegacyMismatch() {
+  const panel = qs("#legacyMismatchPanel");
+  try {
+    const rows = await api.get("/routes/legacy-mismatch");
+    if (!rows.length) {
+      panel.classList.add("hidden");
+      return;
+    }
+    panel.classList.remove("hidden");
+    qs("#legacyMismatchCount").textContent = `${rows.length} pendiente${
+      rows.length === 1 ? "" : "s"
+    }`;
+    qs("#legacyMismatchList").innerHTML = rows
+      .map((row) => {
+        const owner = row.owner ? escapeHtml(row.owner.full_name) : "Sin conductor";
+        const legacy = row.legacy_truck ? escapeHtml(row.legacy_truck.plate) : "—";
+        const effective = row.effective_truck
+          ? escapeHtml(row.effective_truck.plate)
+          : "sin camión";
+        const convert =
+          row.convertible && row.target_driver_id
+            ? `<button class="btn btn--ghost btn--sm" type="button" data-convert-driver="${row.target_driver_id}" data-convert-truck="${row.legacy_truck.id}" data-convert-route="${row.route_name}">${escapeHtml(
+                row.legacy_truck.plate
+              )} → asignar a ${owner}</button>`
+            : "";
+        return `
+          <div class="legacy-mismatch__row">
+            <div class="legacy-mismatch__route">
+              <strong>${escapeHtml(row.route_name)}</strong>
+              <span class="muted">Legado: ${legacy} · Derivado: ${effective} · ${owner}</span>
+            </div>
+            <p class="legacy-mismatch__hint">${escapeHtml(row.suggestion)}</p>
+            ${convert}
+          </div>
+        `;
+      })
+      .join("");
+    panel.querySelectorAll("[data-convert-driver]").forEach((button) => {
+      button.addEventListener("click", () =>
+        convertLegacyLink(
+          Number(button.dataset.convertDriver),
+          Number(button.dataset.convertTruck),
+          button.dataset.convertRoute
+        )
+      );
+    });
+  } catch (error) {
+    /* El reporte es informativo; si falla no bloquea la página. */
+    console.warn("No se pudo cargar el reporte de conciliación", error);
+  }
+}
+
+async function convertLegacyLink(driverId, truckId, routeName) {
+  const accepted = await confirmDialog({
+    title: "Convertir vínculo legado",
+    message: `El camión de «${routeName}» pasará a ser el camión del conductor. Si el conductor ya tenía otro camión, quedará libre.`,
+    confirmText: "Convertir",
+    danger: false,
+  });
+  if (!accepted) return;
+  try {
+    await api.put(`/drivers/${driverId}/truck`, { truck_id: truckId });
+    notify.success("Vínculo convertido en asignación del conductor.");
+    await loadLegacyMismatch();
+    await loadRoutes();
+  } catch (error) {
+    notify.error(error.message, { title: "No se pudo convertir el vínculo" });
+  }
+}
+
+async function assignRouteDriver() {
+  if (state.mode !== "edit" || !state.routeId) return;
+  const driverId = qs("#assignDriverSelect").value;
+  const weekdays = Array.from(document.querySelectorAll("[data-weekday]"))
+    .filter((checkbox) => checkbox.checked)
+    .map((checkbox) => Number(checkbox.dataset.weekday));
+
+  if (!driverId) {
+    notify.warning("Selecciona un conductor. Para quitarlo usa «Quitar conductor».");
+    return;
+  }
+
+  const button = qs("#assignDriverButton");
+  setButtonLoading(button, true, "Guardando…");
+  try {
+    const route = await api.put(`/routes/${state.routeId}/driver`, {
+      driver_id: Number(driverId),
+      weekdays,
+    });
+    state.routeDriver = route.assigned_driver;
+    state.routeDays = route.delivery_days;
+    syncRouteInList(route);
+    updateHeader();
+    updateDriverAssignForm();
+    notify.success("Conductor y calendario guardados correctamente.");
+  } catch (error) {
+    notify.error(error.message, { title: "No se pudo asignar el conductor" });
+  } finally {
+    setButtonLoading(button, false);
+  }
+}
+
+async function removeRouteDriver() {
+  if (state.mode !== "edit" || !state.routeId) return;
+  if (!state.routeDriver) {
+    notify.info("Esta ruta no tiene conductor asignado.");
+    return;
+  }
+  const accepted = await confirmDialog({
+    title: "Quitar conductor",
+    message: `La ruta quedará sin conductor y sin días de entrega. ${
+      state.routeTruck ? "El vínculo legado con el camión se conserva." : ""
+    }`,
+    confirmText: "Quitar conductor",
+    danger: true,
+  });
+  if (!accepted) return;
+
+  try {
+    const route = await api.put(`/routes/${state.routeId}/driver`, {
+      driver_id: null,
+      weekdays: [],
+    });
+    state.routeDriver = route.assigned_driver;
+    state.routeDays = route.delivery_days;
+    syncRouteInList(route);
+    updateHeader();
+    updateDriverAssignForm();
+    notify.success("Conductor retirado de la ruta.");
+  } catch (error) {
+    notify.error(error.message, { title: "No se pudo quitar el conductor" });
   }
 }
 
@@ -602,7 +762,9 @@ function wireEvents() {
   qs("#saveRouteButton").addEventListener("click", saveRoute);
   qs("#calculateRouteButton").addEventListener("click", calculateRoute);
   qs("#deleteRouteButton").addEventListener("click", deleteRoute);
-  qs("#assignRouteButton").addEventListener("click", assignRoute);
+  qs("#changeTruckButton").addEventListener("click", goToDriverEdit);
+  qs("#assignDriverButton").addEventListener("click", assignRouteDriver);
+  qs("#removeDriverButton").addEventListener("click", removeRouteDriver);
 
   qs("#addPointButton").addEventListener("click", () => {
     if (!state.map) return;
@@ -618,6 +780,12 @@ function wireEvents() {
       loadRoutes();
     }, 280)
   );
+
+  qs("#routeDriverFilter").addEventListener("change", (event) => {
+    state.driverFilter = event.target.value;
+    state.page = 1;
+    loadRoutes();
+  });
 
   qs("#routesList").addEventListener("click", (event) => {
     const item = event.target.closest("[data-route-id]");
@@ -664,7 +832,7 @@ async function init() {
   await initProtectedPage();
   state.map = createMap("routeMap", { zoom: 12 });
   wireEvents();
-  await Promise.all([loadRoutes(), loadTrucks()]);
+  await Promise.all([loadRoutes(), loadDriverOptions(), loadLegacyMismatch()]);
   const id = Number(new URLSearchParams(window.location.search).get("id"));
   if (id) {
     let route = state.routes.find((item) => item.id === id);

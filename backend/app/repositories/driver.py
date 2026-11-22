@@ -98,18 +98,31 @@ def truck_by_id(db: Session, truck_id: int) -> Truck | None:
     return db.get(Truck, truck_id)
 
 
-def options_with_truck(db: Session) -> list[tuple[int, str]]:
-    """Conductores activos con camión asignado (para selectores de rutas, G4)."""
+def list_options(db: Session) -> list[tuple[int, str]]:
+    """Conductores activos, con o sin camión (la etiqueta indica la placa).
+
+    G4: una ruta puede pertenecer a cualquier conductor activo; si aún no
+    tiene camión, la etiqueta lo señala para que el administrador lo sepa.
+    """
     rows = db.execute(
-        select(Driver.id, Driver.first_name, Driver.last_name)
-        .where(Driver.is_active.is_(True))
-        .where(
-            Driver.id.in_(
-                select(DriverTruckAssignment.driver_id).where(
-                    DriverTruckAssignment.unassigned_at.is_(None)
-                )
-            )
+        select(Driver.id, Driver.first_name, Driver.last_name, Truck.plate)
+        .outerjoin(
+            DriverTruckAssignment,
+            (DriverTruckAssignment.driver_id == Driver.id)
+            & DriverTruckAssignment.unassigned_at.is_(None),
         )
-        .order_by(func.lower(Driver.last_name))
+        .outerjoin(Truck, Truck.id == DriverTruckAssignment.truck_id)
+        .where(Driver.is_active.is_(True))
+        .order_by(func.lower(Driver.last_name), func.lower(Driver.first_name))
     ).all()
-    return [(row[0], f"{row[1]} {row[2]}") for row in rows]
+    return [
+        (
+            row[0],
+            (
+                f"{row[1]} {row[2]} · {row[3]}"
+                if row[3]
+                else f"{row[1]} {row[2]} · sin camión"
+            ),
+        )
+        for row in rows
+    ]

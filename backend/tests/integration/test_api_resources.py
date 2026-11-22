@@ -83,19 +83,24 @@ def test_routes_crud(client, login, csrf_headers, monkeypatch):
     recalculated = client.post(f"/api/v1/routes/{route_id}/calculate", headers=headers)
     assert recalculated.status_code == 200
 
+    # G4.1: el vínculo legado camión→ruta está deprecado.
     truck = client.post(
         "/api/v1/trucks", json=_truck_payload("ROUTE-TRUCK"), headers=headers
     )
     truck_id = truck.json()["id"]
-    assigned = client.post(
+    deprecated = client.post(
         f"/api/v1/routes/{route_id}/assign",
         json={"truck_id": truck_id},
         headers=headers,
     )
-    assert assigned.status_code == 200
+    assert deprecated.status_code == 409
+    assert "asigne el camión al conductor" in deprecated.json()["detail"]
 
     deleted = client.delete(f"/api/v1/routes/{route_id}", headers=headers)
     assert deleted.status_code == 204
+
+    cleanup = client.delete(f"/api/v1/trucks/{truck_id}", headers=headers)
+    assert cleanup.status_code == 204
 
 
 def test_dashboard_endpoints(client, login, create_truck, monkeypatch):

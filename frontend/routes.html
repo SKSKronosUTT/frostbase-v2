@@ -55,6 +55,19 @@
               <i class="fa-solid fa-magnifying-glass"></i>
               <input class="input" id="routeSearch" type="search" placeholder="Buscar ruta" />
             </div>
+            <select class="select" id="routeDriverFilter" aria-label="Filtrar por conductor asignado">
+              <option value="">Todos los conductores</option>
+              <option value="pending">Sin conductor (por migrar)</option>
+              <option value="assigned">Con conductor</option>
+            </select>
+          </div>
+
+          <div class="legacy-mismatch hidden" id="legacyMismatchPanel">
+            <div class="legacy-mismatch__head">
+              <strong><i class="fa-solid fa-triangle-exclamation"></i> Conciliación de camiones legados</strong>
+              <span class="section-header__meta" id="legacyMismatchCount">—</span>
+            </div>
+            <div class="legacy-mismatch__list" id="legacyMismatchList"></div>
           </div>
           <div class="routes-list" id="routesList">
             <div class="loading-block"><span class="spinner"></span> Cargando rutas…</div>
@@ -128,15 +141,54 @@
               </div>
             </div>
 
-            <div class="route-assign" id="routeAssign">
+            <div class="route-assign" id="routeDriverAssign">
               <div class="form-field">
-                <label for="assignTruckSelect">Asignar a camión</label>
-                <select class="select" id="assignTruckSelect">
-                  <option value="">Sin camión asignado</option>
+                <label for="assignDriverSelect">Conductor de la ruta</label>
+                <select class="select" id="assignDriverSelect">
+                  <option value="">Sin conductor asignado</option>
                 </select>
               </div>
-              <button class="btn btn--ghost btn--sm" id="assignRouteButton" type="button">
-                <i class="fa-solid fa-truck"></i> Aplicar asignación
+              <fieldset class="weekday-picker">
+                <legend>Días de entrega</legend>
+                <label class="weekday-picker__day">
+                  <input type="checkbox" data-weekday="0" /> <span>D</span>
+                </label>
+                <label class="weekday-picker__day">
+                  <input type="checkbox" data-weekday="1" /> <span>L</span>
+                </label>
+                <label class="weekday-picker__day">
+                  <input type="checkbox" data-weekday="2" /> <span>M</span>
+                </label>
+                <label class="weekday-picker__day">
+                  <input type="checkbox" data-weekday="3" /> <span>X</span>
+                </label>
+                <label class="weekday-picker__day">
+                  <input type="checkbox" data-weekday="4" /> <span>J</span>
+                </label>
+                <label class="weekday-picker__day">
+                  <input type="checkbox" data-weekday="5" /> <span>V</span>
+                </label>
+                <label class="weekday-picker__day">
+                  <input type="checkbox" data-weekday="6" /> <span>S</span>
+                </label>
+              </fieldset>
+              <div class="route-driver-actions">
+                <button class="btn btn--primary btn--sm" id="assignDriverButton" type="button">
+                  <i class="fa-solid fa-user-shield"></i> Guardar conductor y días
+                </button>
+                <button class="btn btn--ghost btn--sm" id="removeDriverButton" type="button">
+                  <i class="fa-solid fa-xmark"></i> Quitar conductor
+                </button>
+              </div>
+            </div>
+
+            <div class="route-assign" id="routeTruckInfo">
+              <div class="route-truck-status" id="routeTruckStatus">
+                <i class="fa-solid fa-truck"></i>
+                <span id="routeTruckText">Sin camión del conductor</span>
+              </div>
+              <button class="btn btn--ghost btn--sm" id="changeTruckButton" type="button" hidden>
+                <i class="fa-solid fa-truck"></i> Asignar camión al conductor
               </button>
             </div>
           </div>

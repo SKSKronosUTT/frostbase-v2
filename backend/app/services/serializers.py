@@ -11,6 +11,7 @@ from app.schemas.alert import AlertOut
 from app.schemas.device import DeviceOut
 from app.schemas.reading import ReadingOut
 from app.schemas.route import (
+    AssignedDriverOut,
     AssignedTruckOut,
     DeliveryPointOut,
     RouteBrief,
@@ -18,6 +19,7 @@ from app.schemas.route import (
     RouteOut,
 )
 from app.schemas.truck import TruckDetailOut, TruckOut
+from app.services.route_links import effective_truck
 from app.utils.geo import simplify_polyline
 from app.utils.time import ensure_utc, utcnow
 
@@ -89,8 +91,16 @@ def serialize_route_brief_geometry(
     )
 
 
-def serialize_route(route: Route, warning: str | None = None) -> RouteOut:
-    truck = route.truck
+def serialize_route(route: Route, warning: str | None = None, *, db=None) -> RouteOut:
+    """Serializa una ruta.
+
+    G4.1: ``truck`` es el camión **derivado** del dueño de la ruta (el vínculo
+    legado ``trucks.route_id`` está en desuso). El cálculo vive en
+    ``route_links.effective_truck`` y se ejecuta cuando el llamador aporta
+    la sesión.
+    """
+    truck = effective_truck(db, route) if db is not None else None
+    driver = route.assigned_driver
     return RouteOut(
         id=route.id,
         name=route.name,
@@ -108,6 +118,12 @@ def serialize_route(route: Route, warning: str | None = None) -> RouteOut:
             if truck
             else None
         ),
+        assigned_driver=(
+            AssignedDriverOut(id=driver.id, full_name=driver.full_name)
+            if driver
+            else None
+        ),
+        delivery_days=[day.weekday for day in route.delivery_days],
         created_at=ensure_utc(route.created_at),
         updated_at=ensure_utc(route.updated_at),
         warning=warning,
@@ -156,7 +172,14 @@ def serialize_truck(
     setting: Setting,
     active_alerts: int = 0,
     detail: bool = False,
+    route: Route | None = None,
+    db=None,
 ) -> TruckOut:
+    """Serializa un camión con su ruta **derivada** (G4.1).
+
+    ``route`` es la ruta efectiva del conductor activo del camión (regla de
+    hoy/única); el vínculo legado ``truck.route`` ya no se lee.
+    """
     device = serialize_device(truck.device, setting.offline_timeout_seconds)
     base: dict[str, Any] = dict(
         id=truck.id,
@@ -174,10 +197,10 @@ def serialize_truck(
     if detail:
         return TruckDetailOut(
             **base,
-            route=serialize_route(truck.route) if truck.route else None,
+            route=serialize_route(route, db=db) if route else None,
             temperature_min=setting.temperature_min,
             temperature_max=setting.temperature_max,
             humidity_min=setting.humidity_min,
             humidity_max=setting.humidity_max,
         )
-    return TruckOut(**base, route=serialize_route_brief(truck.route))
+    return TruckOut(**base, route=serialize_route_brief(route))

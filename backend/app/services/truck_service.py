@@ -6,11 +6,14 @@ from app.models.truck import Truck
 from app.repositories import alerts as alerts_repo
 from app.repositories import devices as devices_repo
 from app.repositories import readings as readings_repo
-from app.repositories import routes as routes_repo
 from app.repositories import trucks as trucks_repo
 from app.schemas.common import OptionOut, Page
 from app.schemas.truck import TruckCreate, TruckDetailOut, TruckOut, TruckUpdate
 from app.services import alert_service, settings_service
+from app.services.route_links import (
+    effective_route_for_truck,
+    effective_routes_for_trucks,
+)
 from app.services.serializers import serialize_truck
 
 
@@ -34,17 +37,18 @@ def _get_or_fail(db: Session, truck_id: int) -> Truck:
 
 
 def _assign_route(db: Session, truck: Truck, route_id: int | None) -> None:
-    if route_id is None:
-        truck.route_id = None
-        db.add(truck)
-        return
-    route = routes_repo.get(db, route_id)
-    if route is None:
-        raise TruckValidationError("La ruta seleccionada no existe")
-    for other in trucks_repo.trucks_using_route(db, route_id, except_id=truck.id):
-        other.route_id = None
-        db.add(other)
-    truck.route_id = route.id
+    """Vínculo legado camión→ruta, en desuso (G4.1).
+
+    La ruta de un camión se deriva de su conductor activo. Ya no se aceptan
+    asignaciones de ruta desde el camión: solo se permite liberar el vínculo
+    legado (``route_id=None``), que únicamente usa el reporte de conciliación.
+    """
+    if route_id is not None:
+        raise TruckValidationError(
+            "La ruta ya no se asigna al camión: asigne la ruta a un conductor "
+            "y el camión se tomará de él"
+        )
+    truck.route_id = None
     db.add(truck)
 
 
@@ -90,12 +94,15 @@ def list_trucks(
     )
     latest = readings_repo.get_latest_for_trucks(db, [truck.id for truck in trucks])
     active_counts = alerts_repo.active_counts_by_truck(db)
+    effective_routes = effective_routes_for_trucks(db, [truck.id for truck in trucks])
     items = [
         serialize_truck(
             truck,
             latest_reading=latest.get(truck.id),
             setting=setting,
             active_alerts=active_counts.get(truck.id, 0),
+            route=effective_routes.get(truck.id),
+            db=db,
         )
         for truck in trucks
     ]
@@ -122,6 +129,8 @@ def get_truck_detail(db: Session, truck_id: int) -> TruckDetailOut:
             setting=setting,
             active_alerts=active,
             detail=True,
+            route=effective_route_for_truck(db, truck),
+            db=db,
         ),
     )
 
@@ -151,7 +160,13 @@ def create_truck(db: Session, payload: TruckCreate) -> TruckOut:
     truck = _get_or_fail(db, truck.id)
     setting = settings_service.get_settings(db)
     latest = readings_repo.get_latest_for_truck(db, truck.id)
-    return serialize_truck(truck, latest_reading=latest, setting=setting)
+    return serialize_truck(
+        truck,
+        latest_reading=latest,
+        setting=setting,
+        route=effective_route_for_truck(db, truck),
+        db=db,
+    )
 
 
 def update_truck(db: Session, truck_id: int, payload: TruckUpdate) -> TruckOut:
@@ -190,6 +205,8 @@ def update_truck(db: Session, truck_id: int, payload: TruckUpdate) -> TruckOut:
         latest_reading=latest,
         setting=setting,
         active_alerts=active_counts.get(truck.id, 0),
+        route=effective_route_for_truck(db, truck),
+        db=db,
     )
 
 

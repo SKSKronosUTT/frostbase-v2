@@ -267,12 +267,11 @@ async function loadDevices() {
 }
 
 async function ensureReferences() {
-  const [routes, devices, trucks] = await Promise.all([
-    api.get("/routes/options"),
+  const [devices, trucks] = await Promise.all([
     api.get("/devices/all"),
     api.get("/trucks/options"),
   ]);
-  return { routes, devices, trucks };
+  return { devices, trucks };
 }
 
 function fillTruckOptions(select, trucks, selectedId = null) {
@@ -293,15 +292,6 @@ async function openTruckModal(truckId = null) {
     const references = await ensureReferences();
     truckForm.reset();
     qs("#truckId").value = "";
-
-    const routeSelect = qs("#truckRoute");
-    routeSelect.innerHTML =
-      '<option value="">Sin ruta</option>' +
-      references.routes
-        .map(
-          (route) => `<option value="${route.id}">${escapeHtml(route.label)}</option>`
-        )
-        .join("");
 
     const deviceSelect = qs("#truckDevice");
     deviceSelect.innerHTML =
@@ -329,7 +319,6 @@ async function openTruckModal(truckId = null) {
       qs("#truckPlate").value = truck.plate;
       qs("#truckStatus").value = truck.status;
       qs("#truckDescription").value = truck.description || "";
-      routeSelect.value = truck.route?.id || "";
       deviceSelect.value = truck.device?.id || "";
     } else {
       qs("#truckModalTitle").textContent = "Registrar camión";
@@ -356,34 +345,10 @@ async function submitTruck(event) {
     plate: qs("#truckPlate").value.trim().toUpperCase(),
     status: qs("#truckStatus").value,
     description: qs("#truckDescription").value.trim() || null,
-    route_id: qs("#truckRoute").value ? Number(qs("#truckRoute").value) : null,
     device_id: qs("#truckDevice").value ? Number(qs("#truckDevice").value) : null,
   };
 
-  const button = qs("#truckSubmit");
-  const currentPlate = payload.plate;
-  if (payload.route_id) {
-    try {
-      const route = await api.get(`/routes/${payload.route_id}`);
-      const assignedPlate = route.truck?.plate || "";
-      if (assignedPlate && assignedPlate !== currentPlate) {
-        const accepted = await confirmDialog({
-          title: "Reasignar ruta",
-          message: `La ruta está asignada al camión ${assignedPlate}. Si continúas, ese camión quedará sin ruta y se asignará a ${currentPlate}.`,
-          confirmText: "Reasignar",
-          danger: false,
-        });
-        if (!accepted) return;
-      }
-    } catch (error) {
-      notify.error(error.message, {
-        title: "No se pudo verificar la ruta",
-      });
-      return;
-    }
-  }
-
-  setButtonLoading(button, true, "Guardando…");
+  setButtonLoading(qs("#truckSubmit"), true, "Guardando…");
   try {
     if (id) {
       await api.put(`/trucks/${id}`, payload);
@@ -398,7 +363,7 @@ async function submitTruck(event) {
   } catch (error) {
     notify.error(error.message, { title: "No se pudo guardar el camión" });
   } finally {
-    setButtonLoading(button, false);
+    setButtonLoading(qs("#truckSubmit"), false);
   }
 }
 

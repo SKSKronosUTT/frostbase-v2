@@ -11,7 +11,7 @@ from app.schemas.iot import (
     IoTRouteConfig,
     ReadingIngest,
 )
-from app.services import reading_service, settings_service
+from app.services import reading_service, route_links, settings_service
 from app.services.serializers import serialize_alert
 
 router = APIRouter(prefix="/iot", tags=["IoT"])
@@ -90,7 +90,12 @@ def device_config(
     )
     request.state.device_id = device.device_id
     setting = settings_service.get_settings(db)
-    route = device.truck.route if device.truck else None
+    setting = settings_service.get_settings(db)
+    route = (
+        route_links.effective_route_for_truck(db, device.truck)
+        if device.truck
+        else None
+    )
     return IoTConfigResponse(
         device_id=device.device_id,
         truck_id=device.truck_id,
