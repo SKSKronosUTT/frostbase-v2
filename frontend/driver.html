@@ -111,6 +111,47 @@
         </div>
       </section>
 
+      <!-- ===== Viaje en curso / botón de inicio ===== -->
+      <section class="card driver-trip-card" aria-label="Viaje">
+        <header class="card__header">
+          <h2 class="card__title"><i class="fa-solid fa-play"></i> Viaje</h2>
+          <span class="badge badge--muted" id="tripBadge">Sin viaje</span>
+        </header>
+        <div class="card__body" id="tripBody">
+          <div id="tripIdle">
+            <button
+              class="btn btn--primary btn--block driver-trip-start"
+              id="startTripButton"
+              type="button"
+              hidden
+            >
+              <i class="fa-solid fa-play"></i> Iniciar viaje
+            </button>
+            <p class="muted driver-trip-blocked" id="tripBlocking" hidden></p>
+          </div>
+          <div id="tripActive" hidden>
+            <div class="driver-trip-progress">
+              <span class="driver-trip-progress__label" id="tripProgressLabel"
+                >0 de 0 entregadas</span
+              >
+              <div class="driver-trip-progress__bar">
+                <div class="driver-trip-progress__fill" id="tripProgressFill"></div>
+              </div>
+            </div>
+            <div class="driver-orders" id="ordersList">
+              <p class="muted">Cargando órdenes…</p>
+            </div>
+            <button
+              class="btn btn--danger btn--block driver-trip-end"
+              id="endTripButton"
+              type="button"
+            >
+              <i class="fa-solid fa-flag-checkered"></i> Finalizar viaje
+            </button>
+          </div>
+        </div>
+      </section>
+
       <!-- ===== Alertas ===== -->
       <section class="card driver-alerts-card" aria-label="Alertas del contenedor">
         <header class="card__header">
