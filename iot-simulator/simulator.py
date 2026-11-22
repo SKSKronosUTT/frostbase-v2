@@ -182,7 +182,10 @@ class ReadingGenerator:
         self.hum_max = float(config.get("humidity_max", 90))
         self.temp_center = (self.temp_min + self.temp_max) / 2
         self.hum_center = (self.hum_min + self.hum_max) / 2
-        self.walker = RouteWalker(config.get("route", {}).get("geometry"))
+        # G4.1: la ruta puede ser None (sin conductor, sin ruta de hoy o sin
+        # camión); el camión se queda en la posición fija del .env.
+        route = config.get("route") or {}
+        self.walker = RouteWalker(route.get("geometry"))
 
     def _normal_temperature(self) -> float:
         span = max(0.2, (self.temp_max - self.temp_min) * 0.25)
