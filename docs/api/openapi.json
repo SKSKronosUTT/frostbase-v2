@@ -150,6 +150,76 @@
         "title": "AgentAlertsOut",
         "type": "object"
       },
+      "AgentAlertsTodayOut": {
+        "properties": {
+          "active_by_type": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Active By Type",
+            "type": "object"
+          },
+          "active_total": {
+            "title": "Active Total",
+            "type": "integer"
+          },
+          "created_by_type": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Created By Type",
+            "type": "object"
+          },
+          "created_total": {
+            "title": "Created Total",
+            "type": "integer"
+          },
+          "generated_at": {
+            "title": "Generated At",
+            "type": "string"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/AgentTodayAlertOut"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "resolved_by_type": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Resolved By Type",
+            "type": "object"
+          },
+          "resolved_total": {
+            "title": "Resolved Total",
+            "type": "integer"
+          },
+          "timezone": {
+            "title": "Timezone",
+            "type": "string"
+          },
+          "window_start": {
+            "title": "Window Start",
+            "type": "string"
+          }
+        },
+        "required": [
+          "generated_at",
+          "timezone",
+          "window_start",
+          "created_total",
+          "resolved_total",
+          "active_total",
+          "created_by_type",
+          "resolved_by_type",
+          "active_by_type",
+          "items"
+        ],
+        "title": "AgentAlertsTodayOut",
+        "type": "object"
+      },
       "AgentFleetSummaryOut": {
         "properties": {
           "alerts_active": {
@@ -162,6 +232,21 @@
             },
             "title": "Alerts By Type",
             "type": "object"
+          },
+          "alerts_created_today": {
+            "title": "Alerts Created Today",
+            "type": "integer"
+          },
+          "alerts_created_today_by_type": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Alerts Created Today By Type",
+            "type": "object"
+          },
+          "alerts_resolved_today": {
+            "title": "Alerts Resolved Today",
+            "type": "integer"
           },
           "generated_at": {
             "title": "Generated At",
@@ -193,15 +278,23 @@
           "trucks_total": {
             "title": "Trucks Total",
             "type": "integer"
+          },
+          "window_start": {
+            "title": "Window Start",
+            "type": "string"
           }
         },
         "required": [
           "generated_at",
           "timezone",
+          "window_start",
           "trucks_total",
           "trucks_by_status",
           "alerts_active",
           "alerts_by_type",
+          "alerts_created_today",
+          "alerts_created_today_by_type",
+          "alerts_resolved_today",
           "trips_active",
           "pending_orders",
           "routes_today"
@@ -340,6 +433,56 @@
           "overrides"
         ],
         "title": "AgentThresholdsOut",
+        "type": "object"
+      },
+      "AgentTodayAlertOut": {
+        "properties": {
+          "acknowledged": {
+            "default": false,
+            "title": "Acknowledged",
+            "type": "boolean"
+          },
+          "alert_type": {
+            "title": "Alert Type",
+            "type": "string"
+          },
+          "resolved_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resolved At"
+          },
+          "started_at": {
+            "title": "Started At",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "truck_plate": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Truck Plate"
+          }
+        },
+        "required": [
+          "alert_type",
+          "status",
+          "started_at"
+        ],
+        "title": "AgentTodayAlertOut",
         "type": "object"
       },
       "AgentTripOut": {
@@ -5002,6 +5145,68 @@
           }
         },
         "summary": "Alerts",
+        "tags": [
+          "Agente (solo lectura)"
+        ]
+      }
+    },
+    "/api/v1/agent-read/alerts/today": {
+      "get": {
+        "description": "Alertas creadas/resueltas desde medianoche local (America/Tijuana).",
+        "operationId": "alerts_today_api_v1_agent_read_alerts_today_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 10,
+              "maximum": 20,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentAlertsTodayOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Alerts Today",
         "tags": [
           "Agente (solo lectura)"
         ]

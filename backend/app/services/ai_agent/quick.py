@@ -15,6 +15,7 @@ from app.models.alert import Alert
 from app.models.route import Route, RouteDeliveryDay
 from app.models.trip import Trip, TripOrder
 from app.models.truck import Truck
+from app.services import agent_read
 from app.services.ai_agent.context import collect_snapshot
 from app.services.route_links import today_weekday
 from app.utils.time import ensure_utc, utcnow
@@ -22,6 +23,7 @@ from app.utils.time import ensure_utc, utcnow
 QUICK_PROMPTS: dict[str, str] = {
     "fleet-summary": "Resumen de la flota",
     "active-alerts": "Alertas activas",
+    "today-alerts": "Alertas de hoy",
     "active-trips": "Viajes en curso",
     "critical-containers": "Contenedores críticos",
     "today-routes": "Rutas de hoy",
@@ -101,6 +103,31 @@ def _active_alerts(db: Session) -> str:
             ),
         )
         lines.append(f"- {plate} · {row.alert_type}{value} · hace {age} min{acked}")
+    lines.append(_stamp())
+    return "\n".join(lines)
+
+
+def _today_alerts(db: Session) -> str:
+    counts = agent_read.alerts_today(db, limit=5)
+    created = (
+        ", ".join(
+            f"{key}: {value}" for key, value in sorted(counts.created_by_type.items())
+        )
+        if counts.created_by_type
+        else "ninguna"
+    )
+    lines = [
+        f"Alertas de hoy ({settings.app_timezone}):",
+        f"- Creadas: {counts.created_total} ({created}).",
+        f"- Resueltas: {counts.resolved_total}.",
+        f"- Activas ahora: {counts.active_total}.",
+    ]
+    if counts.items:
+        lines.append("Últimas creadas hoy:")
+        for item in counts.items[:5]:
+            plate = item.truck_plate or "sin camión"
+            hour = item.started_at[11:16]
+            lines.append(f"- {plate} · {item.alert_type} · {item.status} · {hour}")
     lines.append(_stamp())
     return "\n".join(lines)
 
@@ -212,6 +239,7 @@ def quick_answer(db: Session, key: str) -> tuple[str, str]:
     builders = {
         "fleet-summary": _fleet_summary,
         "active-alerts": _active_alerts,
+        "today-alerts": _today_alerts,
         "active-trips": _active_trips,
         "critical-containers": _critical_containers,
         "today-routes": _today_routes,

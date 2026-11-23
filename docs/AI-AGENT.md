@@ -324,6 +324,7 @@ hasta habilitar/implementar el *pull* (`agent-read`, A2); sin streaming.
 |---|---|
 | `GET /api/v1/agent-read/fleet-summary` | Totales, alertas por tipo, viajes y rutas de hoy |
 | `GET /api/v1/agent-read/alerts?limit=10` | Alertas activas sin PII |
+| `GET /api/v1/agent-read/alerts/today?limit=10` | Creadas/resueltas desde medianoche local + activas ahora |
 | `GET /api/v1/agent-read/trucks/{id}/status` | Última lectura, estado, umbrales, alertas |
 | `GET /api/v1/agent-read/trips/active?limit=5` | Progreso por viaje con alias de conductor |
 | `GET /api/v1/agent-read/routes/today?limit=6` | Rutas de hoy, puntos y pendientes |
@@ -334,6 +335,10 @@ hasta habilitar/implementar el *pull* (`agent-read`, A2); sin streaming.
   `404`.
 - Respuestas compactas (<4 KB), ISO 8601 con offset, alias `Conductor {id}`,
   sin correos/teléfonos ni texto libre salvo nombre de ruta saneado.
+- **Métricas de alertas**: `alerts_active` (ahora), `alerts_created_today` y
+  `alerts_resolved_today` (desde medianoche de `America/Tijuana`, incluye
+  resueltas), más `window_start`. El prompt indica cómo distinguirlas cuando el
+  usuario pregunta por «hoy».
 - Solo métodos GET: no existe ninguna ruta de escritura para el agente.
 
 **Respuestas rápidas deterministas** (sin LLM ni cuota):
@@ -343,7 +348,7 @@ hasta habilitar/implementar el *pull* (`agent-read`, A2); sin streaming.
 | `GET` | `/api/v1/ai/quick` | Lista de sugerencias disponibles |
 | `POST` | `/api/v1/ai/quick/{id}` | Texto calculado con datos actuales |
 
-IDs: `fleet-summary`, `active-alerts`, `active-trips`,
+IDs: `fleet-summary`, `active-alerts`, `today-alerts`, `active-trips`,
 `critical-containers`, `today-routes`. La UI las marca como
 **«Datos del sistema»**.
 

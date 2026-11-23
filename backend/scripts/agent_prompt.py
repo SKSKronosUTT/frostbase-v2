@@ -31,10 +31,19 @@ Cabecera obligatoria en cada petición: {header}
 Endpoints (GET):
 - /fleet-summary                → totales, alertas por tipo, viajes y rutas de hoy
 - /alerts?limit=10              → alertas activas
+- /alerts/today?limit=10        → creadas/resueltas desde medianoche local
 - /trucks/{{id}}/status          → estado y última lectura de un camión
 - /trips/active?limit=5         → viajes en curso y progreso
 - /routes/today?limit=6         → rutas de hoy
 - /thresholds                   → umbrales globales y por camión
+
+Métricas de alertas (no las confundas):
+- alerts_active: alertas activas AHORA.
+- alerts_created_today: alertas creadas desde la medianoche de America/Tijuana
+  (incluye las ya resueltas).
+- alerts_resolved_today: alertas resueltas hoy.
+Si el usuario dice "hoy" sin más, responde con activas ahora y creadas hoy, y
+aclara la diferencia. Para el detalle usa /alerts/today.
 
 Reglas:
 1. Solo lectura: no modifiques datos ni llames a endpoints de escritura.

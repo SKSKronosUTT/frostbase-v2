@@ -334,6 +334,7 @@ def test_quick_list_and_deterministic_answers(
         "active-trips",
         "critical-containers",
         "today-routes",
+        "today-alerts",
     } <= ids
 
     response = client.post("/api/v1/ai/quick/fleet-summary", headers=csrf_headers())
@@ -342,6 +343,10 @@ def test_quick_list_and_deterministic_answers(
     assert body["source"] == "system"
     assert "Flota:" in body["text"]
     assert "Datos del sistema" in body["text"]
+
+    today = client.post("/api/v1/ai/quick/today-alerts", headers=csrf_headers())
+    assert today.status_code == 200
+    assert "Alertas de hoy" in today.json()["text"]
 
     unknown = client.post("/api/v1/ai/quick/no-existe", headers=csrf_headers())
     assert unknown.status_code == 404

@@ -201,6 +201,7 @@ solo GET y 60 req/min. Respuestas compactas y sin datos personales.
 |---|---|---|
 | `GET` | `/agent-read/fleet-summary` | Totales de flota, alertas, viajes y rutas |
 | `GET` | `/agent-read/alerts` | Alertas activas (`limit` 1–20) |
+| `GET` | `/agent-read/alerts/today` | Creadas y resueltas hoy + activas ahora (`limit` 1–20) |
 | `GET` | `/agent-read/trucks/{id}/status` | Estado y última lectura del camión |
 | `GET` | `/agent-read/trips/active` | Viajes en curso (`limit` 1–10) |
 | `GET` | `/agent-read/routes/today` | Rutas de hoy (`limit` 1–10) |

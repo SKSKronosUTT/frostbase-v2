@@ -48,6 +48,7 @@ Reglas:
 Para datos de FrostBase usa la API de solo lectura:
   GET http://192.168.100.16:8050/api/v1/agent-read/fleet-summary
   GET http://192.168.100.16:8050/api/v1/agent-read/alerts?limit=10
+  GET http://192.168.100.16:8050/api/v1/agent-read/alerts/today?limit=10
   GET http://192.168.100.16:8050/api/v1/agent-read/trucks/{id}/status
   GET http://192.168.100.16:8050/api/v1/agent-read/trips/active?limit=5
   GET http://192.168.100.16:8050/api/v1/agent-read/routes/today?limit=6
@@ -55,6 +56,11 @@ Para datos de FrostBase usa la API de solo lectura:
 Header obligatorio: Authorization: Bearer <AI_AGENT_READ_TOKEN>
 Nunca escribas ni modifiques datos: esta API es de solo lectura.
 ```
+
+Métricas de alertas: `alerts_active` son las activas **ahora**;
+`alerts_created_today` y `alerts_resolved_today` usan la medianoche local de
+`America/Tijuana`. Si el usuario dice «hoy», aclara a qué métrica se refiere y
+usa `/alerts/today` para el desglose.
 
 La IP y el token deben coincidir con `ALLOWED_HOSTS` y `AI_AGENT_READ_TOKEN`
 del `.env` de FrostBase. Si el host cambia, actualiza la instrucción.

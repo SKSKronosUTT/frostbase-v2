@@ -1,6 +1,6 @@
 """Endpoints de solo lectura para el agente (A2)."""
 
-from datetime import timedelta
+from datetime import UTC, datetime, time, timedelta
 
 import pytest
 
@@ -63,6 +63,26 @@ def agent_data(create_truck, create_device, create_driver):
                 value=3.5,
                 min_value=-5,
                 max_value=1,
+            )
+        )
+        db.add(
+            Alert(
+                truck_id=truck_id,
+                device_id=device_pk,
+                alert_type="humedad",
+                status="resuelta",
+                started_at=now - timedelta(hours=1),
+                resolved_at=now - timedelta(minutes=30),
+            )
+        )
+        db.add(
+            Alert(
+                truck_id=truck_id,
+                device_id=device_pk,
+                alert_type="desconexion",
+                status="resuelta",
+                started_at=now - timedelta(days=3),
+                resolved_at=now - timedelta(days=3),
             )
         )
         db.add(DriverTruckAssignment(driver_id=driver_id, truck_id=truck_id))
@@ -195,6 +215,13 @@ def test_fleet_summary(client, read_token, agent_data):
     assert body["trucks_total"] == 2
     assert body["alerts_active"] == 1
     assert body["alerts_by_type"] == {"temperatura": 1}
+    assert body["alerts_created_today"] == 2
+    assert body["alerts_created_today_by_type"] == {
+        "temperatura": 1,
+        "humedad": 1,
+    }
+    assert body["alerts_resolved_today"] == 1
+    assert body["window_start"].startswith(datetime.now(settings.tz).date().isoformat())
     assert body["trips_active"] == 1
     assert body["pending_orders"] == 1
     assert body["routes_today"] == 1
@@ -275,3 +302,52 @@ def test_thresholds(client, read_token, agent_data):
 def test_agent_read_is_get_only(client, read_token, agent_data):
     response = client.post("/api/v1/agent-read/fleet-summary", headers=HEADERS)
     assert response.status_code == 405
+
+
+def test_alerts_today_endpoint(client, read_token, agent_data):
+    response = client.get(
+        "/api/v1/agent-read/alerts/today", params={"limit": 5}, headers=HEADERS
+    )
+    assert response.status_code == 200
+    body = response.json()
+    assert body["created_total"] == 2
+    assert body["resolved_total"] == 1
+    assert body["active_total"] == 1
+    assert body["created_by_type"] == {"temperatura": 1, "humedad": 1}
+    assert body["resolved_by_type"] == {"humedad": 1}
+    assert len(body["items"]) == 2
+    assert body["items"][0]["status"] in {"activa", "resuelta"}
+    assert "@" not in response.text
+    assert len(response.content) < 4096
+
+
+def test_alerts_today_respects_local_midnight(client, read_token):
+    now_local = datetime.now(settings.tz)
+    start_local = datetime.combine(now_local.date(), time.min, tzinfo=settings.tz)
+    elapsed = now_local - start_local
+    after = start_local + min(timedelta(minutes=1), elapsed / 2)
+    before = start_local - timedelta(minutes=1)
+    with SessionLocal() as db:
+        db.add(
+            Alert(
+                alert_type="humedad",
+                status="resuelta",
+                started_at=before.astimezone(UTC),
+                resolved_at=before.astimezone(UTC),
+            )
+        )
+        db.add(
+            Alert(
+                alert_type="temperatura",
+                status="resuelta",
+                started_at=after.astimezone(UTC),
+                resolved_at=after.astimezone(UTC),
+            )
+        )
+        db.commit()
+
+    response = client.get("/api/v1/agent-read/fleet-summary", headers=HEADERS)
+    assert response.status_code == 200
+    body = response.json()
+    assert body["alerts_created_today"] == 1
+    assert body["alerts_resolved_today"] == 1

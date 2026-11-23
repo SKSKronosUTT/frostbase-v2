@@ -10,6 +10,7 @@ from app.api.deps import AgentReadToken, DbSession
 from app.core.ratelimit import RateLimit
 from app.schemas.agent_read import (
     AgentAlertsOut,
+    AgentAlertsTodayOut,
     AgentFleetSummaryOut,
     AgentRoutesOut,
     AgentThresholdsOut,
@@ -36,6 +37,19 @@ def fleet_summary(
 ) -> AgentFleetSummaryOut:
     _check(request, response)
     return agent_read.fleet_summary(db)
+
+
+@router.get("/alerts/today", response_model=AgentAlertsTodayOut)
+def alerts_today(
+    request: Request,
+    response: Response,
+    _: AgentReadToken,
+    db: DbSession,
+    limit: int = Query(default=10, ge=1, le=20),
+) -> AgentAlertsTodayOut:
+    """Alertas creadas/resueltas desde medianoche local (America/Tijuana)."""
+    _check(request, response)
+    return agent_read.alerts_today(db, limit=limit)
 
 
 @router.get("/alerts", response_model=AgentAlertsOut)
