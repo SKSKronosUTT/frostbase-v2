@@ -21,6 +21,7 @@ x-app-environment: &app-environment
   IOT_IP_RATE_LIMIT: ${IOT_IP_RATE_LIMIT:-120}
   LOGIN_IP_RATE_LIMIT: ${LOGIN_IP_RATE_LIMIT:-5}
   LOGIN_IDENTIFIER_RATE_LIMIT: ${LOGIN_IDENTIFIER_RATE_LIMIT:-10}
+  HASH_CONCURRENCY: ${HASH_CONCURRENCY:-2}
   OSRM_BASE_URL: ${OSRM_BASE_URL:-https://router.project-osrm.org}
   OSRM_TIMEOUT_SECONDS: ${OSRM_TIMEOUT_SECONDS:-5}
   WEATHER_TIMEOUT_SECONDS: ${WEATHER_TIMEOUT_SECONDS:-3}
@@ -40,6 +41,8 @@ services:
     image: postgres:16
     container_name: frostbase-v4-db
     restart: unless-stopped
+    # G8: dos workers con pool 40+10 cada uno más watcher y margen.
+    command: postgres -c max_connections=250
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-frostbase}
       POSTGRES_USER: ${POSTGRES_USER:-frostbase}
@@ -68,8 +71,8 @@ services:
     deploy:
       resources:
         limits:
-          cpus: "1.00"
-          memory: 512M
+          cpus: "4.00"
+          memory: 1G
     healthcheck:
       test:
         [

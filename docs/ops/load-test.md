@@ -1,8 +1,31 @@
 # Prueba de carga IoT · Fase 4
 
-Script: [`backend/scripts/loadtest.py`](../../backend/scripts/loadtest.py).
+Scripts:
 
-## Metodología
+- Ingesta IoT: [`backend/scripts/loadtest.py`](../../backend/scripts/loadtest.py)
+- Portal de conductores (RNF2, G8): [`backend/scripts/loadtest_portal.py`](../../backend/scripts/loadtest_portal.py)
+
+## Prueba de carga del portal (G8 · RNF2: 999 usuarios)
+
+`loadtest_portal.py` prepara `--drivers` conductores reales (camión, ruta de
+hoy, contraseña cambiada) y lanza `--users` usuarios virtuales que inician
+sesión y hacen polling cada 5 s de `/driver/dashboard`,
+`/driver/trips/current` y `/driver/alerts`.
+
+**Importante:** ejecute contra un stack con los límites de login elevados
+(cada usuario virtual inicia sesión):
+
+```bash
+LOGIN_IP_RATE_LIMIT=99999 LOGIN_IDENTIFIER_RATE_LIMIT=99999 \
+  docker compose up -d --force-recreate app
+
+python -m scripts.loadtest_portal --users 999 --duration 60
+```
+
+Los resultados y el dimensionado derivado se registran en
+[`perf-baseline.md`](perf-baseline.md).
+
+## Metodología (ingesta IoT)
 
 1. Inicia sesión como administrador y crea `N` camiones y dispositivos vía API.
 2. Cada dispositivo envía lecturas cada `--interval` segundos, con un desfase

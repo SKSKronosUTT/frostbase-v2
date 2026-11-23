@@ -27,13 +27,14 @@ from app.schemas.driver_portal import (
 )
 from app.services import door_service, settings_service
 from app.services.route_links import effective_route_for_truck, routes_for_driver
-from app.utils.time import ensure_utc
+from app.utils.time import ensure_utc, utcnow
 
 logger = logging.getLogger("frostbase.driver_portal")
 
 CONTAINER_STATUS_OK = "ok"
 CONTAINER_STATUS_OUT_OF_RANGE = "out_of_range"
 CONTAINER_STATUS_DOOR_OPEN = "door_open"
+CONTAINER_STATUS_NO_SIGNAL = "no_signal"
 CONTAINER_STATUS_NO_DATA = "no_data"
 
 
@@ -188,12 +189,17 @@ def get_container_live(db: Session, driver: Driver) -> DriverContainerOut:
         )
 
     status = CONTAINER_STATUS_OK
+    stale_before = utcnow().timestamp() - global_setting.offline_timeout_seconds
+    latest_seen = ensure_utc(latest.received_at) or utcnow()
     if latest.temperature < temp_min or latest.temperature > temp_max:
         status = CONTAINER_STATUS_OUT_OF_RANGE
     elif latest.humidity < hum_min or latest.humidity > hum_max:
         status = CONTAINER_STATUS_OUT_OF_RANGE
     elif door_state is not None and door_state.is_open:
         status = CONTAINER_STATUS_DOOR_OPEN
+    elif latest_seen.timestamp() < stale_before:
+        # G8: la última lectura es más antigua que el umbral de desconexión.
+        status = CONTAINER_STATUS_NO_SIGNAL
 
     return DriverContainerOut(
         temperature=latest.temperature,

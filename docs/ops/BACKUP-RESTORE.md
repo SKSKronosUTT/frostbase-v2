@@ -15,7 +15,25 @@ Los dumps antiguos que estaban en `db-backups/` se movieron a
 
 ## 2. Respaldo (RPO objetivo: 24 h)
 
-### Windows PowerShell
+### Script automatizado (recomendado, G8)
+
+`scripts/backup_db.py` automatiza el volcado completo: dump `-Fc` dentro del
+contenedor, copia al host, retención configurable y cifrado opcional con
+`age`. Verificado el 2026-11-22 (dump de 0.4 MB generado en segundos).
+
+```powershell
+# Uso directo
+.\backend\.venv\Scripts\python.exe -m scripts.backup_db --keep 14
+
+# Con la tarea del repositorio
+.\tasks.ps1 backup                 # retención por defecto: 14
+.\tasks.ps1 backup -Keep 30       # conservar 30 dumps
+
+# Cifrado con age (si está instalado)
+.\backend\.venv\Scripts\python.exe -m scripts.backup_db --age-recipient age1xxxxxxx
+```
+
+### Windows PowerShell (manual)
 
 ```powershell
 $target = Join-Path $env:USERPROFILE "backups\frostbase"
@@ -51,6 +69,26 @@ gpg --symmetric --cipher-algo AES256 "$target/frostbase_$stamp.dump"
 ```
 
 No guarde la passphrase ni la clave privada junto a los dumps.
+
+### Programación automática (RPO 24 h)
+
+**Windows · Programador de tareas** (diario a las 03:00):
+
+```powershell
+$task = New-ScheduledTaskAction -Execute "powershell.exe" `
+  -Argument "-NoProfile -Command cd 'C:\ruta\a\frostbase-v2'; .\tasks.ps1 backup"
+$trigger = New-ScheduledTaskTrigger -Daily -At 03:00
+Register-ScheduledTask -TaskName "FrostBase Backup" -Action $task -Trigger $trigger
+```
+
+**Linux · cron** (`crontab -e`):
+
+```cron
+0 3 * * * cd /opt/frostbase && make backup KEEP=14 >> /var/log/frostbase-backup.log 2>&1
+```
+
+Verifique semanalmente que el dump del día existe y que la restauración
+sigue funcionando (drill de la sección 3).
 
 ## 3. Restauración (RTO objetivo: < 30 min)
 

@@ -69,6 +69,9 @@ function renderDashboard(data) {
     } else if (c.status === "door_open") {
       badge.textContent = "Puerta abierta";
       badge.className = "badge badge--danger";
+    } else if (c.status === "no_signal") {
+      badge.textContent = "Sin señal";
+      badge.className = "badge badge--warning";
     } else {
       badge.textContent = "Sin datos";
       badge.className = "badge badge--muted";

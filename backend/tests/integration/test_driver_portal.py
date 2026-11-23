@@ -130,6 +130,37 @@ def test_container_live_without_data(client, driver_session):
     assert response.json()["status"] == "no_data"
 
 
+def test_container_live_no_signal_when_reading_is_stale(
+    client, driver_session, driver_setup
+):
+    """G8: la última lectura más antigua que el umbral da ``no_signal``."""
+    _, _, _, truck_id, device_pk = driver_setup
+    stale = datetime.now(UTC) - timedelta(seconds=120)
+    with SessionLocal() as db:
+        from app.services import settings_service
+
+        setting = settings_service.get_settings(db)
+        setting.offline_timeout_seconds = 60
+        db.add(setting)
+        db.add(
+            Reading(
+                device_id=device_pk,
+                truck_id=truck_id,
+                temperature=-2.0,
+                humidity=80.0,
+                received_at=stale,
+                reading_timestamp=stale,
+            )
+        )
+        db.commit()
+
+    response = client.get("/api/v1/driver/container/live")
+    assert response.status_code == 200
+    body = response.json()
+    assert body["status"] == "no_signal"
+    assert body["temperature"] == -2.0
+
+
 def test_routes_list_and_today(client, driver_session, driver_setup):
     driver_id, _, _, _, device_pk = driver_setup
     today = today_weekday()

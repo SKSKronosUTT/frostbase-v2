@@ -1,9 +1,10 @@
-.PHONY: dev up down test lint build seed e2e openapi
+.PHONY: dev up down test lint build seed e2e openapi backup
 
 PYTHON ?= backend/.venv/bin/python
 COMPOSE ?= docker compose
 TRUCKS ?= 3
 DEVICES ?= 2
+KEEP ?= 14
 
 dev:
 	$(COMPOSE) up -d --build
@@ -38,3 +39,6 @@ e2e:
 
 openapi:
 	cd backend && $(PYTHON) -m scripts.export_openapi
+
+backup:
+	cd backend && $(PYTHON) -m scripts.backup_db --keep $(KEEP)
