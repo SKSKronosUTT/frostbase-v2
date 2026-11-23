@@ -48,6 +48,7 @@
 | Watcher con advisory lock de PostgreSQL (una sola instancia activa) | ✅ | `disconnect_watcher.py` |
 | Retención de lecturas (90 d) y alertas resueltas (365 d) | ✅ | `scripts/retention.py` |
 | Respaldo diario automatizado con retención y cifrado opcional | ✅ (G8) | `scripts/backup_db.py` + programación en `BACKUP-RESTORE.md` |
+| Datos demo nunca en producción (`SEED_DEMO_DATA`) | ✅ (G9) | Guard de configuración + default `false` en compose; `.env.example` usa `ENVIRONMENT=development` |
 
 ## 5. Hallazgos de esta revisión
 
