@@ -52,6 +52,875 @@
         "title": "AdminOut",
         "type": "object"
       },
+      "AgentAlertOut": {
+        "properties": {
+          "acknowledged": {
+            "default": false,
+            "title": "Acknowledged",
+            "type": "boolean"
+          },
+          "age_minutes": {
+            "title": "Age Minutes",
+            "type": "integer"
+          },
+          "alert_type": {
+            "title": "Alert Type",
+            "type": "string"
+          },
+          "max_value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Value"
+          },
+          "min_value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Min Value"
+          },
+          "started_at": {
+            "title": "Started At",
+            "type": "string"
+          },
+          "truck_plate": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Truck Plate"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          }
+        },
+        "required": [
+          "alert_type",
+          "started_at",
+          "age_minutes"
+        ],
+        "title": "AgentAlertOut",
+        "type": "object"
+      },
+      "AgentAlertsOut": {
+        "properties": {
+          "generated_at": {
+            "title": "Generated At",
+            "type": "string"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/AgentAlertOut"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "timezone": {
+            "title": "Timezone",
+            "type": "string"
+          }
+        },
+        "required": [
+          "generated_at",
+          "timezone",
+          "items"
+        ],
+        "title": "AgentAlertsOut",
+        "type": "object"
+      },
+      "AgentAlertsTodayOut": {
+        "properties": {
+          "active_by_type": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Active By Type",
+            "type": "object"
+          },
+          "active_total": {
+            "title": "Active Total",
+            "type": "integer"
+          },
+          "created_by_type": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Created By Type",
+            "type": "object"
+          },
+          "created_total": {
+            "title": "Created Total",
+            "type": "integer"
+          },
+          "generated_at": {
+            "title": "Generated At",
+            "type": "string"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/AgentTodayAlertOut"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "resolved_by_type": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Resolved By Type",
+            "type": "object"
+          },
+          "resolved_total": {
+            "title": "Resolved Total",
+            "type": "integer"
+          },
+          "timezone": {
+            "title": "Timezone",
+            "type": "string"
+          },
+          "window_start": {
+            "title": "Window Start",
+            "type": "string"
+          }
+        },
+        "required": [
+          "generated_at",
+          "timezone",
+          "window_start",
+          "created_total",
+          "resolved_total",
+          "active_total",
+          "created_by_type",
+          "resolved_by_type",
+          "active_by_type",
+          "items"
+        ],
+        "title": "AgentAlertsTodayOut",
+        "type": "object"
+      },
+      "AgentFleetSummaryOut": {
+        "properties": {
+          "alerts_active": {
+            "title": "Alerts Active",
+            "type": "integer"
+          },
+          "alerts_by_type": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Alerts By Type",
+            "type": "object"
+          },
+          "alerts_created_today": {
+            "title": "Alerts Created Today",
+            "type": "integer"
+          },
+          "alerts_created_today_by_type": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Alerts Created Today By Type",
+            "type": "object"
+          },
+          "alerts_resolved_today": {
+            "title": "Alerts Resolved Today",
+            "type": "integer"
+          },
+          "generated_at": {
+            "title": "Generated At",
+            "type": "string"
+          },
+          "pending_orders": {
+            "title": "Pending Orders",
+            "type": "integer"
+          },
+          "routes_today": {
+            "title": "Routes Today",
+            "type": "integer"
+          },
+          "timezone": {
+            "title": "Timezone",
+            "type": "string"
+          },
+          "trips_active": {
+            "title": "Trips Active",
+            "type": "integer"
+          },
+          "trucks_by_status": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Trucks By Status",
+            "type": "object"
+          },
+          "trucks_total": {
+            "title": "Trucks Total",
+            "type": "integer"
+          },
+          "window_start": {
+            "title": "Window Start",
+            "type": "string"
+          }
+        },
+        "required": [
+          "generated_at",
+          "timezone",
+          "window_start",
+          "trucks_total",
+          "trucks_by_status",
+          "alerts_active",
+          "alerts_by_type",
+          "alerts_created_today",
+          "alerts_created_today_by_type",
+          "alerts_resolved_today",
+          "trips_active",
+          "pending_orders",
+          "routes_today"
+        ],
+        "title": "AgentFleetSummaryOut",
+        "type": "object"
+      },
+      "AgentRouteOut": {
+        "properties": {
+          "driver_alias": {
+            "title": "Driver Alias",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "pending_orders": {
+            "title": "Pending Orders",
+            "type": "integer"
+          },
+          "points": {
+            "title": "Points",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "name",
+          "driver_alias",
+          "points",
+          "pending_orders"
+        ],
+        "title": "AgentRouteOut",
+        "type": "object"
+      },
+      "AgentRoutesOut": {
+        "properties": {
+          "generated_at": {
+            "title": "Generated At",
+            "type": "string"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/AgentRouteOut"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "timezone": {
+            "title": "Timezone",
+            "type": "string"
+          }
+        },
+        "required": [
+          "generated_at",
+          "timezone",
+          "items"
+        ],
+        "title": "AgentRoutesOut",
+        "type": "object"
+      },
+      "AgentThresholdOverrideOut": {
+        "properties": {
+          "humidity_max": {
+            "title": "Humidity Max",
+            "type": "number"
+          },
+          "humidity_min": {
+            "title": "Humidity Min",
+            "type": "number"
+          },
+          "plate": {
+            "title": "Plate",
+            "type": "string"
+          },
+          "temperature_max": {
+            "title": "Temperature Max",
+            "type": "number"
+          },
+          "temperature_min": {
+            "title": "Temperature Min",
+            "type": "number"
+          }
+        },
+        "required": [
+          "plate",
+          "temperature_min",
+          "temperature_max",
+          "humidity_min",
+          "humidity_max"
+        ],
+        "title": "AgentThresholdOverrideOut",
+        "type": "object"
+      },
+      "AgentThresholdsOut": {
+        "properties": {
+          "generated_at": {
+            "title": "Generated At",
+            "type": "string"
+          },
+          "humidity_max": {
+            "title": "Humidity Max",
+            "type": "number"
+          },
+          "humidity_min": {
+            "title": "Humidity Min",
+            "type": "number"
+          },
+          "overrides": {
+            "items": {
+              "$ref": "#/components/schemas/AgentThresholdOverrideOut"
+            },
+            "title": "Overrides",
+            "type": "array"
+          },
+          "temperature_max": {
+            "title": "Temperature Max",
+            "type": "number"
+          },
+          "temperature_min": {
+            "title": "Temperature Min",
+            "type": "number"
+          },
+          "timezone": {
+            "title": "Timezone",
+            "type": "string"
+          }
+        },
+        "required": [
+          "generated_at",
+          "timezone",
+          "temperature_min",
+          "temperature_max",
+          "humidity_min",
+          "humidity_max",
+          "overrides"
+        ],
+        "title": "AgentThresholdsOut",
+        "type": "object"
+      },
+      "AgentTodayAlertOut": {
+        "properties": {
+          "acknowledged": {
+            "default": false,
+            "title": "Acknowledged",
+            "type": "boolean"
+          },
+          "alert_type": {
+            "title": "Alert Type",
+            "type": "string"
+          },
+          "resolved_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resolved At"
+          },
+          "started_at": {
+            "title": "Started At",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "truck_plate": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Truck Plate"
+          }
+        },
+        "required": [
+          "alert_type",
+          "status",
+          "started_at"
+        ],
+        "title": "AgentTodayAlertOut",
+        "type": "object"
+      },
+      "AgentTripOut": {
+        "properties": {
+          "driver_alias": {
+            "title": "Driver Alias",
+            "type": "string"
+          },
+          "orders_delivered": {
+            "title": "Orders Delivered",
+            "type": "integer"
+          },
+          "orders_failed": {
+            "title": "Orders Failed",
+            "type": "integer"
+          },
+          "orders_pending": {
+            "title": "Orders Pending",
+            "type": "integer"
+          },
+          "orders_total": {
+            "title": "Orders Total",
+            "type": "integer"
+          },
+          "started_at": {
+            "title": "Started At",
+            "type": "string"
+          },
+          "truck_plate": {
+            "title": "Truck Plate",
+            "type": "string"
+          }
+        },
+        "required": [
+          "driver_alias",
+          "truck_plate",
+          "started_at",
+          "orders_total",
+          "orders_delivered",
+          "orders_failed",
+          "orders_pending"
+        ],
+        "title": "AgentTripOut",
+        "type": "object"
+      },
+      "AgentTripsOut": {
+        "properties": {
+          "generated_at": {
+            "title": "Generated At",
+            "type": "string"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/AgentTripOut"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "timezone": {
+            "title": "Timezone",
+            "type": "string"
+          }
+        },
+        "required": [
+          "generated_at",
+          "timezone",
+          "items"
+        ],
+        "title": "AgentTripsOut",
+        "type": "object"
+      },
+      "AgentTruckStatusOut": {
+        "properties": {
+          "active_alerts": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Active Alerts",
+            "type": "array"
+          },
+          "age_minutes": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Age Minutes"
+          },
+          "door_open": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Door Open"
+          },
+          "generated_at": {
+            "title": "Generated At",
+            "type": "string"
+          },
+          "humidity": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Humidity"
+          },
+          "humidity_max": {
+            "title": "Humidity Max",
+            "type": "number"
+          },
+          "humidity_min": {
+            "title": "Humidity Min",
+            "type": "number"
+          },
+          "plate": {
+            "title": "Plate",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "temperature": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Temperature"
+          },
+          "temperature_max": {
+            "title": "Temperature Max",
+            "type": "number"
+          },
+          "temperature_min": {
+            "title": "Temperature Min",
+            "type": "number"
+          },
+          "timezone": {
+            "title": "Timezone",
+            "type": "string"
+          },
+          "truck_id": {
+            "title": "Truck Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "generated_at",
+          "timezone",
+          "truck_id",
+          "plate",
+          "status",
+          "temperature_min",
+          "temperature_max",
+          "humidity_min",
+          "humidity_max"
+        ],
+        "title": "AgentTruckStatusOut",
+        "type": "object"
+      },
+      "AiChatIn": {
+        "properties": {
+          "conversation_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Conversation Id"
+          },
+          "message": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "title": "Message",
+            "type": "string"
+          }
+        },
+        "required": [
+          "message"
+        ],
+        "title": "AiChatIn",
+        "type": "object"
+      },
+      "AiChatOut": {
+        "properties": {
+          "conversation_id": {
+            "format": "uuid",
+            "title": "Conversation Id",
+            "type": "string"
+          },
+          "latency_ms": {
+            "title": "Latency Ms",
+            "type": "integer"
+          },
+          "reply": {
+            "title": "Reply",
+            "type": "string"
+          },
+          "source": {
+            "default": "agent",
+            "title": "Source",
+            "type": "string"
+          }
+        },
+        "required": [
+          "conversation_id",
+          "reply",
+          "latency_ms"
+        ],
+        "title": "AiChatOut",
+        "type": "object"
+      },
+      "AiConversationClosedOut": {
+        "properties": {
+          "closed": {
+            "default": true,
+            "title": "Closed",
+            "type": "boolean"
+          },
+          "conversation_id": {
+            "format": "uuid",
+            "title": "Conversation Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "conversation_id"
+        ],
+        "title": "AiConversationClosedOut",
+        "type": "object"
+      },
+      "AiMetricsOut": {
+        "properties": {
+          "by_action": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "By Action",
+            "type": "object"
+          },
+          "days": {
+            "title": "Days",
+            "type": "integer"
+          },
+          "errors": {
+            "title": "Errors",
+            "type": "integer"
+          },
+          "errors_by_http_status": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Errors By Http Status",
+            "type": "object"
+          },
+          "generated_at": {
+            "format": "date-time",
+            "title": "Generated At",
+            "type": "string"
+          },
+          "latency_avg_ms": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latency Avg Ms"
+          },
+          "latency_p50_ms": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latency P50 Ms"
+          },
+          "latency_p95_ms": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latency P95 Ms"
+          },
+          "requests": {
+            "title": "Requests",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "days",
+          "generated_at",
+          "requests",
+          "errors",
+          "by_action",
+          "errors_by_http_status"
+        ],
+        "title": "AiMetricsOut",
+        "type": "object"
+      },
+      "AiQuickItem": {
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title"
+        ],
+        "title": "AiQuickItem",
+        "type": "object"
+      },
+      "AiQuickOut": {
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "source": {
+            "default": "system",
+            "title": "Source",
+            "type": "string"
+          },
+          "text": {
+            "title": "Text",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "text"
+        ],
+        "title": "AiQuickOut",
+        "type": "object"
+      },
+      "AiStatusOut": {
+        "properties": {
+          "boot_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Boot Id"
+          },
+          "enabled": {
+            "title": "Enabled",
+            "type": "boolean"
+          },
+          "last_ok_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Ok At"
+          },
+          "latency_ms": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latency Ms"
+          },
+          "online": {
+            "title": "Online",
+            "type": "boolean"
+          },
+          "wifi_connected": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Wifi Connected"
+          }
+        },
+        "required": [
+          "enabled",
+          "online"
+        ],
+        "title": "AiStatusOut",
+        "type": "object"
+      },
       "AlertOut": {
         "properties": {
           "alert_type": {
@@ -4220,6 +5089,626 @@
   },
   "openapi": "3.1.0",
   "paths": {
+    "/api/v1/agent-read/alerts": {
+      "get": {
+        "operationId": "alerts_api_v1_agent_read_alerts_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 10,
+              "maximum": 20,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentAlertsOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Alerts",
+        "tags": [
+          "Agente (solo lectura)"
+        ]
+      }
+    },
+    "/api/v1/agent-read/alerts/today": {
+      "get": {
+        "description": "Alertas creadas/resueltas desde medianoche local (America/Tijuana).",
+        "operationId": "alerts_today_api_v1_agent_read_alerts_today_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 10,
+              "maximum": 20,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentAlertsTodayOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Alerts Today",
+        "tags": [
+          "Agente (solo lectura)"
+        ]
+      }
+    },
+    "/api/v1/agent-read/fleet-summary": {
+      "get": {
+        "operationId": "fleet_summary_api_v1_agent_read_fleet_summary_get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentFleetSummaryOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Fleet Summary",
+        "tags": [
+          "Agente (solo lectura)"
+        ]
+      }
+    },
+    "/api/v1/agent-read/routes/today": {
+      "get": {
+        "operationId": "routes_today_api_v1_agent_read_routes_today_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 6,
+              "maximum": 10,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentRoutesOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Routes Today",
+        "tags": [
+          "Agente (solo lectura)"
+        ]
+      }
+    },
+    "/api/v1/agent-read/thresholds": {
+      "get": {
+        "operationId": "thresholds_api_v1_agent_read_thresholds_get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentThresholdsOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Thresholds",
+        "tags": [
+          "Agente (solo lectura)"
+        ]
+      }
+    },
+    "/api/v1/agent-read/trips/active": {
+      "get": {
+        "operationId": "active_trips_api_v1_agent_read_trips_active_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 5,
+              "maximum": 10,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentTripsOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Active Trips",
+        "tags": [
+          "Agente (solo lectura)"
+        ]
+      }
+    },
+    "/api/v1/agent-read/trucks/{truck_id}/status": {
+      "get": {
+        "operationId": "truck_status_api_v1_agent_read_trucks__truck_id__status_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "truck_id",
+            "required": true,
+            "schema": {
+              "title": "Truck Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentTruckStatusOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Truck Status",
+        "tags": [
+          "Agente (solo lectura)"
+        ]
+      }
+    },
+    "/api/v1/ai/chat": {
+      "post": {
+        "operationId": "chat_api_v1_ai_chat_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AiChatIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiChatOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Chat",
+        "tags": [
+          "Asistente IA"
+        ]
+      }
+    },
+    "/api/v1/ai/conversations/{conversation_id}": {
+      "delete": {
+        "operationId": "close_api_v1_ai_conversations__conversation_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "conversation_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Conversation Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiConversationClosedOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Close",
+        "tags": [
+          "Asistente IA"
+        ]
+      }
+    },
+    "/api/v1/ai/metrics": {
+      "get": {
+        "description": "Uso agregado del asistente (sin contenido de conversaciones).",
+        "operationId": "metrics_api_v1_ai_metrics_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "days",
+            "required": false,
+            "schema": {
+              "default": 7,
+              "maximum": 30,
+              "minimum": 1,
+              "title": "Days",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiMetricsOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Metrics",
+        "tags": [
+          "Asistente IA"
+        ]
+      }
+    },
+    "/api/v1/ai/quick": {
+      "get": {
+        "description": "Sugerencias rápidas disponibles (respuestas locales, sin LLM).",
+        "operationId": "quick_list_api_v1_ai_quick_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/AiQuickItem"
+                  },
+                  "title": "Response Quick List Api V1 Ai Quick Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Quick List",
+        "tags": [
+          "Asistente IA"
+        ]
+      }
+    },
+    "/api/v1/ai/quick/{quick_id}": {
+      "post": {
+        "operationId": "quick_api_v1_ai_quick__quick_id__post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "quick_id",
+            "required": true,
+            "schema": {
+              "title": "Quick Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiQuickOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Quick",
+        "tags": [
+          "Asistente IA"
+        ]
+      }
+    },
+    "/api/v1/ai/status": {
+      "get": {
+        "operationId": "agent_status_api_v1_ai_status_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiStatusOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Agent Status",
+        "tags": [
+          "Asistente IA"
+        ]
+      }
+    },
     "/api/v1/alerts": {
       "get": {
         "operationId": "list_alerts_api_v1_alerts_get",

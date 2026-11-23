@@ -20,6 +20,7 @@ from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.core.database import SessionLocal
+from app.models.ai import AiAudit
 from app.models.alert import Alert
 from app.models.reading import Reading
 from app.utils.time import utcnow
@@ -33,10 +34,14 @@ class RetentionResult:
     readings: int
     alerts: int
     dry_run: bool
+    audit: int = 0
 
     def summary(self) -> str:
         prefix = "Simulación" if self.dry_run else "Retención aplicada"
-        return f"{prefix}: {self.readings} lecturas y {self.alerts} alertas"
+        return (
+            f"{prefix}: {self.readings} lecturas, {self.alerts} alertas "
+            f"y {self.audit} eventos de auditoría IA"
+        )
 
 
 def _cutoff(days: int):
@@ -48,10 +53,12 @@ def run_retention(
     *,
     readings_days: int | None = None,
     alerts_days: int | None = None,
+    audit_days: int | None = None,
     dry_run: bool = False,
 ) -> RetentionResult:
     readings_limit = _cutoff(readings_days or settings.readings_retention_days)
     alerts_limit = _cutoff(alerts_days or settings.resolved_alerts_retention_days)
+    audit_limit = _cutoff(audit_days or settings.ai_audit_retention_days)
 
     readings_filter = Reading.received_at < readings_limit
     alerts_filter = (
@@ -59,17 +66,23 @@ def run_retention(
         & (Alert.resolved_at.is_not(None))
         & (Alert.resolved_at < alerts_limit)
     )
+    audit_filter = AiAudit.created_at < audit_limit
 
     if dry_run:
         readings = db.scalar(select(func.count(Reading.id)).where(readings_filter)) or 0
         alerts = db.scalar(select(func.count(Alert.id)).where(alerts_filter)) or 0
-        return RetentionResult(readings=readings, alerts=alerts, dry_run=True)
+        audit = db.scalar(select(func.count(AiAudit.id)).where(audit_filter)) or 0
+        return RetentionResult(
+            readings=readings, alerts=alerts, audit=audit, dry_run=True
+        )
 
     readings_result = db.execute(delete(Reading).where(readings_filter))
     alerts_result = db.execute(delete(Alert).where(alerts_filter))
+    audit_result = db.execute(delete(AiAudit).where(audit_filter))
     result = RetentionResult(
         readings=getattr(readings_result, "rowcount", 0) or 0,
         alerts=getattr(alerts_result, "rowcount", 0) or 0,
+        audit=getattr(audit_result, "rowcount", 0) or 0,
         dry_run=False,
     )
     db.commit()
@@ -81,6 +94,7 @@ def main() -> int:
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--readings-days", type=int, default=None)
     parser.add_argument("--alerts-days", type=int, default=None)
+    parser.add_argument("--audit-days", type=int, default=None)
     args = parser.parse_args()
 
     with SessionLocal() as db:
@@ -88,6 +102,7 @@ def main() -> int:
             db,
             readings_days=args.readings_days,
             alerts_days=args.alerts_days,
+            audit_days=args.audit_days,
             dry_run=args.dry_run,
         )
     logger.info(result.summary())

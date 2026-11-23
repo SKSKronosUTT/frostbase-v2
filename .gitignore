@@ -28,3 +28,6 @@ db-backups/
 *.dump.enc
 
 frontend/tests/e2e/.auth/
+
+# Evidencia local del sondeo del agente (SSID/config del dispositivo)
+docs/ai/evidencia-a0*.json

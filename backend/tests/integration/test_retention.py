@@ -1,6 +1,7 @@
 from datetime import timedelta
 
 from app.core.database import SessionLocal
+from app.models.ai import AiAudit
 from app.models.alert import Alert
 from app.models.reading import Reading
 from app.utils.time import utcnow
@@ -56,18 +57,39 @@ def test_retention_dry_run_and_apply(create_truck, create_device):
                 status="resuelta",
             )
         )
+        db.add(
+            AiAudit(
+                action="chat",
+                status="ok",
+                http_status=200,
+                latency_ms=100,
+                created_at=old,
+            )
+        )
+        db.add(
+            AiAudit(
+                action="chat",
+                status="ok",
+                http_status=200,
+                latency_ms=100,
+                created_at=now,
+            )
+        )
         db.commit()
 
         preview = run_retention(db, readings_days=90, alerts_days=90, dry_run=True)
         assert preview.readings == 1
         assert preview.alerts == 1
+        assert preview.audit == 1
 
         applied = run_retention(db, readings_days=90, alerts_days=90)
         assert applied.readings == 1
         assert applied.alerts == 1
+        assert applied.audit == 1
 
     with SessionLocal() as db:
         remaining = db.query(Reading).filter(Reading.device_id == device_pk).all()
         assert len(remaining) == 1
         alerts = db.query(Alert).filter(Alert.device_id == device_pk).all()
         assert len(alerts) == 1
+        assert db.query(AiAudit).count() == 1

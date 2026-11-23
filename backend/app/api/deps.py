@@ -1,3 +1,4 @@
+import hmac
 from typing import Annotated
 
 from fastapi import Depends, Header, HTTPException, Request, status
@@ -151,6 +152,37 @@ def get_current_principal(request: Request, db: DbSession) -> Admin | Driver:
 CurrentAdmin = Annotated[Admin, Depends(get_current_admin)]
 CurrentDriver = Annotated[Driver, Depends(get_current_driver)]
 CurrentPrincipal = Annotated[Admin | Driver, Depends(get_current_principal)]
+
+
+def require_agent_read_token(
+    authorization: Annotated[str | None, Header()] = None,
+) -> None:
+    """Token de solo lectura que usa el agente para ``/agent-read``.
+
+    Si el asistente o el token no están configurados, los endpoints no existen
+    (404) para no revelar su presencia.
+    """
+    if not settings.ai_agent_enabled or not settings.ai_agent_read_token:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Endpoints del agente deshabilitados",
+        )
+    if not authorization or not authorization.lower().startswith("bearer "):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Falta el token de solo lectura",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    provided = authorization[7:].strip()
+    if not hmac.compare_digest(provided, settings.ai_agent_read_token):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token de solo lectura inválido",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+
+AgentReadToken = Annotated[None, Depends(require_agent_read_token)]
 
 
 def authenticate_device_or_401(db: Session, *, device_id: str, device_key: str | None):

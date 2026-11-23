@@ -1,6 +1,8 @@
 from fastapi import APIRouter
 
 from app.api.v1.endpoints import (
+    agent_read,
+    ai,
     alerts,
     auth,
     dashboard,
@@ -26,3 +28,5 @@ api_router.include_router(settings.router)
 api_router.include_router(iot.router)
 api_router.include_router(driver.router)
 api_router.include_router(drivers.router)
+api_router.include_router(ai.router)
+api_router.include_router(agent_read.router)

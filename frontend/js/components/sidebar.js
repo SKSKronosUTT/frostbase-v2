@@ -12,6 +12,7 @@ const NAV_ITEMS = [
     icon: "fa-user-shield",
   },
   { page: "routes", label: "Rutas", href: "routes.html", icon: "fa-route" },
+  { page: "ai", label: "Asistente IA", href: "ai.html", icon: "fa-microchip" },
   {
     page: "alerts",
     label: "Historial de alertas",

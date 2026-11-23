@@ -181,6 +181,45 @@ ser igual a la actual ni contener el nombre de usuario.
 
 ---
 
+## Asistente IA (administrador)
+
+| Método | Ruta | Descripción |
+|---|---|---|
+| `POST` | `/ai/chat` | `{message, conversation_id?}` → `{conversation_id, reply, latency_ms}` |
+| `GET` | `/ai/status` | Estado del agente (cacheado 15 s) |
+| `GET` | `/ai/metrics` | Uso agregado del asistente (`days` 1–30; sin contenido) |
+| `GET` | `/ai/quick` | Lista de respuestas rápidas disponibles |
+| `POST` | `/ai/quick/{id}` | Respuesta determinista con datos actuales (sin LLM) |
+| `DELETE` | `/ai/conversations/{id}` | Cierra la conversación y la sesión del agente |
+
+### Endpoints de solo lectura para el agente
+
+Autenticados con `Authorization: Bearer <AI_AGENT_READ_TOKEN>` (no JWT),
+solo GET y 60 req/min. Respuestas compactas y sin datos personales.
+
+| Método | Ruta | Descripción |
+|---|---|---|
+| `GET` | `/agent-read/fleet-summary` | Totales de flota, alertas, viajes y rutas |
+| `GET` | `/agent-read/alerts` | Alertas activas (`limit` 1–20) |
+| `GET` | `/agent-read/alerts/today` | Creadas y resueltas hoy + activas ahora (`limit` 1–20) |
+| `GET` | `/agent-read/trucks/{id}/status` | Estado y última lectura del camión |
+| `GET` | `/agent-read/trips/active` | Viajes en curso (`limit` 1–10) |
+| `GET` | `/agent-read/routes/today` | Rutas de hoy (`limit` 1–10) |
+| `GET` | `/agent-read/thresholds` | Umbrales globales y por camión |
+
+Requiere rol administrador, CSRF, rate limit (6/min) y cuota diaria
+(`AI_AGENT_DAILY_LIMIT`, 100 por defecto). El backend es el único cliente del
+ESP32; el navegador nunca lo llama. Si el asistente está deshabilitado
+(`AI_AGENT_ENABLED=false`), devuelve `404`. Errores: `429` ocupado/cuota,
+`503` inalcanzable, `504` timeout. Documentación completa en
+`docs/AI-AGENT.md`.
+
+Cada `chat`, `quick` y `close` registra metadatos en `ai_audit` (administrador,
+estado, latencia, `conversation_id`), **nunca el texto** del chat.
+`GET /ai/metrics` resume peticiones, errores y latencias p50/p95.
+
+---
+
 ## Panel
 
 | Método | Ruta | Descripción |

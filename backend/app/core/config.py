@@ -69,6 +69,26 @@ class Settings(BaseSettings):
     login_identifier_rate_limit: int = 10
     hash_concurrency: int = 2
 
+    # Asistente IA (ESP-Claw). Deshabilitado por defecto.
+    ai_agent_enabled: bool = False
+    ai_agent_url: str = ""
+    ai_agent_token: str = ""
+    ai_agent_timeout_seconds: int = 90
+    ai_agent_connect_timeout_seconds: float = 5.0
+    ai_agent_poll_interval_seconds: float = 1.0
+    ai_agent_max_message_chars: int = 500
+    ai_agent_rate_limit: int = 6
+    ai_agent_daily_limit: int = 100
+    ai_agent_status_cache_seconds: int = 15
+    ai_agent_read_token: str = ""
+    # El agente llama al backend por su IP de LAN; se usa para generar el
+    # prompt de operación (scripts.agent_prompt).
+    ai_backend_url: str = ""
+    # Rotación de la sesión del agente para limitar la memoria acumulada.
+    ai_agent_session_ttl_hours: int = 12
+    # Retención de la auditoría (solo metadatos, sin contenido).
+    ai_audit_retention_days: int = 90
+
     osrm_base_url: str = "https://router.project-osrm.org"
     osrm_timeout_seconds: float = 5.0
     weather_timeout_seconds: float = 3.0

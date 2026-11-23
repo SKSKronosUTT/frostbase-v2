@@ -60,7 +60,27 @@
 | H-4 | Doble `db.add(truck)` muerto en `start_trip` (código limpio) | Nulo | Corregido de paso en G8 junto al manejo de carrera de inicio de viaje |
 | H-5 | Pool de conexiones por worker (10+20) agotado con cientos de peticiones en vuelo: `QueuePool limit reached` → 500 en cascada tras 30 s de cola | Alto (disponibilidad bajo concurrencia RNF2) | **Corregido (G8):** `pool_size=40/max_overflow=10/pool_timeout=10` + `max_connections=250` en PostgreSQL; ver `perf-baseline.md` |
 
-## 6. Cobertura de pruebas que respalda esta revisión
+## 7. Asistente IA (A1–A5)
+
+| Control | Estado | Evidencia |
+|---|---|---|
+| Solo administradores; CSRF y rate limit | ✅ | `CurrentAdmin` + middleware + `ai:chat` 6/min |
+| Cuota diaria atómica entre workers | ✅ | UPSERT `ai_usage` |
+| Una consulta concurrente al ESP32 | ✅ | `pg_try_advisory_lock(7712028)` |
+| El navegador nunca llama al ESP32 | ✅ | Proxy backend; ESP32 no expuesto |
+| API del ESP32 sin autenticación | ⚠️ aceptado | Solo LAN/AP; sin *port forwarding*; `/api/config` nunca se reenvía |
+| Token de solo lectura para `agent-read` | ✅ | `hmac.compare_digest`, no JWT, solo GET, 60/min |
+| Sin PII en datos del agente | ✅ | Alias `Conductor {id}`; sin correos/teléfonos |
+| Datos operativos a LLM externo | ⚠️ documentado | Aviso en la UI; minimización; DeepSeek configurado en el ESP32 |
+| Inyección directa/indirecta | ✅ mitigada | Contexto generado por servidor, sin texto libre; prompt declara datos |
+| Auditoría sin contenido | ✅ | `ai_audit` (metadatos), retención 90 días |
+| Cuota y latencia observables | ✅ | `/ai/metrics` (p50/p95, errores) |
+| Rotación de token y sesiones | ✅ | Procedimiento en `docs/ai/OPERACION.md` |
+
+> El token RO se rotó tras una prueba en la que se envió en un mensaje de chat
+> (el texto viaja al LLM). Nunca debe incluirse en conversaciones.
+
+## 8. Cobertura de pruebas que respalda esta revisión
 
 - 137 pruebas de integración (pytest, PostgreSQL real) · cobertura 84 %.
 - 23 E2E Playwright (flujos críticos del panel + accesibilidad + CSP sin violaciones).
