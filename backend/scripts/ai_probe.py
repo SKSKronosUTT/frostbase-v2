@@ -133,6 +133,31 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Permitir hosts fuera de red privada (no recomendado)",
     )
+    parser.add_argument(
+        "--chat",
+        action="store_true",
+        help=(
+            "Prueba de conversación: crea sesión, envía el mensaje y espera "
+            "la respuesta"
+        ),
+    )
+    parser.add_argument(
+        "--session",
+        default=None,
+        help="Sesión existente para --chat (si se omite, crea una nueva)",
+    )
+    parser.add_argument(
+        "--reply-timeout",
+        type=float,
+        default=90.0,
+        help="Espera máxima de la respuesta del agente en --chat",
+    )
+    parser.add_argument(
+        "--poll-interval",
+        type=float,
+        default=1.0,
+        help="Intervalo de sondeo de mensajes en --chat",
+    )
     return parser.parse_args()
 
 
@@ -300,6 +325,85 @@ async def probe_ws(
     }
 
 
+async def chat_probe(
+    base_url: str,
+    message: str,
+    token: str | None,
+    *,
+    session: str | None,
+    reply_timeout: float,
+    poll_interval: float,
+) -> dict:
+    """Crea (o reutiliza) una sesión web, envía el mensaje y espera la respuesta."""
+    import uuid
+
+    headers = {"Authorization": f"Bearer {token}"} if token else {}
+    async with httpx.AsyncClient(
+        base_url=base_url, timeout=20, headers=headers
+    ) as client:
+        if session:
+            session_id = session
+            created = False
+        else:
+            response = await client.post("/api/webim/sessions")
+            response.raise_for_status()
+            session_id = response.json()["session"]
+            created = True
+
+        history = await client.get(
+            f"/api/webim/sessions/{session_id}/messages", params={"before": 0}
+        )
+        history.raise_for_status()
+        history_items = (
+            history.json().get("messages") or history.json().get("items") or []
+        )
+        baseline = max(
+            (item.get("seq", 0) for item in history_items),
+            default=0,
+        )
+
+        sent = await client.post(
+            "/api/webim/send",
+            json={
+                "session": session_id,
+                "client_message_id": uuid.uuid4().hex,
+                "text": message,
+                "files": [],
+            },
+        )
+        sent.raise_for_status()
+        queued = sent.json()
+        sent_at = time.perf_counter()
+
+        reply = None
+        while time.perf_counter() - sent_at < reply_timeout:
+            await asyncio.sleep(poll_interval)
+            current = await client.get(
+                f"/api/webim/sessions/{session_id}/messages", params={"before": 0}
+            )
+            if current.status_code != 200:
+                continue
+            payload = current.json()
+            items = payload.get("messages") or payload.get("items") or []
+            replies = [
+                item
+                for item in items
+                if item.get("role") == "assistant" and item.get("seq", 0) > baseline
+            ]
+            if replies:
+                reply = replies[-1]
+                break
+    latency_ms = (time.perf_counter() - sent_at) * 1000
+    return {
+        "session": session_id,
+        "created": created,
+        "queued": queued,
+        "reply": reply,
+        "latency_ms": round(latency_ms, 1) if reply else None,
+        "timed_out": reply is None,
+    }
+
+
 def _print_human(report: dict) -> None:
     print("\n=== Sondeo del agente ESP-Claw ===")
     print(f"URL base: {report['base_url']}")
@@ -342,6 +446,17 @@ def _print_human(report: dict) -> None:
             for frame in attempt.get("frames", []):
                 print(f"    <- {frame[:200]}")
 
+    if report.get("chat"):
+        chat = report["chat"]
+        print("\n--- Chat ---")
+        print(f"Sesión: {chat['session']} (creada: {chat['created']})")
+        print(f"Encolado: {chat.get('queued')}")
+        if chat.get("reply"):
+            print(f"Respuesta: {chat['reply'].get('text')}")
+            print(f"Latencia: {chat['latency_ms']} ms")
+        else:
+            print("Sin respuesta dentro del timeout")
+
     print("\nSiguiente paso: copie los hallazgos a docs/AI-AGENT.md (A0).")
 
 
@@ -372,23 +487,33 @@ async def main_async(args: argparse.Namespace) -> int:
     ws_url = f"{ws_scheme}://{host}" + (f":{port}" if parsed.port else "")
     ws_url += "/" + args.ws_path.lstrip("/")
 
-    if args.mode in {"http", "both"} and report["tcp"]["reachable"]:
-        paths = args.paths or list(DEFAULT_HTTP_PATHS)
-        with httpx.Client(
-            timeout=args.timeout, follow_redirects=args.follow_redirects
-        ) as client:
-            report["http"] = probe_http(client, base_url, paths, args.token)
-
-    if args.mode in {"ws", "both"} and report["tcp"]["reachable"]:
-        report["ws"] = await probe_ws(
-            ws_url,
-            payloads,
+    if args.chat:
+        report["chat"] = await chat_probe(
+            base_url,
+            args.message,
             args.token,
-            args.ws_timeout,
-            args.ws_idle,
-            origin=args.ws_origin or base_url,
-            subprotocol=args.ws_subprotocol,
+            session=args.session,
+            reply_timeout=args.reply_timeout,
+            poll_interval=args.poll_interval,
         )
+    else:
+        if args.mode in {"http", "both"} and report["tcp"]["reachable"]:
+            paths = args.paths or list(DEFAULT_HTTP_PATHS)
+            with httpx.Client(
+                timeout=args.timeout, follow_redirects=args.follow_redirects
+            ) as client:
+                report["http"] = probe_http(client, base_url, paths, args.token)
+
+        if args.mode in {"ws", "both"} and report["tcp"]["reachable"]:
+            report["ws"] = await probe_ws(
+                ws_url,
+                payloads,
+                args.token,
+                args.ws_timeout,
+                args.ws_idle,
+                origin=args.ws_origin or base_url,
+                subprotocol=args.ws_subprotocol,
+            )
 
     if args.output:
         args.output.parent.mkdir(parents=True, exist_ok=True)

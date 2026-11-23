@@ -80,6 +80,12 @@ docker compose exec app python -m scripts.ai_probe --mode both
 
 # 6) Segunda pasada recomendada (redirects + Origin + escaneo del JS de la SPA)
 .\.venv\Scripts\python.exe -m scripts.ai_probe --mode both --follow-redirects --ws-origin http://192.168.4.1 --output ..\docs\ai\evidencia-a0-2.json
+
+# 7) Prueba de conversación completa (crea sesión, envía y espera respuesta)
+.\.venv\Scripts\python.exe -m scripts.ai_probe --url http://192.168.100.52 --chat --message "Responde solo: OK"
+
+# 8) Continuar una conversación existente (memoria de sesión)
+.\.venv\Scripts\python.exe -m scripts.ai_probe --url http://192.168.100.52 --chat --session <session> --message "¿Qué código te dije?"
 ```
 
 La segunda pasada es la que debe revelar el WebSocket real: captura `Location`
@@ -118,100 +124,127 @@ El script:
 
 | Ruta | Resultado |
 |---|---|
-| TCP `192.168.4.1:80` | **OK**, 7.5 ms |
+| TCP `192.168.4.1:80` | **OK**, 7.5 ms (AP); **LAN `192.168.100.52`** también responde |
 | `GET /` | **200**, `text/html`, 381 KB — SPA «ESP-Claw Settings» |
 | `GET /api/status` | **200** JSON: `boot_id`, `wifi_connected: true`, `ip: 192.168.100.52`, `ap_active: true`, `ap_ssid: esp-claw-CE3085`, `ap_ip: 192.168.4.1`, `wifi_mode: apsta` |
-| `GET /api/config` | **200** JSON **sin autenticación**: Wi-Fi (`Mega-2.4G-1CB2`), `llm_api_key` enmascarada, `llm_backend_type: openai_compatible`, `llm_model: deepseek-flash`, `llm_base_url: https://api.deepseek…` |
-| `GET /api/webim/ws` | **302** → el handshake WebSocket se redirige; el sondeo lo interpretó como URI inválida (`http://192.168.4.1/`) |
-| `GET /api/chat`, `/chat`, `/v1/models` | **302** (rutas no expuestas o redirección a la SPA) |
+| `GET /api/config` | **200** JSON **sin autenticación**: Wi-Fi (`Mega-2.4G-1CB2`), `llm_api_key` enmascarada, `llm_backend_type: openai_compatible`, `llm_model: deepseek-flash`, `llm_base_url: https://api.deepseek.com` |
+| `GET /api/webim/sessions` | **200** lista de conversaciones (`session`, `source` web/telegram, `chat_id`, `run_state`, `delivery_state`) |
+| `POST /api/webim/sessions` | **201** crea conversación web |
+| `POST /api/webim/send` | **202** `{run_id, client_message_id, state: "queued"}` |
+| `GET /api/webim/sessions/{id}/messages?before=0` | **200** `{messages:[{seq, role, text}], total, revision, run_state}` |
+| `WEBSOCKET /ws/webim` | **conecta** con `Origin`; sin frames salvo suscripción (no necesaria para MVP) |
+| `/api/webim/ws`, `/api/chat`, `/chat`, `/v1/models` | 302 (rutas inexistentes; redirigen a la SPA/AP) |
+| `GET /api/capabilities` | **200** grupos disponibles: `cap_http_request`, `cap_mcp_client`, `cap_im_local`, etc. |
 
 **Conclusiones:**
 
-- El **LLM es remoto vía DeepSeek** (OpenAI-compatible, modelo `deepseek-flash`),
-  no OpenCode Go. Actualizar privacidad, cuota y plan de respaldo.
-- `/api/status` es una **comprobación de salud barata** (54 ms) para
-  `/ai/status`: no hace falta gastar una consulta al LLM ni abrir el WebSocket.
-- La consola **no exige autenticación** en `/api/config` (expone configuración
-  con secretos enmascarados). El backend debe ser el único cliente y el ESP32
-  no debe publicarse fuera de la red local.
-- El contrato WebSocket **sigue pendiente**: el 302 indica ruta equivocada o
-  requisitos de `Origin`/query/autenticación. El script de sondeo ya captura
-  `Location`, escanea el JS de la SPA en busca de `ws://`, rutas `/api/*` y tipos
-  de mensaje, y envía `Origin`.
+- **El contrato de chat es HTTP REST, no WebSocket**: sesión → `/api/webim/send` →
+  sondeo de `/messages`. El WS es un canal de eventos opcional.
+- El **LLM es remoto vía DeepSeek** (OpenAI-compatible, `deepseek-flash`,
+  `llm_supports_tools: true`, timeout 120 s), no OpenCode Go. Actualizar
+  privacidad, cuota y plan de respaldo.
+- La **zona horaria del dispositivo es UTC+8**: hay que enviar explícitamente la
+  hora local de `America/Tijuana` en la cabecera de contexto.
+- `/api/status` es una **comprobación de salud barata** para `/ai/status`.
+- La consola **no exige autenticación** y `POST /api/config` permite cambiar la
+  configuración (incluidos secretos): el backend debe ser el único cliente y el
+  dispositivo nunca debe publicarse fuera de la red local.
+- **Pull pendiente de habilitar**: `cap_http_request` existe pero no está en
+  `enabled_cap_groups`/`llm_visible_cap_groups`; el agente respondió que
+  necesita URL, autenticación y dominio autorizado. La allowlist actual
+  (`search_http_allowlist`) es `*`.
 
-### 5.1 Contrato HTTP
+### 5.1 Contrato HTTP (confirmado)
 
-| Ruta | Código | Content-Type | Notas |
-|---|---|---|---|
-| `/` | | | |
-| `/api/status` | | | |
-| `/api/webim/ws` | | | |
-| … | | | |
+| Ruta | Método | Cuerpo / respuesta |
+|---|---|---|
+| `/api/status` | GET | salud, `boot_id`, Wi-Fi, AP |
+| `/api/capabilities` | GET | grupos de capacidades (`cap_http_request`, `cap_mcp_client`, …) |
+| `/api/config` | GET/POST | configuración (no usar desde el backend; expone secretos enmascarados) |
+| `/api/webim/sessions` | GET | `{items, has_more, next_cursor, boot_id}` |
+| `/api/webim/sessions` | POST | crea sesión → `{session, source:"web", chat_id:"web-ui", alias, run_state}` |
+| `/api/webim/sessions/{id}` | GET/PATCH/DELETE | detalle / renombrar (`{title}`) / borrar |
+| `/api/webim/sessions/{id}/messages?before=` | GET | `{messages:[{seq, role, text}], total, revision, run_state, delivery_state}` |
+| `/api/webim/send` | POST | `{session, client_message_id, text, files:[]}` → `202 {run_id, state:"queued"}` |
 
 ### 5.2 Contrato WebSocket
 
 | Aspecto | Hallazgo |
 |---|---|
-| URL real del WS | `[PENDIENTE A0]` |
-| Autenticación (cabecera/token) | `[PENDIENTE A0]` |
-| Formato de envío | `[PENDIENTE A0]` (texto plano vs JSON; claves exactas) |
-| Formato de respuesta | `[PENDIENTE A0]` (texto, JSON, eventos) |
-| Eventos parciales / streaming | `[PENDIENTE A0]` |
-| Errores y códigos | `[PENDIENTE A0]` |
-| Keep-alive / cierre | `[PENDIENTE A0]` |
+| URL real | `ws://<host>/ws/webim` (el JS usa `window.location.host`) |
+| Autenticación | Ninguna; requiere `Origin` correcto |
+| Uso | Canal de eventos; **no** se usa para enviar mensajes |
+| Envío | `POST /api/webim/send` (ver 5.1) |
+| Frames | 0 sin suscripción durante un envío; el MVP usa sondeo de `/messages` |
+| Streaming | Posible fase posterior (requiere descubrir el mensaje de suscripción) |
 
 ### 5.3 Sesiones
 
 | Aspecto | Hallazgo |
 |---|---|
-| Crear sesión | ¿`/new` por WS? `[PENDIENTE A0]` |
-| Cambiar/aislar sesión | `[PENDIENTE A0]` |
-| Límite de sesiones/memoria | `[PENDIENTE A0]` |
-| ¿Se puede fijar sesión por protocolo? | `[PENDIENTE A0]` |
+| Crear sesión | `POST /api/webim/sessions` → `201` |
+| Identificador | `session` (32 hex) |
+| Memoria | **Confirmada**: se recordó `AZUL-42` en un mensaje posterior de la misma sesión |
+| Aislamiento | Cada `session` es independiente (web y Telegram conviven) |
+| Listar / historial | `GET /sessions` y `GET /sessions/{id}/messages?before=` |
+| Borrar / renombrar | `DELETE` / `PATCH {title}` |
+| `conversation_id` | El backend mapeará UUID propio ↔ `session` en `ai_conversations` |
 
 ### 5.4 Autenticación de la consola
 
 | Aspecto | Hallazgo |
 |---|---|
-| ¿Exige login? | `[PENDIENTE A0]` |
-| ¿Qué expone? (config, claves) | `[PENDIENTE A0]` |
-| Mitigación si no hay auth | Solo LAN/AP; backend único cliente |
+| ¿Exige login? | **No** |
+| ¿Qué expone? | `/api/status`, `/api/config` (secretos enmascarados), sesiones de chat |
+| Mitigación | Solo LAN/AP; backend único cliente; sin *port forwarding*; nunca reenviar `/api/config` |
 
-### 5.5 Modelo (OpenCode Go)
+### 5.5 Modelo
 
 | Aspecto | Hallazgo |
 |---|---|
-| Proveedor/protocolo configurado | `[PENDIENTE A0]` |
-| Modelo elegido y respaldo | `[PENDIENTE A0]` |
-| Latencia pregunta simple | `[PENDIENTE A0]` |
-| Latencia con herramientas | `[PENDIENTE A0]` |
-| ¿Bloquea clientes embebidos? | `[PENDIENTE A0]` |
+| Proveedor/protocolo | `openai_compatible` |
+| Endpoint | `https://api.deepseek.com` |
+| Modelo | `deepseek-flash` (`llm_supports_tools: true`, `llm_timeout_ms: 120000`) |
+| Latencia medida | **4.1 s** («OK»), **7–12 s** (respuestas elaboradas) |
+| Zona horaria del agente | UTC+8 → incluir hora local de Tijuana en el contexto |
+| Respaldo | Pendiente definir (otro modelo/proveedor *Custom* en A4) |
 
 ### 5.6 Pull desde el ESP32
 
 | Aspecto | Hallazgo |
 |---|---|
-| `cap_http_request` disponible | `[PENDIENTE A0]` |
-| Transporte MCP soportado | `[PENDIENTE A0]` |
-| ESP32 → backend (`http://<IP_LAN>:8050/...`) | `[PENDIENTE A0]` |
-| Backend → ESP32 (Docker) | `[PENDIENTE A0]` |
+| `cap_http_request` | Disponible, **deshabilitada** (fuera de `enabled_cap_groups` y `llm_visible_cap_groups`) |
+| `cap_mcp_client` | Disponible, deshabilitada |
+| Allowlist HTTP | `search_http_allowlist: "*"` (demasiado amplia; restringir a la IP del backend) |
+| ESP32 → backend | Pendiente de probar tras habilitar la capacidad y el token RO |
+| Backend → ESP32 | **Probado** vía LAN `192.168.100.52` |
+
+**Pasos para habilitar el pull (acción en la consola del ESP32):**
+
+1. **Capabilities**: habilitar `cap_http_request` y marcarla visible al LLM.
+2. **Network Requests**: allowlist `192.168.100.10` (IP LAN del host) en lugar de `*`.
+3. En FrostBase: token RO de `agent-read` y URL `http://<IP_LAN>:8050/api/v1/agent-read/...`.
+4. Prompt/skill: indicar que use esa API para datos y que el token va en `Authorization`.
+5. Probar desde el agente: «¿Cuántas alertas activas hay?».
 
 ### 5.7 Memoria y firmware
 
 | Aspecto | Hallazgo |
 |---|---|
-| ¿La memoria guarda cifras de mensajes? | `[PENDIENTE A0]` |
-| ¿Se puede limitar/limpiar? | `[PENDIENTE A0]` |
-| Versión/commit de ESP-Claw | `[PENDIENTE A0]` |
-| Módulo (flash/PSRAM) | `[PENDIENTE A0]` |
+| ¿La memoria guarda cifras/contenido? | Sí, dentro de la sesión (memoria conversacional) |
+| ¿Se puede limitar/limpiar? | Borrando la sesión (`DELETE`) o creando una nueva |
+| Versión/commit de ESP-Claw | Pendiente (no expuesta en `/api/status`; revisar pie de la consola) |
+| Módulo (flash/PSRAM) | Pendiente de confirmar con el hardware |
+| Integraciones activas | Telegram (`tg_bot_token` configurado), WeChat configurado |
 
-## 6. Decisiones que dependen de A0
+## 6. Decisiones tomadas con la evidencia
 
-1. Adaptador del backend: `webim_ws` (por defecto) u otro.
-2. Estrategia de contexto: **Híbrido** (cabecera mínima + *pull* HTTP).
-3. `conversation_id` ↔ sesión del agente (por protocolo o vía `/new`).
-4. Modelo y proveedor de respaldo.
-5. Streaming sí/no (solo si hay eventos parciales).
+1. Adaptador del backend: **HTTP REST** (`POST /api/webim/sessions`, `POST /api/webim/send`, `GET /messages`); WS solo como mejora futura.
+2. Estrategia de contexto: **P mínimo en A1** (el pull aún no está habilitado) y evolución a **Híbrido (H)** tras habilitar `cap_http_request`.
+3. `conversation_id` del backend ↔ `session` del agente, persistido en `ai_conversations`.
+4. Modelo: DeepSeek `deepseek-flash`; respaldo a definir en A4.
+5. Streaming: no en MVP (WS sin suscripción conocida); indicador de escritura + sondeo.
+6. Hora local de Tijuana en la cabecera de contexto (el agente está en UTC+8).
 
 ## 7. Seguridad (resumen)
 
@@ -226,9 +259,12 @@ El script:
 
 ## 8. Siguientes pasos
 
-1. Ejecutar el sondeo con el equipo conectado al AP y completar §5.
-2. Registrar el contrato en este documento y en el plan.
-3. Implementar A1 (adaptador, lock y cuota en PostgreSQL) y seguir A2–A5.
+1. ~~Ejecutar el sondeo y completar el contrato~~ ✅ (2026-11-23).
+2. Habilitar el *pull* en la consola del ESP32 (capabilities + allowlist) y probar
+   `agent-read` con token RO.
+3. Implementar **A1**: adaptador HTTP, `ConversationManager` (PostgreSQL), `AgentGate`
+   (advisory lock), cuota (`ai_usage`), `/ai/chat` (con contexto mínimo), `/ai/status`.
+4. Seguir con A2 (agent-read + respuestas deterministas), A3 (UI) y A4 (prompt/skill).
 
 ## 9. Referencias
 
