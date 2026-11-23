@@ -257,7 +257,51 @@ El script:
 - Datos operativos viajan al LLM remoto (OpenCode Go): aviso al usuario.
 - Prompt del agente versionado en `docs/ai/prompt-sistema.md`.
 
-## 8. Siguientes pasos
+## 8. Implementación A1 (backend)
+
+**Migración `0011_ai_assistant`** (ya aplicada):
+
+- `ai_usage(admin_id, day, count)` con índice único: cuota diaria atómica.
+- `ai_conversations(id UUID, admin_id, agent_session, last_seq, created_at, last_used_at, closed_at)`.
+
+**Endpoints (solo administrador, CSRF y rate limit):**
+
+| Método | Ruta | Descripción |
+|---|---|---|
+| POST | `/api/v1/ai/chat` | `{message, conversation_id?}` → `{conversation_id, reply, latency_ms}` |
+| GET | `/api/v1/ai/status` | Salud cacheada 15 s (`/api/status` del ESP32) |
+| DELETE | `/api/v1/ai/conversations/{id}` | Cierra la conversación y la sesión del agente |
+
+**Configuración (`AI_AGENT_*`):** `ENABLED`, `URL` (IP LAN o AP), `TOKEN`,
+`TIMEOUT_SECONDS=90`, `CONNECT_TIMEOUT_SECONDS=5`,
+`POLL_INTERVAL_SECONDS=1`, `MAX_MESSAGE_CHARS=500`, `RATE_LIMIT=6/min`,
+`DAILY_LIMIT=100`, `STATUS_CACHE_SECONDS=15`, `READ_TOKEN` (para A2).
+
+**Comportamiento:**
+
+- `AgentGate` con `pg_try_advisory_lock(7712028)`: una consulta a la vez entre
+  workers; si está ocupado → `429` con `Retry-After`.
+- Cuota con UPSERT atómico; al agotarse → `429` (`Retry-After: 3600`).
+- Contexto **push mínimo** por mensaje: hora local de Tijuana, totales, alertas
+  por tipo, viajes/entregas y hasta 6 camiones críticos. Sin nombres, correos ni
+  texto libre.
+- Errores mapeados: 404 deshabilitado · 422 mensaje inválido · 429 ocupado/cuota
+  · 502 respuesta inválida · 503 inalcanzable · 504 timeout.
+- La conversación se cierra borrando la sesión del agente (best-effort).
+
+**Verificación en vivo (2026-11-23, ESP32 en `192.168.100.52`):**
+
+| Comprobación | Resultado |
+|---|---|
+| `GET /ai/status` | online, 2.2 s, `boot_id` actual |
+| `POST /ai/chat` «Responde solo: A1-OK» | **200**, respuesta `A1-OK`, 4.4 s |
+| Segundo mensaje en la misma conversación | recordó `A1-OK` |
+| `DELETE /ai/conversations/{id}` | 200 y sesión cerrada |
+
+**Limitaciones conocidas:** aún no hay UI (A3); el contexto se envía por *push*
+hasta habilitar/implementar el *pull* (`agent-read`, A2); sin streaming.
+
+## 9. Siguientes pasos
 
 1. ~~Ejecutar el sondeo y completar el contrato~~ ✅ (2026-11-23).
 2. Habilitar el *pull* en la consola del ESP32 (capabilities + allowlist) y probar
@@ -266,7 +310,7 @@ El script:
    (advisory lock), cuota (`ai_usage`), `/ai/chat` (con contexto mínimo), `/ai/status`.
 4. Seguir con A2 (agent-read + respuestas deterministas), A3 (UI) y A4 (prompt/skill).
 
-## 9. Referencias
+## 10. Referencias
 
 - ESP-Claw: <https://github.com/espressif/esp-claw>
 - Consola web: <https://esp-claw.com/en/tutorial/web-config/>

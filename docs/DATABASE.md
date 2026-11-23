@@ -306,6 +306,18 @@ Reglas del seed:
 - Las claves de dispositivo se generan aleatorias y se muestran una vez en los
   logs (`DEMO DEVICE KEY …`); no son recuperables (están hasheadas).
 
+## Tablas del asistente IA (A1)
+
+| Tabla | Contenido |
+|---|---|
+| `ai_usage` | Contador diario por administrador (`admin_id`, `day`, `count`), único por pareja. Sin contenido de chat. |
+| `ai_conversations` | `id` UUID del backend ↔ `agent_session` del ESP32, `last_seq` (último mensaje visto), marcas de tiempo y `closed_at`. Sin contenido de chat. |
+
+La cuota se incrementa con un UPSERT atómico (`count = count + 1` solo si
+`count < límite`), por lo que es correcta aunque haya varios workers. El lock
+del agente usa `pg_try_advisory_lock(7712028)`: una consulta concurrente a la
+vez en todo el despliegue.
+
 ## Migraciones
 
 ```bash
