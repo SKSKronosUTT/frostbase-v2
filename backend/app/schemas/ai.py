@@ -42,3 +42,15 @@ class AiQuickOut(BaseModel):
     title: str
     text: str
     source: str = "system"
+
+
+class AiMetricsOut(BaseModel):
+    days: int
+    generated_at: datetime
+    requests: int
+    errors: int
+    by_action: dict[str, int]
+    errors_by_http_status: dict[str, int]
+    latency_avg_ms: float | None = None
+    latency_p50_ms: int | None = None
+    latency_p95_ms: int | None = None

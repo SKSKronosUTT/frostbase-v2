@@ -187,6 +187,8 @@ ser igual a la actual ni contener el nombre de usuario.
 |---|---|---|
 | `POST` | `/ai/chat` | `{message, conversation_id?}` → `{conversation_id, reply, latency_ms}` |
 | `GET` | `/ai/status` | Estado del agente (cacheado 15 s) |
+| `GET` | `/ai/metrics` | Uso agregado del asistente (`days` 1–30; sin contenido) |
+| `GET` | `/ai/quick` | Lista de respuestas rápidas disponibles |
 | `POST` | `/ai/quick/{id}` | Respuesta determinista con datos actuales (sin LLM) |
 | `DELETE` | `/ai/conversations/{id}` | Cierra la conversación y la sesión del agente |
 
@@ -210,6 +212,10 @@ ESP32; el navegador nunca lo llama. Si el asistente está deshabilitado
 (`AI_AGENT_ENABLED=false`), devuelve `404`. Errores: `429` ocupado/cuota,
 `503` inalcanzable, `504` timeout. Documentación completa en
 `docs/AI-AGENT.md`.
+
+Cada `chat`, `quick` y `close` registra metadatos en `ai_audit` (administrador,
+estado, latencia, `conversation_id`), **nunca el texto** del chat.
+`GET /ai/metrics` resume peticiones, errores y latencias p50/p95.
 
 ---
 

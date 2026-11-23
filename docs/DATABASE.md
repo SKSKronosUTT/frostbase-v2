@@ -312,6 +312,7 @@ Reglas del seed:
 |---|---|
 | `ai_usage` | Contador diario por administrador (`admin_id`, `day`, `count`), único por pareja. Sin contenido de chat. |
 | `ai_conversations` | `id` UUID del backend ↔ `agent_session` del ESP32, `last_seq` (último mensaje visto), marcas de tiempo y `closed_at`. Sin contenido de chat. |
+| `ai_audit` | Metadatos de uso: administrador, acción (`chat`/`quick`/`close`), estado, código HTTP, latencia, `conversation_id` y código de error. **Sin texto del chat.** Retención de 90 días por defecto. |
 
 La cuota se incrementa con un UPSERT atómico (`count = count + 1` solo si
 `count < límite`), por lo que es correcta aunque haya varios workers. El lock

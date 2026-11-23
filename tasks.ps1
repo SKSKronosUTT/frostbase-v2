@@ -3,7 +3,7 @@
 
 param(
     [Parameter(Position = 0)]
-    [ValidateSet("dev", "up", "down", "test", "lint", "build", "seed", "e2e", "backup", "ai-probe", "help")]
+    [ValidateSet("dev", "up", "down", "test", "lint", "build", "seed", "e2e", "backup", "ai-probe", "ai-prompt", "help")]
     [string]$Task = "help",
     [switch]$Reset,
     [switch]$PrintKeys,
@@ -71,6 +71,9 @@ switch ($Task) {
     "ai-probe" {
         Invoke-BackendPython @("-m", "scripts.ai_probe", "--mode", "both")
     }
+    "ai-prompt" {
+        Invoke-BackendPython @("-m", "scripts.agent_prompt")
+    }
     default {
         Write-Host "Tareas disponibles:"
         Write-Host "  .\tasks.ps1 dev            Levanta el stack con build"
@@ -82,5 +85,6 @@ switch ($Task) {
         Write-Host "  .\tasks.ps1 backup         Respaldo pg_dump (-Fc) con retención (default 14)"
         Write-Host "                           .\tasks.ps1 backup -Keep 30"
         Write-Host "  .\tasks.ps1 ai-probe       Sondeo A0 del agente ESP-Claw (HTTP + WebSocket)"
+        Write-Host "  .\tasks.ps1 ai-prompt      Prompt de operación con URL y token (contiene secreto)"
     }
 }

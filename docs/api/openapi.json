@@ -591,6 +591,84 @@
         "title": "AiConversationClosedOut",
         "type": "object"
       },
+      "AiMetricsOut": {
+        "properties": {
+          "by_action": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "By Action",
+            "type": "object"
+          },
+          "days": {
+            "title": "Days",
+            "type": "integer"
+          },
+          "errors": {
+            "title": "Errors",
+            "type": "integer"
+          },
+          "errors_by_http_status": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Errors By Http Status",
+            "type": "object"
+          },
+          "generated_at": {
+            "format": "date-time",
+            "title": "Generated At",
+            "type": "string"
+          },
+          "latency_avg_ms": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latency Avg Ms"
+          },
+          "latency_p50_ms": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latency P50 Ms"
+          },
+          "latency_p95_ms": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latency P95 Ms"
+          },
+          "requests": {
+            "title": "Requests",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "days",
+          "generated_at",
+          "requests",
+          "errors",
+          "by_action",
+          "errors_by_http_status"
+        ],
+        "title": "AiMetricsOut",
+        "type": "object"
+      },
       "AiQuickItem": {
         "properties": {
           "id": {
@@ -5286,6 +5364,52 @@
           }
         },
         "summary": "Close",
+        "tags": [
+          "Asistente IA"
+        ]
+      }
+    },
+    "/api/v1/ai/metrics": {
+      "get": {
+        "description": "Uso agregado del asistente (sin contenido de conversaciones).",
+        "operationId": "metrics_api_v1_ai_metrics_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "days",
+            "required": false,
+            "schema": {
+              "default": 7,
+              "maximum": 30,
+              "minimum": 1,
+              "title": "Days",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiMetricsOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Metrics",
         "tags": [
           "Asistente IA"
         ]

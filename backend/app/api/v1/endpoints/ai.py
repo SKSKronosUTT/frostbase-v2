@@ -1,12 +1,13 @@
-"""Asistente IA para el administrador (A1).
+"""Asistente IA para el administrador (A1–A5).
 
 El backend es el único cliente del ESP32: aquí se aplican rol, CSRF, rate
-limit, cuota diaria y el lock distribuido antes de llamar al agente.
+limit, cuota diaria, lock distribuido y auditoría (sin contenido del chat).
 """
 
+import time
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException, Request, Response, status
+from fastapi import APIRouter, HTTPException, Query, Request, Response, status
 
 from app.api.deps import CurrentAdmin, DbSession
 from app.core.config import settings
@@ -15,11 +16,13 @@ from app.schemas.ai import (
     AiChatIn,
     AiChatOut,
     AiConversationClosedOut,
+    AiMetricsOut,
     AiQuickItem,
     AiQuickOut,
     AiStatusOut,
 )
 from app.services import ai_agent
+from app.services.ai_agent import audit
 from app.services.ai_agent.conversations import close_conversation
 
 router = APIRouter(prefix="/ai", tags=["Asistente IA"])
@@ -28,6 +31,26 @@ _chat_limiter = RateLimit(
     "ai:chat", limit=settings.ai_agent_rate_limit, window_seconds=60
 )
 _quick_limiter = RateLimit("ai:quick", limit=30, window_seconds=60)
+
+
+def _audit(
+    admin_id: int,
+    action: str,
+    http_status: int,
+    *,
+    latency_ms: int | None = None,
+    conversation_id: UUID | None = None,
+    detail: str | None = None,
+) -> None:
+    audit.record_event(
+        admin_id=admin_id,
+        action=action,
+        status="ok" if http_status < 400 else "error",
+        http_status=http_status,
+        latency_ms=latency_ms,
+        conversation_id=conversation_id,
+        detail=detail,
+    )
 
 
 @router.post("/chat", response_model=AiChatOut)
@@ -47,38 +70,52 @@ def chat(
             conversation_id=payload.conversation_id,
         )
     except (ai_agent.AgentDisabledError, ai_agent.ConversationNotFoundError) as exc:
+        _audit(admin.id, "chat", 404, detail="disabled_or_not_found")
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)
         ) from exc
     except ai_agent.AgentValidationError as exc:
+        _audit(admin.id, "chat", 422, detail="validation")
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=str(exc)
         ) from exc
     except ai_agent.QuotaExceededError as exc:
+        _audit(admin.id, "chat", 429, detail="quota")
         raise HTTPException(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
             detail=str(exc),
             headers={"Retry-After": "3600"},
         ) from exc
     except ai_agent.AgentBusyError as exc:
+        _audit(admin.id, "chat", 429, detail="busy")
         raise HTTPException(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
             detail=str(exc),
             headers={"Retry-After": "3"},
         ) from exc
     except ai_agent.AgentTimeoutError as exc:
+        _audit(admin.id, "chat", 504, detail="timeout")
         raise HTTPException(
             status_code=status.HTTP_504_GATEWAY_TIMEOUT, detail=str(exc)
         ) from exc
     except ai_agent.AgentProtocolError as exc:
+        _audit(admin.id, "chat", 502, detail="protocol")
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY, detail=str(exc)
         ) from exc
     except (ai_agent.AgentUnavailableError, ai_agent.AgentConfigError) as exc:
+        _audit(admin.id, "chat", 503, detail="unavailable")
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(exc)
         ) from exc
 
+    _audit(
+        admin.id,
+        "chat",
+        200,
+        latency_ms=result.latency_ms,
+        conversation_id=result.conversation_id,
+    )
     return AiChatOut(
         conversation_id=result.conversation_id,
         reply=result.reply,
@@ -89,6 +126,16 @@ def chat(
 @router.get("/status", response_model=AiStatusOut)
 def agent_status(_: CurrentAdmin) -> AiStatusOut:
     return AiStatusOut(**ai_agent.get_status())
+
+
+@router.get("/metrics", response_model=AiMetricsOut)
+def metrics(
+    _: CurrentAdmin,
+    db: DbSession,
+    days: int = Query(default=7, ge=1, le=30),
+) -> AiMetricsOut:
+    """Uso agregado del asistente (sin contenido de conversaciones)."""
+    return AiMetricsOut(**audit.metrics(db, days=days))
 
 
 @router.get("/quick", response_model=list[AiQuickItem])
@@ -106,12 +153,21 @@ def quick(
     db: DbSession,
 ) -> AiQuickOut:
     _quick_limiter.check(request, response, extra=str(admin.id))
+    started = time.perf_counter()
     try:
         title, text = ai_agent.quick_answer(db, quick_id)
     except ai_agent.UnknownQuickError as exc:
+        _audit(admin.id, "quick", 404, detail=quick_id)
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)
         ) from exc
+    _audit(
+        admin.id,
+        "quick",
+        200,
+        latency_ms=int((time.perf_counter() - started) * 1000),
+        detail=quick_id,
+    )
     return AiQuickOut(id=quick_id, title=title, text=text)
 
 
@@ -132,16 +188,20 @@ def close(
                 client=client,
             )
     except (ai_agent.AgentDisabledError, ai_agent.ConversationNotFoundError) as exc:
+        _audit(admin.id, "close", 404, conversation_id=conversation_id)
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)
         ) from exc
     except (ai_agent.AgentUnavailableError, ai_agent.AgentConfigError) as exc:
+        _audit(admin.id, "close", 503, conversation_id=conversation_id)
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(exc)
         ) from exc
     except ai_agent.AgentProtocolError as exc:
+        _audit(admin.id, "close", 502, conversation_id=conversation_id)
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY, detail=str(exc)
         ) from exc
 
+    _audit(admin.id, "close", 200, conversation_id=conversation.id)
     return AiConversationClosedOut(conversation_id=conversation.id)

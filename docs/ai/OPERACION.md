@@ -1,0 +1,132 @@
+# Operación del asistente IA (A4/A5)
+
+Runbook para desplegar, mantener y diagnosticar el asistente ESP-Claw.
+
+## 1. Requisitos
+
+| Elemento | Valor |
+|---|---|
+| Agente | ESP32-S3 con ESP-Claw (`http://<ip>/`, AP `esp-claw-XXXXXX`) |
+| Red | Preferida: IP de LAN del ESP32 (APSTA). El AP (`192.168.4.1`) es rescate |
+| Backend | Publicado en `:8050` y accesible desde el ESP32 (IP de LAN del host) |
+| LLM | Configurado en el ESP32 (hoy DeepSeek `deepseek-flash`, compatible OpenAI) |
+
+## 2. Variables de entorno
+
+```env
+AI_AGENT_ENABLED=true
+AI_AGENT_URL=http://192.168.100.52      # IP del ESP32 (LAN o AP)
+AI_AGENT_READ_TOKEN=<secreto>          # token que usa el agente para leer
+AI_BACKEND_URL=http://192.168.100.16:8050  # IP del backend tal como la ve el ESP32
+AI_AGENT_TIMEOUT_SECONDS=90
+AI_AGENT_SESSION_TTL_HOURS=12          # rotación de memoria del agente
+AI_AGENT_RATE_LIMIT=6                  # por minuto y administrador
+AI_AGENT_DAILY_LIMIT=100               # por administrador y día
+AI_AUDIT_RETENTION_DAYS=90
+ALLOWED_HOSTS=localhost,127.0.0.1,192.168.100.16
+```
+
+`ALLOWED_HOSTS` **debe** incluir la IP con la que el agente llama al backend; si
+no, el *pull* devuelve `400 Invalid host header`.
+
+## 3. Activación y comprobación
+
+```powershell
+docker compose up -d --force-recreate app
+# Estado del agente
+curl http://localhost:8050/api/v1/ai/status  # requiere sesión admin (navegador)
+# Endpoint que usa el agente (token RO)
+curl -H "Authorization: Bearer <AI_AGENT_READ_TOKEN>" `
+     http://192.168.100.16:8050/api/v1/agent-read/fleet-summary
+```
+
+Si el segundo comando responde `200`, el *pull* está listo. Si responde `401`,
+revise el token; `404`, el asistente está deshabilitado o el token está vacío.
+
+## 4. Prompt del agente
+
+Genere el texto con la URL y el token reales:
+
+```powershell
+docker compose exec -T app python -m scripts.agent_prompt
+# o desde el host: .\tasks.ps1 ai-prompt
+```
+
+Péguelo en la configuración de instrucciones/skill del ESP-Claw. Para compartirlo
+sin el secreto use `--no-token`.
+
+> El token es un secreto: no lo envíe en mensajes de chat ni lo pegue en issues.
+
+## 5. Rotación del token de solo lectura
+
+1. Genere un token nuevo y actualice `AI_AGENT_READ_TOKEN` en `.env`.
+2. `docker compose up -d --force-recreate app`.
+3. Actualice el prompt del ESP32 con el token nuevo.
+4. Borre las sesiones antiguas del agente (memoria):
+
+```powershell
+# Lista y borra las sesiones web guardadas por FrostBase
+docker compose exec -T app python -c "from app.core.database import SessionLocal; from app.models.ai import AiConversation; import httpx; db=SessionLocal(); sessions=[c.agent_session for c in db.query(AiConversation).filter(AiConversation.agent_session.isnot(None))]; c=httpx.Client(base_url='http://192.168.100.52', timeout=10); [c.delete(f'/api/webim/sessions/{s}') for s in sessions]"
+```
+
+5. Verifique: token viejo → `401`, token nuevo → `200`.
+
+## 6. Memoria y conversaciones
+
+- Cada conversación del panel ↔ una sesión en el agente (`ai_conversations`).
+- Tras **12 h** sin uso (`AI_AGENT_SESSION_TTL_HOURS`) la sesión se rota
+  automáticamente: se borra la anterior y se crea una nueva.
+- «Nueva conversación» cierra la sesión de inmediato.
+- El backend **no guarda el texto** de los mensajes.
+
+## 7. Modelo y respaldo
+
+El modelo se configura en el ESP32 (no en FrostBase). Procedimiento ante fallo
+o límite del proveedor:
+
+1. Entre a la consola del ESP32 → sección LLM.
+2. Cambie `llm_base_url`, `llm_api_key` y `llm_model` a un proveedor compatible
+   con OpenAI (o Anthropic).
+3. Guarde y reinicie el dispositivo.
+4. Compruebe con una pregunta simple y con `GET /ai/status`.
+
+El backend no necesita cambios: el contrato WebIM es independiente del modelo.
+
+## 8. Auditoría y métricas
+
+- **Auditoría** (`ai_audit`): administrador, acción (`chat`/`quick`/`close`),
+  estado, código HTTP, latencia, `conversation_id` y código de error. **Nunca**
+  el contenido del chat.
+- **Métricas**: `GET /api/v1/ai/metrics?days=7` (solo admin) devuelve peticiones,
+  errores, desglose por acción/estado y latencia media/p50/p95.
+- **Retención**: el watcher elimina auditoría con más de
+  `AI_AUDIT_RETENTION_DAYS` (90 por defecto) junto con las lecturas/alertas.
+
+## 9. Cuotas y límites
+
+| Límite | Valor |
+|---|---|
+| Mensajes por minuto/admin | 6 (`AI_AGENT_RATE_LIMIT`) |
+| Consultas diarias/admin | 100 (`AI_AGENT_DAILY_LIMIT`) |
+| Mensaje | 500 caracteres (`AI_AGENT_MAX_MESSAGE_CHARS`) |
+| Respuestas rápidas | 30/min, sin cuota ni LLM |
+| `agent-read` | 60/min, solo GET |
+
+## 10. Diagnóstico rápido
+
+| Síntoma | Causa probable | Acción |
+|---|---|---|
+| `/ai/status` offline | IP/red del ESP32 o firewall | `ping`/`curl` al ESP32 desde el host y el contenedor |
+| `503` al chatear | ESP32 apagado o URL incorrecta | Revisar `AI_AGENT_URL` y `docker compose logs app` |
+| `504` | LLM lento o caído | Reintentar; revisar proveedor en el ESP32 |
+| `401` en `agent-read` | Token distinto (rotado) | Actualizar el prompt del ESP32 |
+| `400` en `agent-read` | `ALLOWED_HOSTS` sin la IP del backend | Añadir la IP y recrear `app` |
+| `429` al chatear | Otra consulta en curso o cuota | Esperar 3 s / 24 h |
+| Respuestas con datos viejos | Memoria de sesión | «Nueva conversación» o esperar el TTL |
+| El agente no consulta la API | Prompt sin instrucciones o `cap_http_request` deshabilitada | Regenerar el prompt y habilitar la capacidad + allowlist |
+
+## 11. Cambio de IP
+
+1. Actualice `AI_AGENT_URL` (IP del ESP32) y/o `AI_BACKEND_URL` + `ALLOWED_HOSTS`.
+2. Regenere el prompt (`scripts.agent_prompt`) y péguelo en el ESP32.
+3. Recrear `app` y comprobar `/ai/status` + `agent-read/fleet-summary`.

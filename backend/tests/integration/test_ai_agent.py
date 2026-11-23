@@ -2,6 +2,7 @@
 
 import json
 import uuid
+from datetime import timedelta
 
 import httpx
 import pytest
@@ -10,7 +11,7 @@ from sqlalchemy import select, text
 import app.services.ai_agent as ai_agent_pkg
 from app.core.config import settings
 from app.core.database import SessionLocal, engine
-from app.models.ai import AiConversation, AiUsage
+from app.models.ai import AiAudit, AiConversation, AiUsage
 from app.models.alert import Alert
 from app.models.reading import Reading
 from app.services.ai_agent.chat import chat as chat_function
@@ -369,3 +370,124 @@ def test_quick_requires_csrf(client, login):
     assert login().status_code == 200
     response = client.post("/api/v1/ai/quick/fleet-summary")
     assert response.status_code == 403
+
+
+def test_chat_writes_audit_without_content(
+    client, login, csrf_headers, ai_settings, monkeypatch
+):
+    install_agent(monkeypatch, FakeAgent().handler)
+    assert login().status_code == 200
+    response = client.post(
+        "/api/v1/ai/chat", json={"message": "Hola"}, headers=csrf_headers()
+    )
+    assert response.status_code == 200
+
+    with SessionLocal() as db:
+        row = db.scalar(select(AiAudit))
+        assert row is not None
+        assert row.action == "chat"
+        assert row.status == "ok"
+        assert row.http_status == 200
+        assert row.latency_ms and row.latency_ms >= 0
+        assert not hasattr(row, "message")
+
+
+def test_busy_request_is_audited_as_error(
+    client, login, csrf_headers, ai_settings, monkeypatch
+):
+    install_agent(monkeypatch, FakeAgent().handler)
+    assert login().status_code == 200
+
+    connection = engine.connect()
+    try:
+        connection.execute(
+            text("SELECT pg_advisory_lock(:key)"), {"key": GATE_LOCK_KEY}
+        )
+        response = client.post(
+            "/api/v1/ai/chat", json={"message": "Hola"}, headers=csrf_headers()
+        )
+        assert response.status_code == 429
+    finally:
+        connection.execute(
+            text("SELECT pg_advisory_unlock(:key)"), {"key": GATE_LOCK_KEY}
+        )
+        connection.close()
+
+    with SessionLocal() as db:
+        row = db.scalar(select(AiAudit).where(AiAudit.action == "chat"))
+        assert row.status == "error"
+        assert row.http_status == 429
+        assert row.detail == "busy"
+
+
+def test_quick_and_metrics_are_audited(client, login, csrf_headers, ai_settings):
+    assert login().status_code == 200
+    assert (
+        client.post(
+            "/api/v1/ai/quick/fleet-summary", headers=csrf_headers()
+        ).status_code
+        == 200
+    )
+    assert (
+        client.post("/api/v1/ai/quick/no-existe", headers=csrf_headers()).status_code
+        == 404
+    )
+
+    response = client.get("/api/v1/ai/metrics", params={"days": 1})
+    assert response.status_code == 200
+    body = response.json()
+    assert body["requests"] == 2
+    assert body["errors"] == 1
+    assert body["by_action"]["quick"] == 2
+
+    with SessionLocal() as db:
+        assert db.query(AiAudit).count() == 2
+
+
+def test_metrics_requires_admin(client, create_driver, csrf_headers):
+    _, email, password = create_driver(email="metrics.driver@frostbase.local")
+    assert (
+        client.post(
+            "/api/v1/auth/login",
+            json={"identifier": email, "password": password},
+        ).status_code
+        == 200
+    )
+    response = client.get("/api/v1/ai/metrics")
+    assert response.status_code == 403
+
+
+def test_session_ttl_rotates_agent_session(
+    client, login, csrf_headers, ai_settings, monkeypatch
+):
+    monkeypatch.setattr(settings, "ai_agent_session_ttl_hours", 1)
+    agent = FakeAgent()
+    install_agent(monkeypatch, agent.handler)
+    assert login().status_code == 200
+
+    first = client.post(
+        "/api/v1/ai/chat", json={"message": "Hola"}, headers=csrf_headers()
+    )
+    assert first.status_code == 200
+    conversation_id = first.json()["conversation_id"]
+
+    with SessionLocal() as db:
+        conversation = db.get(AiConversation, uuid.UUID(conversation_id))
+        old_session = conversation.agent_session
+        conversation.last_used_at = utcnow() - timedelta(hours=2)
+        db.add(conversation)
+        db.commit()
+
+    second = client.post(
+        "/api/v1/ai/chat",
+        json={"message": "Otra", "conversation_id": conversation_id},
+        headers=csrf_headers(),
+    )
+    assert second.status_code == 200
+
+    with SessionLocal() as db:
+        conversation = db.get(AiConversation, uuid.UUID(conversation_id))
+        assert conversation.agent_session != old_session
+        assert conversation.last_seq == 2
+    assert old_session not in agent.sessions
+    assert len(agent.sessions) == 1

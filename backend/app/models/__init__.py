@@ -1,5 +1,5 @@
 from app.models.admin import Admin
-from app.models.ai import AiConversation, AiUsage
+from app.models.ai import AiAudit, AiConversation, AiUsage
 from app.models.alert import Alert
 from app.models.device import Device
 from app.models.door_event import DoorEvent
@@ -14,6 +14,7 @@ from app.models.truck import Truck, TruckThresholdOverride
 
 __all__ = [
     "Admin",
+    "AiAudit",
     "AiConversation",
     "AiUsage",
     "Alert",

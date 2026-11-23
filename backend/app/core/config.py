@@ -81,6 +81,13 @@ class Settings(BaseSettings):
     ai_agent_daily_limit: int = 100
     ai_agent_status_cache_seconds: int = 15
     ai_agent_read_token: str = ""
+    # El agente llama al backend por su IP de LAN; se usa para generar el
+    # prompt de operación (scripts.agent_prompt).
+    ai_backend_url: str = ""
+    # Rotación de la sesión del agente para limitar la memoria acumulada.
+    ai_agent_session_ttl_hours: int = 12
+    # Retención de la auditoría (solo metadatos, sin contenido).
+    ai_audit_retention_days: int = 90
 
     osrm_base_url: str = "https://router.project-osrm.org"
     osrm_timeout_seconds: float = 5.0

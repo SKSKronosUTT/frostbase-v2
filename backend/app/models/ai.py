@@ -59,3 +59,27 @@ class AiConversation(Base):
     )
 
     admin = relationship("Admin")
+
+
+class AiAudit(Base):
+    """Auditoría de uso del asistente: solo metadatos, nunca el texto del chat."""
+
+    __tablename__ = "ai_audit"
+    __table_args__ = (
+        Index("ix_ai_audit_created", "created_at"),
+        Index("ix_ai_audit_admin_created", "admin_id", "created_at"),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    admin_id: Mapped[int | None] = mapped_column(
+        ForeignKey("admins.id", ondelete="SET NULL"), nullable=True
+    )
+    action: Mapped[str] = mapped_column(String(20), nullable=False)
+    status: Mapped[str] = mapped_column(String(20), nullable=False)
+    http_status: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    latency_ms: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    conversation_id: Mapped[uuid.UUID | None] = mapped_column(Uuid, nullable=True)
+    detail: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utcnow, nullable=False
+    )

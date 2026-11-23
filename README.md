@@ -280,7 +280,8 @@ y rutas). Las **sugerencias rápidas** se calculan en el servidor sin LLM
 Las consultas libres pasan por el modelo externo configurado en el ESP32
 (DeepSeek) y el texto del chat no se guarda en el servidor. Detalles técnicos en
 `docs/AI-AGENT.md` (incluye los endpoints `agent-read` con token de solo lectura
-para que el agente consulte datos frescos).
+para que el agente consulte datos frescos). El uso se audita sin guardar el
+texto del chat y se resume en `GET /api/v1/ai/metrics`.
 
 ---
 
@@ -389,7 +390,7 @@ pytest -q
 pytest --cov=app --cov-report=term-missing
 ```
 
-Resultado esperado: **168 passed** y cobertura **≥ 70 %** (actual: 85 %). Para limpiar la base de pruebas:
+Resultado esperado: **185 passed** y cobertura **≥ 70 %** (actual: 85 %). Para limpiar la base de pruebas:
 
 ```bash
 docker compose -f compose.test.yml down

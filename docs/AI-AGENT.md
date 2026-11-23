@@ -368,16 +368,43 @@ Para datos de FrostBase usa la API de solo lectura:
 Header obligatorio: Authorization: Bearer <AI_AGENT_READ_TOKEN>
 ```
 
-## 11. Siguientes pasos
+## 11. Implementación A4/A5 (operación y endurecimiento)
 
-1. ~~Ejecutar el sondeo y completar el contrato~~ ✅ (2026-11-23).
-2. Habilitar el *pull* en la consola del ESP32 (capabilities + allowlist) y probar
-   `agent-read` con token RO.
-3. Implementar **A1**: adaptador HTTP, `ConversationManager` (PostgreSQL), `AgentGate`
-   (advisory lock), cuota (`ai_usage`), `/ai/chat` (con contexto mínimo), `/ai/status`.
-4. Seguir con A2 (agent-read + respuestas deterministas), A3 (UI) y A4 (prompt/skill).
+**A4 · Agente y memoria**
 
-## 12. Referencias
+- Prompt de operación generado con URL y token reales:
+  `python -m scripts.agent_prompt` (`.\tasks.ps1 ai-prompt`). Soporta
+  `--no-token` para compartirlo sin secreto.
+- **Política de memoria**: la sesión del agente se rota automáticamente tras
+  `AI_AGENT_SESSION_TTL_HOURS` (12 h) sin uso; «Nueva conversación» la cierra.
+- **Batería conversacional** (`scripts/ai_conversation_check.py`): contrasta las
+  respuestas con `agent-read`; resultado en vivo **5/5 (100 %)** con preguntas de
+  alertas, viajes, rutas, entregas pendientes y placas.
+- **Modelo de respaldo**: procedimiento documentado en
+  `docs/ai/OPERACION.md` (cambio de proveedor en el ESP32 sin tocar FrostBase).
+
+**A5 · Auditoría y métricas**
+
+- Tabla `ai_audit` (migración `0012`): `admin_id`, acción (`chat`/`quick`/`close`),
+  estado, código HTTP, latencia, `conversation_id` y código de error. **Sin texto
+  del chat.**
+- La auditoría se escribe en una transacción independiente para que sobreviva a
+  errores de la petición.
+- `GET /api/v1/ai/metrics?days=7` (solo admin): peticiones, errores, desglose por
+  acción/estado y latencia media/p50/p95.
+- Retención integrada en el watcher (`AI_AUDIT_RETENTION_DAYS`, 90 por defecto).
+- Runbook completo en `docs/ai/OPERACION.md` (red, activación, rotación de token,
+  cuotas, memoria, modelo y diagnóstico).
+
+## 12. Siguientes pasos
+
+1. ~~Sondeo, contrato, backend, UI, pull y respuestas rápidas~~ ✅.
+2. Pegar el prompt generado (`scripts.agent_prompt`) en el ESP-Claw con el token
+   rotado y validar el pull desde el agente.
+3. Definir el modelo/proveedor de respaldo en el dispositivo (ver runbook).
+4. Opcional: streaming por WebSocket si se descubre el mensaje de suscripción.
+
+## 13. Referencias
 
 - ESP-Claw: <https://github.com/espressif/esp-claw>
 - Consola web: <https://esp-claw.com/en/tutorial/web-config/>

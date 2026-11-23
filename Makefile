@@ -42,3 +42,6 @@ openapi:
 
 backup:
 	cd backend && $(PYTHON) -m scripts.backup_db --keep $(KEEP)
+
+ai-prompt:
+	cd backend && $(PYTHON) -m scripts.agent_prompt
