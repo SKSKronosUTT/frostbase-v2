@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="es" data-theme="light">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta
+      name="description"
+      content="Asistente IA de FrostBase: consulta la flota, alertas y viajes en lenguaje natural."
+    />
+    <title>Asistente IA | FrostBase</title>
+    <link rel="icon" href="assets/logo.png" />
+    <link
+      rel="preload"
+      href="assets/fonts/outfit-latin.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    <link rel="stylesheet" href="css/fonts.css" />
+    <link rel="stylesheet" href="assets/vendors/fontawesome/fa-subset.css" />
+    <link rel="stylesheet" href="css/tokens.css" />
+    <link rel="stylesheet" href="css/base.css" />
+    <link rel="stylesheet" href="css/components.css" />
+    <link rel="stylesheet" href="css/layout.css" />
+    <link rel="stylesheet" href="css/pages/ai.css" />
+    <script src="js/core/theme-boot.js"></script>
+  </head>
+  <body data-page="ai">
+    <div class="app-shell">
+      <aside class="sidebar" id="sidebar"></aside>
+      <main class="main ai-main">
+        <header class="page-header">
+          <div class="page-header__title">
+            <span class="eyebrow">Asistente de operaciones</span>
+            <h1>Asistente IA</h1>
+            <p class="page-header__subtitle">
+              Consulta la flota, alertas, viajes y rutas en lenguaje natural.
+            </p>
+          </div>
+          <div class="header-actions">
+            <span class="ai-status ai-status--checking" id="aiStatus">
+              <span class="ai-status__dot"></span>
+              <span id="aiStatusText">Comprobando agente…</span>
+            </span>
+            <button class="btn btn--ghost btn--sm" id="newConversation" type="button">
+              <i class="fa-solid fa-plus"></i> Nueva conversación
+            </button>
+          </div>
+        </header>
+
+        <section class="card ai-card" aria-label="Conversación con el asistente">
+          <div class="ai-chat" id="aiChat" aria-live="polite">
+            <div class="ai-empty" id="aiEmpty">
+              <div class="ai-empty__icon"><i class="fa-solid fa-microchip"></i></div>
+              <h2>¿Qué quieres consultar?</h2>
+              <p class="muted">
+                El asistente responde con los datos actuales del panel. Puede tardar
+                unos segundos.
+              </p>
+              <div class="ai-suggestions">
+                <button
+                  class="ai-suggestion"
+                  type="button"
+                  data-prompt="Dame un resumen del estado de la flota."
+                >
+                  Resumen de la flota
+                </button>
+                <button
+                  class="ai-suggestion"
+                  type="button"
+                  data-prompt="¿Qué alertas están activas y qué camiones son los más críticos?"
+                >
+                  Alertas activas
+                </button>
+                <button
+                  class="ai-suggestion"
+                  type="button"
+                  data-prompt="¿Qué viajes están en curso y cómo van las entregas?"
+                >
+                  Viajes en curso
+                </button>
+                <button
+                  class="ai-suggestion"
+                  type="button"
+                  data-prompt="¿Hay contenedores fuera de rango o sin señal?"
+                >
+                  Contenedores críticos
+                </button>
+                <button
+                  class="ai-suggestion"
+                  type="button"
+                  data-prompt="¿Qué rutas hay programadas para hoy?"
+                >
+                  Rutas de hoy
+                </button>
+              </div>
+            </div>
+            <div class="ai-typing" id="aiTyping" hidden>
+              <span></span><span></span><span></span>
+              <span class="muted">El agente está escribiendo…</span>
+            </div>
+          </div>
+
+          <form class="ai-composer" id="aiForm" novalidate>
+            <label class="sr-only" for="aiMessage">Mensaje para el asistente</label>
+            <textarea
+              class="ai-composer__input"
+              id="aiMessage"
+              rows="2"
+              maxlength="500"
+              placeholder="Escribe tu pregunta… (máx. 500 caracteres)"
+              required
+            ></textarea>
+            <div class="ai-composer__actions">
+              <span class="ai-composer__count" id="aiCount">0/500</span>
+              <button class="btn btn--primary" id="aiSend" type="submit">
+                <i class="fa-solid fa-arrow-right"></i> Enviar
+              </button>
+            </div>
+          </form>
+          <p class="ai-privacy">
+            <i class="fa-solid fa-circle-info"></i>
+            Las consultas se procesan en un modelo externo (DeepSeek) a través del
+            agente local. El texto del chat no se guarda en el servidor.
+          </p>
+        </section>
+      </main>
+    </div>
+    <script type="module" src="js/pages/ai.js"></script>
+  </body>
+</html>

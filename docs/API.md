@@ -181,6 +181,23 @@ ser igual a la actual ni contener el nombre de usuario.
 
 ---
 
+## Asistente IA (administrador)
+
+| Método | Ruta | Descripción |
+|---|---|---|
+| `POST` | `/ai/chat` | `{message, conversation_id?}` → `{conversation_id, reply, latency_ms}` |
+| `GET` | `/ai/status` | Estado del agente (cacheado 15 s) |
+| `DELETE` | `/ai/conversations/{id}` | Cierra la conversación y la sesión del agente |
+
+Requiere rol administrador, CSRF, rate limit (6/min) y cuota diaria
+(`AI_AGENT_DAILY_LIMIT`, 100 por defecto). El backend es el único cliente del
+ESP32; el navegador nunca lo llama. Si el asistente está deshabilitado
+(`AI_AGENT_ENABLED=false`), devuelve `404`. Errores: `429` ocupado/cuota,
+`503` inalcanzable, `504` timeout. Documentación completa en
+`docs/AI-AGENT.md`.
+
+---
+
 ## Panel
 
 | Método | Ruta | Descripción |

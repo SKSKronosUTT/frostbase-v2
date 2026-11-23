@@ -254,6 +254,33 @@ La documentación de endpoints está en `docs/API.md`; la revisión de seguridad
 
 ---
 
+## Asistente IA (opcional)
+
+El panel incluye un apartado **Asistente IA** (`/ai.html`) para consultar la
+flota en lenguaje natural. El agente corre en un **ESP32-S3 con ESP-Claw** y el
+backend actúa de proxy (el navegador nunca habla con el dispositivo).
+
+Requisitos:
+
+1. El ESP32 debe estar en la misma red que el backend (LAN) o accesible por su
+   AP. Se recomienda la IP de la LAN.
+2. En `.env`:
+   ```env
+   AI_AGENT_ENABLED=true
+   AI_AGENT_URL=http://192.168.100.52
+   ```
+3. Recrear la app: `docker compose up -d --force-recreate app`.
+4. En la consola del ESP32: habilitar `cap_http_request` (Capabilities) y
+   permitir el host del backend en *Network Requests* si se usará el modo
+   *pull*.
+
+El asistente responde con un resumen de datos actuales (alertas, flota, viajes
+y rutas). Las consultas pasan por el modelo externo configurado en el ESP32
+(DeepSeek) y el texto del chat no se guarda en el servidor. Detalles técnicos en
+`docs/AI-AGENT.md`.
+
+---
+
 ## Usar el simulador IoT (opcional)
 
 El simulador envía una lectura cada 10 segundos y mueve un camión sobre la ruta asignada. Sirve para ver el panel con datos en vivo sin un ESP32 real.

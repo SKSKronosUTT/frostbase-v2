@@ -301,7 +301,22 @@ El script:
 **Limitaciones conocidas:** aún no hay UI (A3); el contexto se envía por *push*
 hasta habilitar/implementar el *pull* (`agent-read`, A2); sin streaming.
 
-## 9. Siguientes pasos
+## 9. Implementación A3 (UI)
+
+- Página **`ai.html`** («Asistente IA») en el menú del administrador.
+- Chat con burbujas, indicador de escritura, sugerencias rápidas, contador de
+  caracteres y botón «Nueva conversación».
+- Estado del agente (en línea / no disponible / deshabilitado) con sondeo cada
+  30 s.
+- Errores mapeados a mensajes claros (ocupado, cuota, timeout, sin conexión).
+- Renderizado seguro: se construyen nodos DOM y `textContent`; nunca
+  `innerHTML` con la respuesta.
+- Aviso de privacidad visible (el texto se procesa en un LLM externo).
+- Responsive y compatible con los temas claro/oscuro.
+- E2E con backend simulado: respuesta, agente offline y error 429 (**26/26**
+  pruebas E2E en total).
+
+## 10. Siguientes pasos
 
 1. ~~Ejecutar el sondeo y completar el contrato~~ ✅ (2026-11-23).
 2. Habilitar el *pull* en la consola del ESP32 (capabilities + allowlist) y probar
@@ -310,7 +325,7 @@ hasta habilitar/implementar el *pull* (`agent-read`, A2); sin streaming.
    (advisory lock), cuota (`ai_usage`), `/ai/chat` (con contexto mínimo), `/ai/status`.
 4. Seguir con A2 (agent-read + respuestas deterministas), A3 (UI) y A4 (prompt/skill).
 
-## 10. Referencias
+## 11. Referencias
 
 - ESP-Claw: <https://github.com/espressif/esp-claw>
 - Consola web: <https://esp-claw.com/en/tutorial/web-config/>

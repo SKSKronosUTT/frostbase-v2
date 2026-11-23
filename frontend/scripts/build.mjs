@@ -21,6 +21,7 @@ const PAGES = [
   "settings.html",
   "driver.html",
   "drivers.html",
+  "ai.html",
 ];
 
 function hashedName(name, content) {
