@@ -52,7 +52,7 @@ function appendText(container, text) {
   }
 }
 
-function appendMessage(role, text, { error = false } = {}) {
+function appendMessage(role, text, { error = false, label = null } = {}) {
   empty.hidden = true;
   const wrapper = document.createElement("article");
   wrapper.className = `ai-message ai-message--${role}${error ? " ai-message--error" : ""}`;
@@ -63,7 +63,8 @@ function appendMessage(role, text, { error = false } = {}) {
 
   const meta = document.createElement("span");
   meta.className = "ai-message__meta";
-  meta.textContent = role === "user" ? "Tú" : error ? "Sistema" : "Asistente FrostBase";
+  meta.textContent =
+    label || (role === "user" ? "Tú" : error ? "Sistema" : "Asistente FrostBase");
 
   wrapper.appendChild(bubble);
   wrapper.appendChild(meta);
@@ -178,6 +179,22 @@ async function resetConversation() {
   input.focus();
 }
 
+async function runQuick(quickId) {
+  if (state.busy) return;
+  setBusy(true);
+  try {
+    const quick = await api.post(`/ai/quick/${quickId}`);
+    appendMessage("user", quick.title || "Consulta rápida");
+    appendMessage("assistant", quick.text || "(sin datos)", {
+      label: "Datos del sistema",
+    });
+  } catch (error) {
+    appendMessage("system", errorMessage(error), { error: true });
+  } finally {
+    setBusy(false);
+  }
+}
+
 form.addEventListener("submit", (event) => {
   event.preventDefault();
   sendMessage(input.value);
@@ -191,8 +208,8 @@ input.addEventListener("keydown", (event) => {
   }
 });
 
-document.querySelectorAll("[data-prompt]").forEach((button) => {
-  button.addEventListener("click", () => sendMessage(button.dataset.prompt || ""));
+document.querySelectorAll("[data-quick]").forEach((button) => {
+  button.addEventListener("click", () => runQuick(button.dataset.quick || ""));
 });
 
 newConversation.addEventListener("click", resetConversation);

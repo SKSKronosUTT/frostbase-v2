@@ -275,9 +275,12 @@ Requisitos:
    *pull*.
 
 El asistente responde con un resumen de datos actuales (alertas, flota, viajes
-y rutas). Las consultas pasan por el modelo externo configurado en el ESP32
+y rutas). Las **sugerencias rápidas** se calculan en el servidor sin LLM
+(respuesta instantánea y sin consumir cuota) y se etiquetan «Datos del sistema».
+Las consultas libres pasan por el modelo externo configurado en el ESP32
 (DeepSeek) y el texto del chat no se guarda en el servidor. Detalles técnicos en
-`docs/AI-AGENT.md`.
+`docs/AI-AGENT.md` (incluye los endpoints `agent-read` con token de solo lectura
+para que el agente consulte datos frescos).
 
 ---
 

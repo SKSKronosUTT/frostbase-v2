@@ -30,3 +30,15 @@ class AiStatusOut(BaseModel):
 class AiConversationClosedOut(BaseModel):
     conversation_id: UUID
     closed: bool = True
+
+
+class AiQuickItem(BaseModel):
+    id: str
+    title: str
+
+
+class AiQuickOut(BaseModel):
+    id: str
+    title: str
+    text: str
+    source: str = "system"

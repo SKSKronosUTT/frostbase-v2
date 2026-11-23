@@ -15,6 +15,11 @@ from app.services.ai_agent.conversations import (
     ConversationNotFoundError,
     close_conversation,
 )
+from app.services.ai_agent.quick import (
+    UnknownQuickError,
+    list_quick,
+    quick_answer,
+)
 from app.services.ai_agent.quota import QuotaExceededError
 from app.services.ai_agent.status import get_status, reset_status_cache
 
@@ -29,9 +34,12 @@ __all__ = [
     "ChatReply",
     "ConversationNotFoundError",
     "QuotaExceededError",
+    "UnknownQuickError",
     "build_client",
     "chat",
     "close_conversation",
     "get_status",
+    "list_quick",
+    "quick_answer",
     "reset_status_cache",
 ]

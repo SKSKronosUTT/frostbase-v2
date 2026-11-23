@@ -316,7 +316,59 @@ hasta habilitar/implementar el *pull* (`agent-read`, A2); sin streaming.
 - E2E con backend simulado: respuesta, agente offline y error 429 (**26/26**
   pruebas E2E en total).
 
-## 10. Siguientes pasos
+## 10. Implementación A2 (solo lectura + respuestas rápidas)
+
+**Endpoints `agent-read`** (token propio, solo GET, 60/min):
+
+| Ruta | Contenido |
+|---|---|
+| `GET /api/v1/agent-read/fleet-summary` | Totales, alertas por tipo, viajes y rutas de hoy |
+| `GET /api/v1/agent-read/alerts?limit=10` | Alertas activas sin PII |
+| `GET /api/v1/agent-read/trucks/{id}/status` | Última lectura, estado, umbrales, alertas |
+| `GET /api/v1/agent-read/trips/active?limit=5` | Progreso por viaje con alias de conductor |
+| `GET /api/v1/agent-read/routes/today?limit=6` | Rutas de hoy, puntos y pendientes |
+| `GET /api/v1/agent-read/thresholds` | Umbrales globales y por camión |
+
+- Autenticación: `Authorization: Bearer <AI_AGENT_READ_TOKEN>` (comparación en
+  tiempo constante). Sin token → `401`; asistente deshabilitado o token vacío →
+  `404`.
+- Respuestas compactas (<4 KB), ISO 8601 con offset, alias `Conductor {id}`,
+  sin correos/teléfonos ni texto libre salvo nombre de ruta saneado.
+- Solo métodos GET: no existe ninguna ruta de escritura para el agente.
+
+**Respuestas rápidas deterministas** (sin LLM ni cuota):
+
+| Método | Ruta | Descripción |
+|---|---|---|
+| `GET` | `/api/v1/ai/quick` | Lista de sugerencias disponibles |
+| `POST` | `/api/v1/ai/quick/{id}` | Texto calculado con datos actuales |
+
+IDs: `fleet-summary`, `active-alerts`, `active-trips`,
+`critical-containers`, `today-routes`. La UI las marca como
+**«Datos del sistema»**.
+
+**Verificación en vivo (23/11/2026):**
+
+- Los 6 endpoints responden con el token RO (401 sin token / token inválido).
+- Respuesta de `fleet-summary`: **308 B**.
+- Las 5 respuestas rápidas responden y no consumen cuota.
+- **Pull validado de punta a punta desde el ESP32**: con `cap_http_request`
+  habilitada, el agente llamó a `fleet-summary` y respondió con las cifras
+  reales del panel (569 alertas y 2 viajes en curso en ese momento).
+
+**Configuración del agente para el pull** (A4):
+
+```text
+Para datos de FrostBase usa la API de solo lectura:
+  GET http://192.168.100.16:8050/api/v1/agent-read/fleet-summary
+  GET http://192.168.100.16:8050/api/v1/agent-read/alerts?limit=10
+  GET http://192.168.100.16:8050/api/v1/agent-read/trips/active?limit=5
+  GET http://192.168.100.16:8050/api/v1/agent-read/routes/today?limit=6
+  GET http://192.168.100.16:8050/api/v1/agent-read/thresholds
+Header obligatorio: Authorization: Bearer <AI_AGENT_READ_TOKEN>
+```
+
+## 11. Siguientes pasos
 
 1. ~~Ejecutar el sondeo y completar el contrato~~ ✅ (2026-11-23).
 2. Habilitar el *pull* en la consola del ESP32 (capabilities + allowlist) y probar
@@ -325,7 +377,7 @@ hasta habilitar/implementar el *pull* (`agent-read`, A2); sin streaming.
    (advisory lock), cuota (`ai_usage`), `/ai/chat` (con contexto mínimo), `/ai/status`.
 4. Seguir con A2 (agent-read + respuestas deterministas), A3 (UI) y A4 (prompt/skill).
 
-## 11. Referencias
+## 12. Referencias
 
 - ESP-Claw: <https://github.com/espressif/esp-claw>
 - Consola web: <https://esp-claw.com/en/tutorial/web-config/>

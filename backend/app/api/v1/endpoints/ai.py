@@ -15,6 +15,8 @@ from app.schemas.ai import (
     AiChatIn,
     AiChatOut,
     AiConversationClosedOut,
+    AiQuickItem,
+    AiQuickOut,
     AiStatusOut,
 )
 from app.services import ai_agent
@@ -25,6 +27,7 @@ router = APIRouter(prefix="/ai", tags=["Asistente IA"])
 _chat_limiter = RateLimit(
     "ai:chat", limit=settings.ai_agent_rate_limit, window_seconds=60
 )
+_quick_limiter = RateLimit("ai:quick", limit=30, window_seconds=60)
 
 
 @router.post("/chat", response_model=AiChatOut)
@@ -86,6 +89,30 @@ def chat(
 @router.get("/status", response_model=AiStatusOut)
 def agent_status(_: CurrentAdmin) -> AiStatusOut:
     return AiStatusOut(**ai_agent.get_status())
+
+
+@router.get("/quick", response_model=list[AiQuickItem])
+def quick_list(_: CurrentAdmin) -> list[AiQuickItem]:
+    """Sugerencias rápidas disponibles (respuestas locales, sin LLM)."""
+    return [AiQuickItem(**item) for item in ai_agent.list_quick()]
+
+
+@router.post("/quick/{quick_id}", response_model=AiQuickOut)
+def quick(
+    quick_id: str,
+    request: Request,
+    response: Response,
+    admin: CurrentAdmin,
+    db: DbSession,
+) -> AiQuickOut:
+    _quick_limiter.check(request, response, extra=str(admin.id))
+    try:
+        title, text = ai_agent.quick_answer(db, quick_id)
+    except ai_agent.UnknownQuickError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)
+        ) from exc
+    return AiQuickOut(id=quick_id, title=title, text=text)
 
 
 @router.delete(

@@ -17,6 +17,18 @@ async function mockAgent(page, { status = STATUS_ONLINE, chat } = {}) {
       body: JSON.stringify(status),
     })
   );
+  await page.route("**/api/v1/ai/quick/*", (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        id: "fleet-summary",
+        title: "Resumen de la flota",
+        text: "Hay **3 alertas activas**: temperatura 2 y puerta 1.",
+        source: "system",
+      }),
+    })
+  );
   await page.route("**/api/v1/ai/chat", (route) => {
     if (chat?.error) {
       return route.fulfill({
@@ -47,7 +59,7 @@ test("asistente: estado en línea y respuesta a una sugerencia", async ({ page }
   await expect(page.getByText("Agente en línea")).toBeVisible();
 
   await page.getByRole("button", { name: "Resumen de la flota" }).click();
-  await expect(page.getByText("Dame un resumen del estado de la flota.")).toBeVisible();
+  await expect(page.getByText("Datos del sistema")).toBeVisible();
   await expect(page.getByText("3 alertas activas")).toBeVisible();
 });
 

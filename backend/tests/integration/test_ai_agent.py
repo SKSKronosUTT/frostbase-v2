@@ -313,3 +313,59 @@ def test_context_contains_operational_data_without_pii(create_truck, create_devi
     assert "America/Tijuana" in context
     assert "@" not in context
     assert "Temperatura alta" not in context
+
+
+def test_quick_list_and_deterministic_answers(
+    client, login, csrf_headers, ai_settings, monkeypatch
+):
+    def boom():
+        raise AssertionError("Las respuestas rápidas no deben llamar al agente")
+
+    monkeypatch.setattr(ai_agent_pkg, "build_client", boom)
+    assert login().status_code == 200
+
+    listed = client.get("/api/v1/ai/quick")
+    assert listed.status_code == 200
+    ids = {item["id"] for item in listed.json()}
+    assert {
+        "fleet-summary",
+        "active-alerts",
+        "active-trips",
+        "critical-containers",
+        "today-routes",
+    } <= ids
+
+    response = client.post("/api/v1/ai/quick/fleet-summary", headers=csrf_headers())
+    assert response.status_code == 200
+    body = response.json()
+    assert body["source"] == "system"
+    assert "Flota:" in body["text"]
+    assert "Datos del sistema" in body["text"]
+
+    unknown = client.post("/api/v1/ai/quick/no-existe", headers=csrf_headers())
+    assert unknown.status_code == 404
+
+    with SessionLocal() as db:
+        assert db.scalar(select(AiUsage)) is None
+
+
+def test_quick_requires_admin_and_csrf(client, create_driver, csrf_headers):
+    # Sin sesión → 401 (el middleware/dependencia de rol lo rechaza).
+    assert client.post("/api/v1/ai/quick/fleet-summary").status_code in (401, 403)
+
+    _, email, password = create_driver(email="quick.driver@frostbase.local")
+    assert (
+        client.post(
+            "/api/v1/auth/login",
+            json={"identifier": email, "password": password},
+        ).status_code
+        == 200
+    )
+    denied = client.post("/api/v1/ai/quick/fleet-summary", headers=csrf_headers())
+    assert denied.status_code == 403
+
+
+def test_quick_requires_csrf(client, login):
+    assert login().status_code == 200
+    response = client.post("/api/v1/ai/quick/fleet-summary")
+    assert response.status_code == 403

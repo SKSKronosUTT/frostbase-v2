@@ -157,6 +157,10 @@ def collect_snapshot(db: Session) -> dict:
         "generated_at": now,
         "timezone": settings.app_timezone,
         "trucks_total": len(trucks),
+        "truck_statuses": {
+            status: sum(1 for truck in trucks if truck.status == status)
+            for status in sorted({truck.status for truck in trucks})
+        },
         "alerts_active": len(alerts),
         "alert_counts": alert_counts,
         "active_trips": active_trips,
