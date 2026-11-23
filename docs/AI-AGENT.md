@@ -47,22 +47,36 @@ Navegador admin ──HTTPS──▶ FastAPI ──WebSocket LAN──▶ ESP32-
 
 Script: `backend/scripts/ai_probe.py` (HTTP + WebSocket, sin tocar la BD).
 
+> **Use el Python del proyecto, no el global.** El `python` del sistema no
+> tiene `httpx`/`websockets`. Desde `backend/`:
+> `.\.venv\Scripts\python.exe` (Windows) o `.venv/bin/python` (Linux/macOS);
+> o active el entorno con `.\.venv\Scripts\Activate.ps1`.
+> También puede usar `.\tasks.ps1 ai-probe` desde la raíz, que ya usa el venv.
+
 ```bash
 # 1) Conecte el equipo al AP del ESP32 y compruebe el gateway
 #    Windows: ipconfig  → Puerta de enlace predeterminada 192.168.4.1
 
 # 2) Desde el host (backend/)
-python -m scripts.ai_probe --mode both --output ..\docs\ai\evidencia-a0.json
+.\.venv\Scripts\python.exe -m scripts.ai_probe --mode both --output ..\docs\ai\evidencia-a0.json
+# Linux/macOS: .venv/bin/python -m scripts.ai_probe --mode both --output ../docs/ai/evidencia-a0.json
 
 # 3) Igual que lo verá el backend (Docker)
 docker compose exec app python -m scripts.ai_probe --mode both
 
 # 4) Solo HTTP, o solo WebSocket con un mensaje concreto
-python -m scripts.ai_probe --mode http
-python -m scripts.ai_probe --mode ws --message "Resumen de la flota"
+.\.venv\Scripts\python.exe -m scripts.ai_probe --mode http
+.\.venv\Scripts\python.exe -m scripts.ai_probe --mode ws --message "Resumen de la flota"
 
 # 5) Si el agente exige token o el contrato difiere
-python -m scripts.ai_probe --mode ws --token "<token>" --payload '{"op":"chat","data":"{message}"}'
+.\.venv\Scripts\python.exe -m scripts.ai_probe --mode ws --token "<token>" --payload '{"op":"chat","data":"{message}"}'
+```
+
+Si el entorno no existe o está incompleto:
+
+```bash
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements-dev.txt
 ```
 
 El script:
