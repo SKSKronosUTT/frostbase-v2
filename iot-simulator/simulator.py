@@ -31,7 +31,7 @@ if load_dotenv:
     load_dotenv(Path(__file__).with_name(".env"))
 
 API_URL = os.getenv("FROSTBASE_API_URL", "http://localhost:8050/api/v1").rstrip("/")
-DEVICE_ID = os.getenv("DEVICE_ID", "ESP32-FROST-001")
+DEVICE_ID = os.getenv("DEVICE_ID", "ESP32-DEMO-001")
 DEVICE_KEY = os.getenv("DEVICE_KEY", "")
 INTERVAL_SECONDS = float(os.getenv("INTERVAL_SECONDS", "10"))
 ANOMALY_PROBABILITY = float(os.getenv("ANOMALY_PROBABILITY", "0.01"))

@@ -155,26 +155,49 @@ Usa estas credenciales:
 
 Si la base de datos ya tenía un administrador creado antes de la actualización de seguridad (migración `0002_admin_auth_policy`), el panel mostrará un **modal obligatorio** para cambiar la contraseña. La nueva contraseña debe tener **12 caracteres o más**, ser distinta de la actual y no contener el nombre de usuario. En una instalación nueva no aparece ese modal.
 
-### Paso 5 (opcional) · Cargar datos de demostración
+### Paso 5 · Datos de demostración (automáticos)
 
-Para tener camiones, rutas y dispositivos de ejemplo:
+Con `SEED_DEMO_DATA=true` (valor por defecto en `.env.example`), **el primer arranque siembra solo** un conjunto demo completo y coherente: 4 camiones, 4 conductores, 3 tiendas, 4 rutas, lecturas de las últimas 24 h, viajes (uno en curso), alertas y eventos de puerta. No hay que ejecutar nada.
+
+Para explorar la demo:
+
+| Rol | Credenciales |
+|---|---|
+| Administrador | `admin` + tu `ADMIN_PASSWORD` |
+| Conductor con viaje en curso | `carlos.rivera@demo.frostbase.local` / `Demo1234!` |
+| Conductor listo para iniciar viaje | `ana.morales@demo.frostbase.local` / `Demo1234!` |
+| Conductor bloqueado (sin ruta hoy) | `luis.hernandez@demo.frostbase.local` / `Demo1234!` |
+
+> Las contraseñas demo son fijas y **solo para desarrollo/demostración**. El
+> arranque falla si `SEED_DEMO_DATA=true` con `ENVIRONMENT=production`.
+
+El seed es **idempotente**: reiniciar el stack no duplica datos. Las claves de
+los dispositivos demo se imprimen **una sola vez** en los logs del arranque;
+para el simulador:
 
 ```bash
-docker compose exec app python -m scripts.seed_demo
+# Ver la clave de ESP32-DEMO-001 en los logs del primer arranque
+docker compose logs app | Select-String "DEMO DEVICE KEY"
 ```
 
-El comando crea una ruta en Tijuana, 3 camiones y 2 dispositivos. **Imprime las claves de los dispositivos una sola vez**: cópialas si vas a usar el simulador.
+Opciones útiles:
 
-> El seed es idempotente: ejecutarlo de nuevo no duplica rutas, camiones ni dispositivos. Opciones útiles:
->
-> ```bash
-> # Mostrar de nuevo las claves generadas en esta ejecución
-> docker compose exec app python -m scripts.seed_demo --print-keys
-> # Datos extra para pruebas de carga
-> docker compose exec app python -m scripts.seed_demo --trucks 50 --devices 50
-> # Borrar los datos de demostración
-> docker compose exec app python -m scripts.seed_demo --reset
-> ```
+```bash
+# Volver a sembrar desde cero (borra SOLO los datos demo, no los reales)
+docker compose exec app python -m scripts.seed_demo --reset-demo
+
+# Mostrar las claves generadas en esta ejecución (solo en la primera creación)
+docker compose exec app python -m scripts.seed_demo --print-keys
+
+# Datos extra para pruebas de carga
+docker compose exec app python -m scripts.seed_demo --trucks 50 --devices 50
+
+# Arrancar sin datos demo: SEED_DEMO_DATA=false en .env y recrear la app
+docker compose up -d --force-recreate app
+```
+
+También puede lanzarse con `.\tasks.ps1 seed` (o `.\tasks.ps1 seed -Reset`) y
+`make seed` en Linux/macOS.
 
 ---
 
@@ -241,11 +264,11 @@ El simulador envía una lectura cada 10 segundos y mueve un camión sobre la rut
 
 ### 1. Obtener la clave del dispositivo
 
-- Si acabas de ejecutar el seed, busca la línea `ESP32-FROST-001: ...` en su salida y copia la cadena larga.
+- Si acabas de arrancar la app con datos demo, busca la línea `DEMO DEVICE KEY ESP32-DEMO-001: ...` en `docker compose logs app` y copia la cadena larga.
 - Si no tienes la clave o perdiste la salida del seed, genera una nueva:
 
   ```bash
-  docker compose exec app python -m scripts.rotate_device_key --device-id ESP32-FROST-001
+  docker compose exec app python -m scripts.rotate_device_key --device-id ESP32-DEMO-001
   ```
 
   El comando imprime una línea `DEVICE_KEY=...` **una sola vez**. La clave anterior deja de funcionar.
@@ -287,7 +310,7 @@ python simulator.py
 
 ```env
 FROSTBASE_API_URL=http://localhost:8050/api/v1
-DEVICE_ID=ESP32-FROST-001
+DEVICE_ID=ESP32-DEMO-001
 DEVICE_KEY=<cadena larga de ~43 caracteres; NO es la placa ABC-123-A>
 ```
 
@@ -311,7 +334,7 @@ Comprobación rápida en macOS/Linux:
 
 ```bash
 curl -s -o /dev/null -w "%{http_code}\n" http://localhost:8050/api/v1/iot/config \
-  -H "X-Device-Id: ESP32-FROST-001" \
+  -H "X-Device-Id: ESP32-DEMO-001" \
   -H "X-Device-Key: <tu clave>"
 ```
 
@@ -336,7 +359,7 @@ pytest -q
 pytest --cov=app --cov-report=term-missing
 ```
 
-Resultado esperado: **137 passed** y cobertura **≥ 70 %** (actual: 84 %). Para limpiar la base de pruebas:
+Resultado esperado: **148 passed** y cobertura **≥ 70 %** (actual: 84 %). Para limpiar la base de pruebas:
 
 ```bash
 docker compose -f compose.test.yml down
@@ -356,7 +379,7 @@ docker compose -f compose.test.yml down
 | Actualizar desde Git | `git pull` y luego `docker compose up -d --build` |
 | Ver el estado | `docker compose ps` |
 | Restablecer la contraseña del admin | `docker compose exec app python -m scripts.reset_admin` |
-| Rotar la clave de un dispositivo | `docker compose exec app python -m scripts.rotate_device_key --device-id ESP32-FROST-001` |
+| Rotar la clave de un dispositivo | `docker compose exec app python -m scripts.rotate_device_key --device-id ESP32-DEMO-001` |
 | Respaldar la base de datos | `.\tasks.ps1 backup` (Linux: `make backup`) — ver [docs/ops/BACKUP-RESTORE.md](docs/ops/BACKUP-RESTORE.md) |
 | Prueba de carga del portal | `python -m scripts.loadtest_portal --users 999 --duration 60` (ver [docs/ops/perf-baseline.md](docs/ops/perf-baseline.md)) |
 
@@ -416,9 +439,10 @@ No olvides actualizar `FROSTBASE_API_URL` en `iot-simulator/.env` si usas el sim
 | Login devuelve error 401 | La contraseña no coincide con la del administrador existente | Ejecuta `docker compose exec app python -m scripts.reset_admin`. |
 | `password authentication failed for user "frostbase"` | Cambiaste `POSTGRES_PASSWORD` después del primer arranque | Vuelve a poner la contraseña anterior en `.env` o rota la contraseña dentro de PostgreSQL (ver abajo). |
 | El login “funciona” pero luego vuelve al login | Estás accediendo por una IP de red con HTTP y `COOKIE_SECURE=true` | Usa `http://localhost` o, solo para pruebas en red, pon `COOKIE_SECURE=false` y reinicia. En producción usa HTTPS. |
-| El simulador recibe 401 | `DEVICE_KEY` es la placa (`ABC-123-A`), una clave antigua o el dispositivo no existe | Rota la clave: `docker compose exec app python -m scripts.rotate_device_key --device-id ESP32-FROST-001`; copia el valor en `iot-simulator/.env` y reinicia. |
+| El simulador recibe 401 | `DEVICE_KEY` es la placa (`ABC-123-A`), una clave antigua o el dispositivo no existe | Rota la clave: `docker compose exec app python -m scripts.rotate_device_key --device-id ESP32-DEMO-001`; copia el valor en `iot-simulator/.env` y reinicia. |
 | El simulador no conecta | Puerto distinto o API URL incorrecta | Revisa `FROSTBASE_API_URL` en `iot-simulator/.env`. |
 | El seed no imprime claves | Los dispositivos ya existían | Rota la clave con `scripts.rotate_device_key` o desde el panel. |
+| Quiero empezar sin datos demo | `SEED_DEMO_DATA=true` en el arranque | Pon `SEED_DEMO_DATA=false` en `.env`, recrea la app y borra la base si ya se sembró (`docker compose down -v`). |
 
 ### Si cambiaste la contraseña de PostgreSQL después del primer arranque
 
@@ -534,8 +558,10 @@ Navegador  →  FastAPI (backend)  →  PostgreSQL
 .\tasks.ps1 test     # PostgreSQL de test + pytest con cobertura
 .\tasks.ps1 lint     # ruff, mypy, ESLint, Prettier y checks de CSS/HTML
 .\tasks.ps1 build    # frontend/build con assets hasheados
+.\tasks.ps1 seed     # datos demo (idempotente; -Reset para recrearlos)
 .\tasks.ps1 seed -Reset -PrintKeys -Trucks 20 -Devices 10
 .\tasks.ps1 e2e      # Playwright (requiere navegadores instalados)
+.\tasks.ps1 backup   # respaldo pg_dump con retención
 ```
 
 En macOS/Linux use el `Makefile` equivalente (`make test`, `make lint`, `make build`).

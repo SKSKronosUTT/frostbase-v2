@@ -27,6 +27,8 @@ class Settings(BaseSettings):
         "postgresql+psycopg://frostbase:frostbase@localhost:5432/frostbase"
     )
     auto_create_tables: bool = False
+    # Siembra datos de demostración al inicializar (solo desarrollo/demo).
+    seed_demo_data: bool = False
 
     # Los secretos son obligatorios: sin ellos el proceso no arranca.
     secret_key: str
@@ -123,6 +125,8 @@ class Settings(BaseSettings):
                 )
             if self.auto_create_tables:
                 raise ValueError("AUTO_CREATE_TABLES debe ser false en producción")
+            if self.seed_demo_data:
+                raise ValueError("SEED_DEMO_DATA debe ser false en producción")
             if "*" in self.cors_origin_list:
                 raise ValueError("CORS_ORIGINS no admite '*' con credenciales")
         return self

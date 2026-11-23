@@ -28,6 +28,7 @@ x-app-environment: &app-environment
   WEATHER_CACHE_SECONDS: ${WEATHER_CACHE_SECONDS:-600}
   ROUTE_GEOMETRY_ASYNC: ${ROUTE_GEOMETRY_ASYNC:-false}
   AUTO_CREATE_TABLES: "false"
+  SEED_DEMO_DATA: ${SEED_DEMO_DATA:-false}
   RATE_LIMIT_BACKEND: ${RATE_LIMIT_BACKEND:-memory}
   REDIS_URL: ${REDIS_URL:-}
   CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:8050,http://127.0.0.1:8050,http://localhost:8060,http://127.0.0.1:8060,http://localhost:8070,http://127.0.0.1:8070}

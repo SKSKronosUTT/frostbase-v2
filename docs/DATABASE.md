@@ -280,6 +280,32 @@ SELECT id, alert_type, value, started_at
 FROM alerts WHERE status = 'activa' ORDER BY started_at DESC;
 ```
 
+## Datos de demostración (G9)
+
+El primer arranque con `SEED_DEMO_DATA=true` ejecuta
+`python -m scripts.seed_demo --if-empty` antes de levantar la API. El catálogo
+es idempotente y se identifica por marcadores estables:
+
+| Entidad | Marcador | Volumen |
+|---|---|---|
+| Camiones | placa `DEMO-00x` | 4 (en ruta, disponible, mantenimiento) |
+| Dispositivos | `ESP32-DEMO-00x` | 3 (1:1 con camión) |
+| Conductores | correo `@demo.frostbase.local` | 4 (uno de baja) |
+| Tiendas y rutas | nombre `Demo · …` | 5 tiendas, 4 rutas |
+| Lecturas | por dispositivo demo | ~430 de las últimas 24 h |
+| Viajes y órdenes | de los conductores demo | 4 viajes (1 en curso) |
+| Alertas y eventos de puerta | de los dispositivos demo | 4 alertas, 3 eventos |
+
+Reglas del seed:
+
+- **No destructivo**: `--reset-demo` borra solo filas con esos marcadores, en
+  orden seguro de claves foráneas; los datos reales nunca se tocan.
+- **`--if-empty`**: no siembra si ya hay camiones, conductores o rutas.
+- **Solo desarrollo**: `SEED_DEMO_DATA=true` con `ENVIRONMENT=production`
+  aborta el arranque.
+- Las claves de dispositivo se generan aleatorias y se muestran una vez en los
+  logs (`DEMO DEVICE KEY …`); no son recuperables (están hasheadas).
+
 ## Migraciones
 
 ```bash
