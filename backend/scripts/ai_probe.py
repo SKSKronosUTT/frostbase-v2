@@ -32,10 +32,12 @@ import sys
 import time
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import cast
 from urllib.parse import urlparse
 
 import httpx
 import websockets
+from websockets.typing import Origin, Subprotocol
 
 DEFAULT_URL = "http://192.168.4.1"
 DEFAULT_WS_PATH = "/api/webim/ws"
@@ -45,7 +47,15 @@ DEFAULT_HTTP_PATHS = (
     "/api/status",
     "/api/config",
     "/api/webim/ws",
+    "/api/webim",
+    "/api/webim/sessions",
+    "/api/sessions",
+    "/api/models",
     "/api/chat",
+    "/webim",
+    "/im",
+    "/console",
+    "/chat.html",
     "/chat",
     "/v1/models",
 )
@@ -86,6 +96,21 @@ def parse_args() -> argparse.Namespace:
         ),
     )
     parser.add_argument("--token", default=None, help="Bearer opcional")
+    parser.add_argument(
+        "--ws-origin",
+        default=None,
+        help="Cabecera Origin del handshake (por defecto, la URL base)",
+    )
+    parser.add_argument(
+        "--ws-subprotocol",
+        default=None,
+        help="Subprotocolo WebSocket (si el firmware lo exige)",
+    )
+    parser.add_argument(
+        "--follow-redirects",
+        action="store_true",
+        help="Seguir redirecciones HTTP (registra Location igualmente)",
+    )
     parser.add_argument(
         "--timeout", type=float, default=5.0, help="Timeout HTTP (segundos)"
     )
@@ -152,6 +177,27 @@ def _payload_for(template: str, message: str) -> str:
     return template.replace("{message}", escaped)
 
 
+_HINT_PATTERNS = {
+    "ws_urls": r"wss?://[^\s\"'`<>\\]+",
+    "websocket_calls": r"new\s+WebSocket\([^)]{0,200}\)",
+    "api_paths": r"[\"'](/api/[^\"']{1,140})[\"']",
+    "webim_refs": r"[A-Za-z0-9_/.\-]{0,40}webim[A-Za-z0-9_/.\-]{0,60}",
+    "message_types": r"[\"']type[\"']\s*:\s*[\"']([^\"']{1,40})[\"']",
+}
+
+
+def extract_js_hints(text: str, *, limit: int = 30) -> dict[str, list[str]]:
+    """Busca pistas del contrato (WS, rutas API, tipos de mensaje) en el HTML/JS."""
+    import re
+
+    hints: dict[str, list[str]] = {}
+    for name, pattern in _HINT_PATTERNS.items():
+        matches = sorted({match.strip() for match in re.findall(pattern, text)})
+        if matches:
+            hints[name] = [match[:200] for match in matches[:limit]]
+    return hints
+
+
 def probe_http(
     client: httpx.Client, base_url: str, paths: list[str], token: str | None
 ) -> list[dict]:
@@ -172,8 +218,15 @@ def probe_http(
                 server=response.headers.get("server"),
                 www_authenticate=response.headers.get("www-authenticate"),
                 upgrade=response.headers.get("upgrade"),
+                location=response.headers.get("location"),
+                final_url=str(response.url),
                 body_preview=response.text[:BODY_PREVIEW_CHARS].strip(),
             )
+            content_type = (response.headers.get("content-type") or "").lower()
+            if "html" in content_type and len(response.text) < 2_000_000:
+                hints = extract_js_hints(response.text)
+                if hints:
+                    entry["js_hints"] = hints
         except httpx.HTTPError as exc:
             entry.update(error=str(exc), elapsed_ms=None)
         results.append(entry)
@@ -186,12 +239,17 @@ async def _ws_attempt(
     token: str | None,
     timeout: float,
     idle: float,
+    *,
+    origin: str | None = None,
+    subprotocol: str | None = None,
 ) -> dict:
     entry: dict = {"payload": payload[:200], "frames": []}
     headers = {"Authorization": f"Bearer {token}"} if token else None
     try:
         async with websockets.connect(
             ws_url,
+            origin=cast(Origin, origin) if origin else None,
+            subprotocols=([cast(Subprotocol, subprotocol)] if subprotocol else None),
             additional_headers=headers,
             open_timeout=timeout,
             close_timeout=2,
@@ -220,11 +278,23 @@ async def probe_ws(
     token: str | None,
     timeout: float,
     idle: float,
+    *,
+    origin: str | None = None,
+    subprotocol: str | None = None,
 ) -> dict:
     return {
         "url": ws_url,
+        "origin": origin,
         "attempts": [
-            await _ws_attempt(ws_url, payload, token, timeout, idle)
+            await _ws_attempt(
+                ws_url,
+                payload,
+                token,
+                timeout,
+                idle,
+                origin=origin,
+                subprotocol=subprotocol,
+            )
             for payload in payloads
         ],
     }
@@ -246,17 +316,24 @@ def _print_human(report: dict) -> None:
         for item in report["http"]:
             if "status" in item:
                 print(
-                    f"{item['path']:<20} {item['status']} "
+                    f"{item['path']:<24} {item['status']} "
                     f"{item.get('content_type') or '-'} "
                     f"{item.get('length', 0)} B {item.get('elapsed_ms')} ms"
                 )
-                if item.get("body_preview"):
+                if item.get("location"):
+                    print(f"    -> Location: {item['location']}")
+                if item.get("body_preview") and not item.get("js_hints"):
                     print(f"    {item['body_preview'][:160]!r}")
+                for name, matches in (item.get("js_hints") or {}).items():
+                    sample = ", ".join(matches[:4])
+                    print(f"    pista {name} ({len(matches)}): {sample[:220]}")
             else:
-                print(f"{item['path']:<20} ERROR {item.get('error')}")
+                print(f"{item['path']:<24} ERROR {item.get('error')}")
 
     if report.get("ws"):
         print(f"\n--- WebSocket {report['ws']['url']} ---")
+        if report["ws"].get("origin"):
+            print(f"Origin: {report['ws']['origin']}")
         for attempt in report["ws"]["attempts"]:
             status = "conectado" if attempt.get("connected") else "fallo"
             print(f"· payload {attempt['payload'][:60]!r}: {status}")
@@ -297,12 +374,20 @@ async def main_async(args: argparse.Namespace) -> int:
 
     if args.mode in {"http", "both"} and report["tcp"]["reachable"]:
         paths = args.paths or list(DEFAULT_HTTP_PATHS)
-        with httpx.Client(timeout=args.timeout, follow_redirects=False) as client:
+        with httpx.Client(
+            timeout=args.timeout, follow_redirects=args.follow_redirects
+        ) as client:
             report["http"] = probe_http(client, base_url, paths, args.token)
 
     if args.mode in {"ws", "both"} and report["tcp"]["reachable"]:
         report["ws"] = await probe_ws(
-            ws_url, payloads, args.token, args.ws_timeout, args.ws_idle
+            ws_url,
+            payloads,
+            args.token,
+            args.ws_timeout,
+            args.ws_idle,
+            origin=args.ws_origin or base_url,
+            subprotocol=args.ws_subprotocol,
         )
 
     if args.output:

@@ -34,9 +34,16 @@ Navegador admin ──HTTPS──▶ FastAPI ──WebSocket LAN──▶ ESP32-
 |---|---|
 | SSID | `esp-claw-XXXXXX` (el del dispositivo) |
 | IP del agente | `http://192.168.4.1` |
-| WebSocket candidato | `ws://192.168.4.1/api/webim/ws` **[VERIFICAR]** |
-| Salida a internet del ESP32 | Necesaria para el LLM remoto |
+| **IP en la LAN (APSTA)** | **`192.168.100.52`** — el ESP32 está conectado a `Mega-2.4G-1CB2` |
+| WebSocket candidato | `ws://192.168.4.1/api/webim/ws` **[pendiente: devuelve 302]** |
+| Salida a internet del ESP32 | Necesaria para el LLM remoto (DeepSeek) |
 | Backend | Publicado en la LAN en `:8050` para el *pull* del agente |
+
+> **Hallazgo:** el dispositivo está en **APSTA** (`wifi_mode: "apsta"`): mantiene el
+> AP (`192.168.4.1`) y a la vez tiene IP en la LAN (`192.168.100.52`). Para el
+> backend es preferible la **IP de la LAN** (no obliga a conectar el equipo al AP
+> y evita perder el acceso a la red habitual); conviene **reservar esa IP por
+> DHCP**. El AP queda como rescate/configuración.
 
 > Al conectar el equipo al AP del ESP32 se pierde el acceso a la red habitual.
 > Para demos con varios dispositivos, use doble interfaz (Ethernet a la LAN +
@@ -70,7 +77,16 @@ docker compose exec app python -m scripts.ai_probe --mode both
 
 # 5) Si el agente exige token o el contrato difiere
 .\.venv\Scripts\python.exe -m scripts.ai_probe --mode ws --token "<token>" --payload '{"op":"chat","data":"{message}"}'
+
+# 6) Segunda pasada recomendada (redirects + Origin + escaneo del JS de la SPA)
+.\.venv\Scripts\python.exe -m scripts.ai_probe --mode both --follow-redirects --ws-origin http://192.168.4.1 --output ..\docs\ai\evidencia-a0-2.json
 ```
+
+La segunda pasada es la que debe revelar el WebSocket real: captura `Location`
+de los 302, envía la cabecera `Origin` (muchos servidores embebidos la exigen)
+y analiza el HTML/JS de la consola para extraer `ws://…`, rutas `/api/*` y tipos
+de mensaje. Para el contrato definitivo, complementar con DevTools → Network →
+WS en el Web Chat (frames enviados/recibidos).
 
 Si el entorno no existe o está incompleto:
 
@@ -91,7 +107,37 @@ El script:
 > Si el puerto no responde, el script termina con código 2 y recuerda conectar
 > el equipo al AP. Ese es el caso actual del entorno de desarrollo.
 
-## 5. Evidencia a completar en A0
+## 5. Evidencia A0
+
+### 5.0 Evidencia recogida (2026-11-23, `docs/ai/evidencia-a0.json`)
+
+> La evidencia local no se versiona (incluye SSID y configuración del
+> dispositivo, aunque los secretos estén enmascarados). Se guarda en
+> `docs/ai/` y está excluida por `.gitignore`; aquí solo se resumen los
+> hallazgos.
+
+| Ruta | Resultado |
+|---|---|
+| TCP `192.168.4.1:80` | **OK**, 7.5 ms |
+| `GET /` | **200**, `text/html`, 381 KB — SPA «ESP-Claw Settings» |
+| `GET /api/status` | **200** JSON: `boot_id`, `wifi_connected: true`, `ip: 192.168.100.52`, `ap_active: true`, `ap_ssid: esp-claw-CE3085`, `ap_ip: 192.168.4.1`, `wifi_mode: apsta` |
+| `GET /api/config` | **200** JSON **sin autenticación**: Wi-Fi (`Mega-2.4G-1CB2`), `llm_api_key` enmascarada, `llm_backend_type: openai_compatible`, `llm_model: deepseek-flash`, `llm_base_url: https://api.deepseek…` |
+| `GET /api/webim/ws` | **302** → el handshake WebSocket se redirige; el sondeo lo interpretó como URI inválida (`http://192.168.4.1/`) |
+| `GET /api/chat`, `/chat`, `/v1/models` | **302** (rutas no expuestas o redirección a la SPA) |
+
+**Conclusiones:**
+
+- El **LLM es remoto vía DeepSeek** (OpenAI-compatible, modelo `deepseek-flash`),
+  no OpenCode Go. Actualizar privacidad, cuota y plan de respaldo.
+- `/api/status` es una **comprobación de salud barata** (54 ms) para
+  `/ai/status`: no hace falta gastar una consulta al LLM ni abrir el WebSocket.
+- La consola **no exige autenticación** en `/api/config` (expone configuración
+  con secretos enmascarados). El backend debe ser el único cliente y el ESP32
+  no debe publicarse fuera de la red local.
+- El contrato WebSocket **sigue pendiente**: el 302 indica ruta equivocada o
+  requisitos de `Origin`/query/autenticación. El script de sondeo ya captura
+  `Location`, escanea el JS de la SPA en busca de `ws://`, rutas `/api/*` y tipos
+  de mensaje, y envía `Origin`.
 
 ### 5.1 Contrato HTTP
 
@@ -169,6 +215,9 @@ El script:
 
 ## 7. Seguridad (resumen)
 
+- **La API del ESP32 no exige autenticación** (comprobado en `/api/status` y
+  `/api/config`): solo LAN/AP, backend como único cliente y sin *port forward*.
+  Nunca reenviar `/api/config` al navegador.
 - Solo el backend llama al agente; el ESP32 no se expone a Internet.
 - Token de solo lectura para `agent-read`, hasheado y rotable; **sin escritura**.
 - Sin PII en los datos del agente: alias `Conductor {id}`.
