@@ -97,6 +97,14 @@ def prune_old(db: Session) -> int:
     return int(deleted or 0)
 
 
+def last_read_at(db: Session) -> datetime | None:
+    """Último acceso del agente a ``agent-read`` (sin token ni contenido)."""
+    value = db.scalar(
+        select(func.max(AiAudit.created_at)).where(AiAudit.action == "read")
+    )
+    return value if isinstance(value, datetime) else None
+
+
 def count_today(db: Session, *, admin_id: int) -> int:
     today = datetime.now(settings.tz).date()
     start = datetime.combine(today, datetime.min.time(), tzinfo=settings.tz)

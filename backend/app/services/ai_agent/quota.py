@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, datetime, time, timedelta
 
+from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.orm import Session
 
+from app.core.config import settings
 from app.models.ai import AiUsage
 
 
@@ -37,3 +39,24 @@ def consume(db: Session, *, admin_id: int, day: date, limit: int) -> int:
         )
     db.flush()
     return int(value)
+
+
+def usage(db: Session, *, admin_id: int, day: date, limit: int) -> dict:
+    """Uso del día y hora local de reinicio de la cuota."""
+    used = int(
+        db.scalar(
+            select(AiUsage.count).where(
+                AiUsage.admin_id == admin_id,
+                AiUsage.day == day,
+            )
+        )
+        or 0
+    )
+    reset_at = datetime.combine(day + timedelta(days=1), time.min, tzinfo=settings.tz)
+    return {
+        "limit": limit,
+        "used": used,
+        "remaining": max(0, limit - used),
+        "day": day,
+        "reset_at": reset_at,
+    }

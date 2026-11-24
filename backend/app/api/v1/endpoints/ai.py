@@ -5,6 +5,7 @@ limit, cuota diaria, lock distribuido y auditoría (sin contenido del chat).
 """
 
 import time
+from datetime import datetime
 from uuid import UUID
 
 from fastapi import APIRouter, HTTPException, Query, Request, Response, status
@@ -20,9 +21,10 @@ from app.schemas.ai import (
     AiQuickItem,
     AiQuickOut,
     AiStatusOut,
+    AiUsageOut,
 )
 from app.services import ai_agent
-from app.services.ai_agent import audit
+from app.services.ai_agent import audit, quota
 from app.services.ai_agent.conversations import close_conversation
 
 router = APIRouter(prefix="/ai", tags=["Asistente IA"])
@@ -93,12 +95,22 @@ def chat(
             detail=str(exc),
             headers={"Retry-After": "3"},
         ) from exc
+    except ai_agent.AgentCircuitOpenError as exc:
+        _audit(admin.id, "chat", 503, detail="breaker")
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=str(exc),
+            headers={"Retry-After": str(exc.retry_after)},
+        ) from exc
     except ai_agent.AgentTimeoutError as exc:
         _audit(admin.id, "chat", 504, detail="timeout")
         raise HTTPException(
             status_code=status.HTTP_504_GATEWAY_TIMEOUT, detail=str(exc)
         ) from exc
-    except ai_agent.AgentProtocolError as exc:
+    except (
+        ai_agent.AgentProtocolError,
+        ai_agent.AgentSessionNotFoundError,
+    ) as exc:
         _audit(admin.id, "chat", 502, detail="protocol")
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY, detail=str(exc)
@@ -109,12 +121,18 @@ def chat(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(exc)
         ) from exc
 
+    details = []
+    if result.recovered:
+        details.append("session_recovered")
+    if result.truncated:
+        details.append("reply_truncated")
     _audit(
         admin.id,
         "chat",
         200,
         latency_ms=result.latency_ms,
         conversation_id=result.conversation_id,
+        detail=",".join(details) or None,
     )
     return AiChatOut(
         conversation_id=result.conversation_id,
@@ -124,8 +142,23 @@ def chat(
 
 
 @router.get("/status", response_model=AiStatusOut)
-def agent_status(_: CurrentAdmin) -> AiStatusOut:
-    return AiStatusOut(**ai_agent.get_status())
+def agent_status(_: CurrentAdmin, db: DbSession) -> AiStatusOut:
+    payload = ai_agent.get_status()
+    payload["last_agent_read_at"] = audit.last_read_at(db)
+    return AiStatusOut(**payload)
+
+
+@router.get("/usage", response_model=AiUsageOut)
+def usage(admin: CurrentAdmin, db: DbSession) -> AiUsageOut:
+    """Cuota diaria del administrador y hora de reinicio (medianoche local)."""
+    today = datetime.now(settings.tz).date()
+    data = quota.usage(
+        db,
+        admin_id=admin.id,
+        day=today,
+        limit=settings.ai_agent_daily_limit,
+    )
+    return AiUsageOut(**data)
 
 
 @router.get("/metrics", response_model=AiMetricsOut)

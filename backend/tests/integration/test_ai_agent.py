@@ -27,9 +27,15 @@ GATE_LOCK_KEY = 7712028
 class FakeAgent:
     """Servidor HTTP falso con el contrato confirmado de WebIM."""
 
-    def __init__(self, reply: str = "Hola desde el agente", respond: bool = True):
+    def __init__(
+        self,
+        reply: str = "Hola desde el agente",
+        respond: bool = True,
+        boot_id: str = "boot-1",
+    ):
         self.reply = reply
         self.respond = respond
+        self.boot_id = boot_id
         self.sessions: dict[str, list[dict]] = {}
         self.status_calls = 0
 
@@ -38,7 +44,7 @@ class FakeAgent:
         if path == "/api/status":
             self.status_calls += 1
             return httpx.Response(
-                200, json={"boot_id": "boot-1", "wifi_connected": True}
+                200, json={"boot_id": self.boot_id, "wifi_connected": True}
             )
         if path == "/api/webim/sessions" and request.method == "POST":
             session = uuid.uuid4().hex
@@ -46,12 +52,14 @@ class FakeAgent:
             return httpx.Response(201, json={"session": session})
         if path.endswith("/messages") and "/api/webim/sessions/" in path:
             session = path.split("/")[4]
-            return httpx.Response(
-                200, json={"messages": self.sessions.get(session, [])}
-            )
+            if session not in self.sessions:
+                return httpx.Response(404, json={"detail": "session not found"})
+            return httpx.Response(200, json={"messages": self.sessions[session]})
         if path == "/api/webim/send" and request.method == "POST":
             payload = json.loads(request.content)
             session = payload["session"]
+            if session not in self.sessions:
+                return httpx.Response(404, json={"detail": "session not found"})
             messages = self.sessions[session]
             messages.append(
                 {"seq": len(messages) + 1, "role": "user", "text": payload["text"]}
@@ -91,6 +99,11 @@ def ai_settings(monkeypatch):
     monkeypatch.setattr(settings, "ai_agent_poll_interval_seconds", 0.02)
     monkeypatch.setattr(settings, "ai_agent_daily_limit", 100)
     monkeypatch.setattr(settings, "ai_agent_max_message_chars", 500)
+    monkeypatch.setattr(settings, "ai_agent_max_reply_chars", 4000)
+    monkeypatch.setattr(settings, "ai_agent_max_conversations", 5)
+    monkeypatch.setattr(settings, "ai_agent_boot_probe_seconds", 0.2)
+    monkeypatch.setattr(settings, "ai_agent_breaker_failures", 3)
+    monkeypatch.setattr(settings, "ai_agent_breaker_seconds", 30)
     reset_status_cache()
     yield
     reset_status_cache()
@@ -496,3 +509,208 @@ def test_session_ttl_rotates_agent_session(
         assert conversation.last_seq == 2
     assert old_session not in agent.sessions
     assert len(agent.sessions) == 1
+
+
+def test_chat_recovers_when_agent_forgets_session(
+    client, login, csrf_headers, ai_settings, monkeypatch
+):
+    agent = FakeAgent()
+    install_agent(monkeypatch, agent.handler)
+    assert login().status_code == 200
+
+    first = client.post(
+        "/api/v1/ai/chat", json={"message": "Hola"}, headers=csrf_headers()
+    )
+    assert first.status_code == 200
+    conversation_id = first.json()["conversation_id"]
+
+    with SessionLocal() as db:
+        conversation = db.get(AiConversation, uuid.UUID(conversation_id))
+        old_session = conversation.agent_session
+        assert old_session
+
+    # El ESP32 reinició y olvidó la sesión (404 en /messages y /send).
+    agent.sessions.clear()
+
+    second = client.post(
+        "/api/v1/ai/chat",
+        json={"message": "Otra", "conversation_id": conversation_id},
+        headers=csrf_headers(),
+    )
+    assert second.status_code == 200
+    assert second.json()["conversation_id"] == conversation_id
+
+    with SessionLocal() as db:
+        conversation = db.get(AiConversation, uuid.UUID(conversation_id))
+        assert conversation.agent_session != old_session
+        assert conversation.last_seq == 2
+        row = db.scalar(
+            select(AiAudit).where(
+                AiAudit.action == "chat",
+                AiAudit.status == "ok",
+                AiAudit.detail == "session_recovered",
+            )
+        )
+        assert row is not None
+    assert old_session not in agent.sessions
+    assert len(agent.sessions) == 1
+
+
+def test_chat_rotates_session_when_boot_id_changes(
+    client, login, csrf_headers, ai_settings, monkeypatch
+):
+    agent = FakeAgent(boot_id="boot-1")
+    install_agent(monkeypatch, agent.handler)
+    assert login().status_code == 200
+
+    first = client.post(
+        "/api/v1/ai/chat", json={"message": "Hola"}, headers=csrf_headers()
+    )
+    assert first.status_code == 200
+    conversation_id = first.json()["conversation_id"]
+
+    with SessionLocal() as db:
+        conversation = db.get(AiConversation, uuid.UUID(conversation_id))
+        old_session = conversation.agent_session
+        assert conversation.agent_boot_id == "boot-1"
+
+    agent.boot_id = "boot-2"
+    second = client.post(
+        "/api/v1/ai/chat",
+        json={"message": "Otra", "conversation_id": conversation_id},
+        headers=csrf_headers(),
+    )
+    assert second.status_code == 200
+
+    with SessionLocal() as db:
+        conversation = db.get(AiConversation, uuid.UUID(conversation_id))
+        assert conversation.agent_session != old_session
+        assert conversation.agent_boot_id == "boot-2"
+        assert conversation.last_seq == 2
+    assert len(agent.sessions) == 1
+
+
+def test_chat_truncates_and_sanitizes_long_reply(
+    client, login, csrf_headers, ai_settings, monkeypatch
+):
+    monkeypatch.setattr(settings, "ai_agent_max_reply_chars", 100)
+    agent = FakeAgent(reply="\u0001" + "x" * 500)
+    install_agent(monkeypatch, agent.handler)
+    assert login().status_code == 200
+
+    response = client.post(
+        "/api/v1/ai/chat", json={"message": "Hola"}, headers=csrf_headers()
+    )
+    assert response.status_code == 200
+    reply = response.json()["reply"]
+    assert len(reply) == 100
+    assert "\u0001" not in reply
+
+    with SessionLocal() as db:
+        row = db.scalar(select(AiAudit).where(AiAudit.action == "chat"))
+        assert row.detail == "reply_truncated"
+
+
+def test_conversation_limit_closes_oldest(
+    client, login, csrf_headers, ai_settings, monkeypatch
+):
+    monkeypatch.setattr(settings, "ai_agent_max_conversations", 1)
+    agent = FakeAgent()
+    install_agent(monkeypatch, agent.handler)
+    assert login().status_code == 200
+
+    first = client.post(
+        "/api/v1/ai/chat", json={"message": "Hola"}, headers=csrf_headers()
+    )
+    assert first.status_code == 200
+    first_id = first.json()["conversation_id"]
+
+    second = client.post(
+        "/api/v1/ai/chat", json={"message": "Otra"}, headers=csrf_headers()
+    )
+    assert second.status_code == 200
+    second_id = second.json()["conversation_id"]
+    assert second_id != first_id
+
+    with SessionLocal() as db:
+        closed = db.get(AiConversation, uuid.UUID(first_id))
+        active = db.get(AiConversation, uuid.UUID(second_id))
+        assert closed.closed_at is not None
+        assert active.closed_at is None
+        assert len(agent.sessions) == 1
+
+
+def test_circuit_breaker_stops_calling_dead_agent(
+    client, login, csrf_headers, ai_settings, monkeypatch
+):
+    monkeypatch.setattr(settings, "ai_agent_breaker_failures", 2)
+    calls: list[str] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        calls.append(request.url.path)
+        raise httpx.ConnectError("down", request=request)
+
+    install_agent(monkeypatch, handler)
+    assert login().status_code == 200
+
+    first = client.post(
+        "/api/v1/ai/chat", json={"message": "Hola"}, headers=csrf_headers()
+    )
+    assert first.status_code == 503
+    second = client.post(
+        "/api/v1/ai/chat", json={"message": "Otra"}, headers=csrf_headers()
+    )
+    assert second.status_code == 503
+
+    calls_before = len(calls)
+    third = client.post(
+        "/api/v1/ai/chat", json={"message": "Tercera"}, headers=csrf_headers()
+    )
+    assert third.status_code == 503
+    assert int(third.headers["Retry-After"]) >= 1
+    assert len(calls) == calls_before
+
+    with SessionLocal() as db:
+        row = db.scalar(
+            select(AiAudit).where(
+                AiAudit.action == "chat",
+                AiAudit.http_status == 503,
+                AiAudit.detail == "breaker",
+            )
+        )
+        assert row is not None
+
+
+def test_usage_endpoint_reports_quota(
+    client, login, csrf_headers, ai_settings, monkeypatch
+):
+    install_agent(monkeypatch, FakeAgent().handler)
+    assert login().status_code == 200
+    for message in ("Hola", "Otra"):
+        assert (
+            client.post(
+                "/api/v1/ai/chat", json={"message": message}, headers=csrf_headers()
+            ).status_code
+            == 200
+        )
+
+    response = client.get("/api/v1/ai/usage")
+    assert response.status_code == 200
+    body = response.json()
+    assert body["limit"] == 100
+    assert body["used"] == 2
+    assert body["remaining"] == 98
+    assert body["day"]
+    assert "T" in body["reset_at"]
+
+
+def test_usage_requires_admin(client, create_driver):
+    _, email, password = create_driver(email="usage.driver@frostbase.local")
+    assert (
+        client.post(
+            "/api/v1/auth/login",
+            json={"identifier": email, "password": password},
+        ).status_code
+        == 200
+    )
+    assert client.get("/api/v1/ai/usage").status_code == 403

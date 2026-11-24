@@ -90,7 +90,7 @@ def _clean_database():
                 "driver_truck_assignments, login_identities, "
                 "route_delivery_days, stores, trips, trip_orders, trip_logs, "
                 "door_events, truck_threshold_overrides, "
-                "ai_usage, ai_conversations, ai_audit "
+                "ai_usage, ai_conversations, ai_audit, ai_breaker "
                 "RESTART IDENTITY CASCADE"
             )
         )

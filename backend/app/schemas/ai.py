@@ -1,6 +1,6 @@
 """Schemas del asistente IA (A1)."""
 
-from datetime import datetime
+from datetime import date, datetime
 from uuid import UUID
 
 from pydantic import BaseModel, Field
@@ -25,6 +25,15 @@ class AiStatusOut(BaseModel):
     boot_id: str | None = None
     wifi_connected: bool | None = None
     last_ok_at: datetime | None = None
+    last_agent_read_at: datetime | None = None
+
+
+class AiUsageOut(BaseModel):
+    limit: int
+    used: int
+    remaining: int
+    day: date
+    reset_at: datetime
 
 
 class AiConversationClosedOut(BaseModel):

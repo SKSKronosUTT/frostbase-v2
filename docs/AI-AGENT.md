@@ -401,6 +401,29 @@ Header obligatorio: Authorization: Bearer <AI_AGENT_READ_TOKEN>
 - Runbook completo en `docs/ai/OPERACION.md` (red, activación, rotación de token,
   cuotas, memoria, modelo y diagnóstico).
 
+**B1/B2 · Robustez y observabilidad (2026-11-24)**
+
+- **Recuperación tras reinicio**: `ai_conversations.agent_boot_id` (migración
+  `0013`) guarda el `boot_id` del ESP32. Cada consulta sondea `/api/status`
+  (2 s, `AI_AGENT_BOOT_PROBE_SECONDS`) y rota la sesión si cambió. Si el agente
+  responde `404` porque olvidó la sesión, se crea otra y se reintenta **una
+  vez** (`session_recovered`).
+- **Cortacircuito** (`ai_breaker`, compartido entre workers): tras
+  `AI_AGENT_BREAKER_FAILURES` fallos seguidos se responde `503` inmediato con
+  `Retry-After` durante `AI_AGENT_BREAKER_SECONDS`; se cierra solo al expirar o
+  tras una respuesta correcta. El bloqueo ocurre **antes** de consumir cuota.
+- **Límites**: respuestas recortadas y saneadas (`AI_AGENT_MAX_REPLY_CHARS`) y
+  máximo de conversaciones activas por admin (`AI_AGENT_MAX_CONVERSATIONS`);
+  al superarlo se cierra la más antigua. Las conversaciones inactivas se purgan
+  con la retención (`AI_CONVERSATIONS_RETENTION_DAYS`).
+- **Observabilidad**: `GET /ai/usage` (cuota, restante y reinicio local),
+  `last_agent_read_at` en `/ai/status` (salud del *pull*) y auditoría `read`
+  con solo la ruta. La UI muestra cuota, errores, latencia p50/p95 y último
+  pull, deshabilita el envío al agotar la cuota y hace cuenta atrás con
+  `Retry-After` (429/503).
+- **Pruebas**: recuperación de sesión, rotación por `boot_id`, cortacircuito,
+  recorte de respuestas, límite de conversaciones, cuota y retención.
+
 ## 12. Siguientes pasos
 
 1. ~~Sondeo, contrato, backend, UI, pull y respuestas rápidas~~ ✅.
