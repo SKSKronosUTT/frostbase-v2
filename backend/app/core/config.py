@@ -77,17 +77,28 @@ class Settings(BaseSettings):
     ai_agent_connect_timeout_seconds: float = 5.0
     ai_agent_poll_interval_seconds: float = 1.0
     ai_agent_max_message_chars: int = 500
+    ai_agent_max_reply_chars: int = 4000
+    ai_agent_max_conversations: int = 5
     ai_agent_rate_limit: int = 6
     ai_agent_daily_limit: int = 100
     ai_agent_status_cache_seconds: int = 15
+    # Sonda de ``boot_id`` por consulta: detecta reinicios del ESP32 y rota la
+    # sesión antes de fallar. Corta para no añadir latencia perceptible.
+    ai_agent_boot_probe_seconds: float = 2.0
+    # Cortacircuito: tras N fallos seguidos se deja de llamar al agente durante
+    # ``AI_AGENT_BREAKER_SECONDS`` (respuesta 503 inmediata con Retry-After).
+    ai_agent_breaker_failures: int = 3
+    ai_agent_breaker_seconds: int = 30
     ai_agent_read_token: str = ""
     # El agente llama al backend por su IP de LAN; se usa para generar el
     # prompt de operación (scripts.agent_prompt).
     ai_backend_url: str = ""
     # Rotación de la sesión del agente para limitar la memoria acumulada.
     ai_agent_session_ttl_hours: int = 12
-    # Retención de la auditoría (solo metadatos, sin contenido).
+    # Retención de la auditoría (solo metadatos, sin contenido) y de las
+    # conversaciones cerradas o inactivas (tampoco guardan contenido).
     ai_audit_retention_days: int = 90
+    ai_conversations_retention_days: int = 30
 
     osrm_base_url: str = "https://router.project-osrm.org"
     osrm_timeout_seconds: float = 5.0

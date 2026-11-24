@@ -6,13 +6,24 @@ const inFlight = new Set();
 let redirectingToLogin = false;
 
 export class ApiError extends Error {
-  constructor(message, status, payload = null, { cancelled = false } = {}) {
+  constructor(
+    message,
+    status,
+    payload = null,
+    { cancelled = false, retryAfter = null } = {}
+  ) {
     super(message);
     this.name = "ApiError";
     this.status = status;
     this.payload = payload;
     this.cancelled = cancelled;
+    this.retryAfter = retryAfter;
   }
+}
+
+function readRetryAfter(response) {
+  const value = Number(response.headers.get("retry-after"));
+  return Number.isFinite(value) && value > 0 ? value : null;
 }
 
 function emitConnection(online) {
@@ -147,7 +158,9 @@ async function request(
       payload,
       `Error ${response.status} al procesar la solicitud`
     );
-    throw new ApiError(message, response.status, payload);
+    throw new ApiError(message, response.status, payload, {
+      retryAfter: readRetryAfter(response),
+    });
   }
 
   return payload;

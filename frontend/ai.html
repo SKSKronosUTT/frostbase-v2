@@ -49,6 +49,44 @@
           </div>
         </header>
 
+        <section class="ai-usage" aria-label="Uso y salud del asistente">
+          <div class="ai-usage__block">
+            <span class="ai-usage__label">Consultas hoy</span>
+            <strong class="ai-usage__value" id="aiUsageCount">—</strong>
+            <span class="ai-usage__hint" id="aiUsageHint">Cargando…</span>
+            <div
+              class="ai-usage__bar"
+              id="aiUsageBarWrap"
+              role="progressbar"
+              aria-label="Cuota diaria"
+              aria-valuemin="0"
+              aria-valuemax="100"
+              aria-valuenow="0"
+            >
+              <span class="ai-usage__fill" id="aiUsageBar"></span>
+            </div>
+          </div>
+          <div class="ai-usage__block">
+            <span class="ai-usage__label">Errores · 24 h</span>
+            <strong class="ai-usage__value" id="aiUsageErrors">—</strong>
+            <span class="ai-usage__hint" id="aiUsageRequests">—</span>
+          </div>
+          <div class="ai-usage__block">
+            <span class="ai-usage__label">Latencia p50 / p95</span>
+            <strong class="ai-usage__value ai-usage__value--small" id="aiUsageLatency">
+              —
+            </strong>
+            <span class="ai-usage__hint">Consultas al agente</span>
+          </div>
+          <div class="ai-usage__block">
+            <span class="ai-usage__label">Último pull del agente</span>
+            <strong class="ai-usage__value ai-usage__value--small" id="aiUsagePull">
+              —
+            </strong>
+            <span class="ai-usage__hint" id="aiUsageBoot">—</span>
+          </div>
+        </section>
+
         <section class="card ai-card" aria-label="Conversación con el asistente">
           <div class="ai-chat" id="aiChat" aria-live="polite">
             <div class="ai-empty" id="aiEmpty">
@@ -88,6 +126,8 @@
               <span class="muted">El agente está escribiendo…</span>
             </div>
           </div>
+
+          <p class="ai-notice" id="aiNotice" role="status" hidden></p>
 
           <form class="ai-composer" id="aiForm" novalidate>
             <label class="sr-only" for="aiMessage">Mensaje para el asistente</label>

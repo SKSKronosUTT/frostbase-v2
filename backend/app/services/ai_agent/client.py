@@ -32,8 +32,20 @@ class AgentTimeoutError(AgentError):
     pass
 
 
+class AgentSessionNotFoundError(AgentError):
+    """La sesión ya no existe en el agente (p. ej. tras reiniciar el ESP32)."""
+
+
 class AgentProtocolError(AgentError):
     pass
+
+
+class AgentCircuitOpenError(AgentError):
+    """Cortacircuito abierto: no se llama al agente hasta que expire."""
+
+    def __init__(self, message: str, *, retry_after: int = 30) -> None:
+        super().__init__(message)
+        self.retry_after = max(1, int(retry_after))
 
 
 class AgentBusyError(AgentError):
@@ -124,6 +136,10 @@ class WebImClient:
             raise AgentTimeoutError(
                 "El agente no respondió dentro del tiempo esperado"
             ) from exc
+        if response.status_code == 404 and (
+            "/api/webim/sessions/" in path or path == "/api/webim/send"
+        ):
+            raise AgentSessionNotFoundError("La conversación ya no existe en el agente")
         if response.status_code >= 400:
             raise AgentProtocolError(f"El agente respondió {response.status_code}")
         return response

@@ -3,9 +3,11 @@
 from app.services.ai_agent.chat import ChatReply, chat
 from app.services.ai_agent.client import (
     AgentBusyError,
+    AgentCircuitOpenError,
     AgentConfigError,
     AgentDisabledError,
     AgentProtocolError,
+    AgentSessionNotFoundError,
     AgentTimeoutError,
     AgentUnavailableError,
     AgentValidationError,
@@ -25,9 +27,11 @@ from app.services.ai_agent.status import get_status, reset_status_cache
 
 __all__ = [
     "AgentBusyError",
+    "AgentCircuitOpenError",
     "AgentConfigError",
     "AgentDisabledError",
     "AgentProtocolError",
+    "AgentSessionNotFoundError",
     "AgentTimeoutError",
     "AgentUnavailableError",
     "AgentValidationError",

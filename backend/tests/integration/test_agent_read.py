@@ -3,9 +3,11 @@
 from datetime import UTC, datetime, time, timedelta
 
 import pytest
+from sqlalchemy import select
 
 from app.core.config import settings
 from app.core.database import SessionLocal
+from app.models.ai import AiAudit
 from app.models.alert import Alert
 from app.models.door_event import DoorEvent
 from app.models.driver import DriverTruckAssignment
@@ -351,3 +353,21 @@ def test_alerts_today_respects_local_midnight(client, read_token):
     body = response.json()
     assert body["alerts_created_today"] == 1
     assert body["alerts_resolved_today"] == 1
+
+
+def test_agent_read_is_audited_for_pull_health(client, read_token, agent_data, login):
+    response = client.get("/api/v1/agent-read/fleet-summary", headers=HEADERS)
+    assert response.status_code == 200
+
+    with SessionLocal() as db:
+        row = db.scalar(select(AiAudit).where(AiAudit.action == "read"))
+        assert row is not None
+        assert row.admin_id is None
+        assert row.status == "ok"
+        assert "fleet-summary" in (row.detail or "")
+        assert TOKEN not in (row.detail or "")
+
+    assert login().status_code == 200
+    status = client.get("/api/v1/ai/status")
+    assert status.status_code == 200
+    assert status.json()["last_agent_read_at"] is not None

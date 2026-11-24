@@ -18,6 +18,7 @@ from app.schemas.agent_read import (
     AgentTruckStatusOut,
 )
 from app.services import agent_read
+from app.services.ai_agent import audit
 
 router = APIRouter(prefix="/agent-read", tags=["Agente (solo lectura)"])
 
@@ -26,6 +27,13 @@ _limiter = RateLimit("agent-read", limit=60, window_seconds=60)
 
 def _check(request: Request, response: Response) -> None:
     _limiter.check(request, response)
+    # Salud del pull: solo ruta, sin token ni contenido de la respuesta.
+    audit.record_event(
+        admin_id=None,
+        action="read",
+        status="ok",
+        detail=request.url.path,
+    )
 
 
 @router.get("/fleet-summary", response_model=AgentFleetSummaryOut)

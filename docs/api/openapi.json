@@ -875,6 +875,18 @@
             "title": "Enabled",
             "type": "boolean"
           },
+          "last_agent_read_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Agent Read At"
+          },
           "last_ok_at": {
             "anyOf": [
               {
@@ -919,6 +931,41 @@
           "online"
         ],
         "title": "AiStatusOut",
+        "type": "object"
+      },
+      "AiUsageOut": {
+        "properties": {
+          "day": {
+            "format": "date",
+            "title": "Day",
+            "type": "string"
+          },
+          "limit": {
+            "title": "Limit",
+            "type": "integer"
+          },
+          "remaining": {
+            "title": "Remaining",
+            "type": "integer"
+          },
+          "reset_at": {
+            "format": "date-time",
+            "title": "Reset At",
+            "type": "string"
+          },
+          "used": {
+            "title": "Used",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "limit",
+          "used",
+          "remaining",
+          "day",
+          "reset_at"
+        ],
+        "title": "AiUsageOut",
         "type": "object"
       },
       "AlertOut": {
@@ -5704,6 +5751,28 @@
           }
         },
         "summary": "Agent Status",
+        "tags": [
+          "Asistente IA"
+        ]
+      }
+    },
+    "/api/v1/ai/usage": {
+      "get": {
+        "description": "Cuota diaria del administrador y hora de reinicio (medianoche local).",
+        "operationId": "usage_api_v1_ai_usage_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiUsageOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Usage",
         "tags": [
           "Asistente IA"
         ]

@@ -20,9 +20,15 @@ AI_AGENT_READ_TOKEN=<secreto>          # token que usa el agente para leer
 AI_BACKEND_URL=http://192.168.100.16:8050  # IP del backend tal como la ve el ESP32
 AI_AGENT_TIMEOUT_SECONDS=90
 AI_AGENT_SESSION_TTL_HOURS=12          # rotación de memoria del agente
+AI_AGENT_MAX_REPLY_CHARS=4000          # recorte de respuestas largas
+AI_AGENT_MAX_CONVERSATIONS=5           # sesiones activas por administrador
 AI_AGENT_RATE_LIMIT=6                  # por minuto y administrador
 AI_AGENT_DAILY_LIMIT=100               # por administrador y día
+AI_AGENT_BOOT_PROBE_SECONDS=2          # detección de reinicio del ESP32
+AI_AGENT_BREAKER_FAILURES=3            # fallos seguidos antes de abrir
+AI_AGENT_BREAKER_SECONDS=30            # pausa sin llamar al agente
 AI_AUDIT_RETENTION_DAYS=90
+AI_CONVERSATIONS_RETENTION_DAYS=30
 ALLOWED_HOSTS=localhost,127.0.0.1,192.168.100.16
 ```
 
@@ -76,8 +82,17 @@ docker compose exec -T app python -c "from app.core.database import SessionLocal
 - Cada conversación del panel ↔ una sesión en el agente (`ai_conversations`).
 - Tras **12 h** sin uso (`AI_AGENT_SESSION_TTL_HOURS`) la sesión se rota
   automáticamente: se borra la anterior y se crea una nueva.
+- Se guarda el `boot_id` del ESP32 con el que se creó la sesión. Si el
+  dispositivo reinicia, la sesión se rota antes de usarla; si aun así el
+  agente responde `404` (sesión perdida), el backend crea otra y **reintenta
+  una vez** (`detail=session_recovered` en la auditoría).
+- Máximo **5 conversaciones activas** por administrador
+  (`AI_AGENT_MAX_CONVERSATIONS`); al crear otra se cierra la más antigua.
 - «Nueva conversación» cierra la sesión de inmediato.
-- El backend **no guarda el texto** de los mensajes.
+- El backend **no guarda el texto** de los mensajes. Las conversaciones
+  inactivas se purgan a los 30 días (`AI_CONVERSATIONS_RETENTION_DAYS`).
+- Las respuestas se recortan a `AI_AGENT_MAX_REPLY_CHARS` (4000) y se limpian
+  caracteres de control (`detail=reply_truncated` en la auditoría).
 
 ## 7. Modelo y respaldo
 
@@ -94,13 +109,20 @@ El backend no necesita cambios: el contrato WebIM es independiente del modelo.
 
 ## 8. Auditoría y métricas
 
-- **Auditoría** (`ai_audit`): administrador, acción (`chat`/`quick`/`close`),
-  estado, código HTTP, latencia, `conversation_id` y código de error. **Nunca**
-  el contenido del chat.
+- **Auditoría** (`ai_audit`): administrador, acción (`chat`/`quick`/`close`/
+  `read`), estado, código HTTP, latencia, `conversation_id` y código de error.
+  **Nunca** el contenido del chat. En `read` solo se guarda la ruta consultada
+  por el agente (sin token).
 - **Métricas**: `GET /api/v1/ai/metrics?days=7` (solo admin) devuelve peticiones,
   errores, desglose por acción/estado y latencia media/p50/p95.
+- **Cuota**: `GET /api/v1/ai/usage` (solo admin) devuelve `limit`, `used`,
+  `remaining`, `day` y `reset_at` (medianoche local).
+- **Salud del pull**: `GET /api/v1/ai/status` incluye `last_agent_read_at`, la
+  última vez que el agente consultó `agent-read`; si es antiguo, el agente está
+  respondiendo solo con el contexto *push*.
 - **Retención**: el watcher elimina auditoría con más de
-  `AI_AUDIT_RETENTION_DAYS` (90 por defecto) junto con las lecturas/alertas.
+  `AI_AUDIT_RETENTION_DAYS` (90) y conversaciones inactivas con más de
+  `AI_CONVERSATIONS_RETENTION_DAYS` (30), junto con lecturas/alertas.
 
 ## 9. Cuotas y límites
 
@@ -109,6 +131,9 @@ El backend no necesita cambios: el contrato WebIM es independiente del modelo.
 | Mensajes por minuto/admin | 6 (`AI_AGENT_RATE_LIMIT`) |
 | Consultas diarias/admin | 100 (`AI_AGENT_DAILY_LIMIT`) |
 | Mensaje | 500 caracteres (`AI_AGENT_MAX_MESSAGE_CHARS`) |
+| Respuesta del agente | 4000 caracteres (`AI_AGENT_MAX_REPLY_CHARS`) |
+| Conversaciones activas/admin | 5 (`AI_AGENT_MAX_CONVERSATIONS`) |
+| Cortacircuito | 3 fallos → 30 s sin llamar (`AI_AGENT_BREAKER_*`) |
 | Respuestas rápidas | 30/min, sin cuota ni LLM |
 | `agent-read` | 60/min, solo GET |
 
@@ -118,7 +143,9 @@ El backend no necesita cambios: el contrato WebIM es independiente del modelo.
 |---|---|---|
 | `/ai/status` offline | IP/red del ESP32 o firewall | `ping`/`curl` al ESP32 desde el host y el contenedor |
 | `503` al chatear | ESP32 apagado o URL incorrecta | Revisar `AI_AGENT_URL` y `docker compose logs app` |
+| `503` con `Retry-After` | Cortacircuito abierto tras fallos seguidos | Esperar el tiempo indicado; al recuperar el agente se cierra solo |
 | `504` | LLM lento o caído | Reintentar; revisar proveedor en el ESP32 |
+| El chat dice «sesión recuperada» | El ESP32 reinició durante la conversación | Normal: el backend creó otra sesión y reintentó |
 | `401` en `agent-read` | Token distinto (rotado) | Actualizar el prompt del ESP32 |
 | `400` en `agent-read` | `ALLOWED_HOSTS` sin la IP del backend | Añadir la IP y recrear `app` |
 | `429` al chatear | Otra consulta en curso o cuota | Esperar 3 s / 24 h |
