@@ -424,6 +424,23 @@ Header obligatorio: Authorization: Bearer <AI_AGENT_READ_TOKEN>
 - **Pruebas**: recuperación de sesión, rotación por `boot_id`, cortacircuito,
   recorte de respuestas, límite de conversaciones, cuota y retención.
 
+**B3 · Conversaciones e historial (2026-11-24)**
+
+- `GET /ai/conversations` lista las conversaciones **activas** del
+  administrador (metadatos: título, fechas y último `seq`); no expone la sesión
+  del agente.
+- `GET /ai/conversations/{id}/messages?limit=50` lee el historial **del agente**
+  (FrostBase no guarda el texto), elimina el contexto *push* del mensaje del
+  usuario, sanea caracteres de control y recorta cada mensaje. No consume cuota.
+- `PATCH /ai/conversations/{id}` renombra en el agente (`PATCH
+  /api/webim/sessions/{id}`) y guarda una etiqueta local (`ai_conversations.title`,
+  migración `0014`). `DELETE` sigue cerrando la conversación y su sesión.
+- **UI**: panel de conversaciones recientes con abrir, renombrar en línea y
+  eliminar; la conversación activa se guarda en `localStorage` y se restaura al
+  recargar leyendo el historial del agente. Si la sesión ya no existe, se avisa
+  y se limpia el estado local.
+- **Auditoría**: acciones `messages` y `rename` (solo metadatos, sin contenido).
+
 ## 12. Siguientes pasos
 
 1. ~~Sondeo, contrato, backend, UI, pull y respuestas rápidas~~ ✅.

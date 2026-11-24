@@ -46,6 +46,8 @@ class AiConversation(Base):
         ForeignKey("admins.id", ondelete="CASCADE"), nullable=False
     )
     agent_session: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    # Etiqueta local editable por el administrador; nunca se deriva del chat.
+    title: Mapped[str | None] = mapped_column(String(60), nullable=True)
     # ``boot_id`` del ESP32 con el que se creó la sesión: si cambia (reinicio),
     # la sesión deja de ser válida y se rota antes de usarla.
     agent_boot_id: Mapped[str | None] = mapped_column(String(64), nullable=True)

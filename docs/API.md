@@ -191,6 +191,9 @@ ser igual a la actual ni contener el nombre de usuario.
 | `GET` | `/ai/metrics` | Uso agregado del asistente (`days` 1–30; sin contenido) |
 | `GET` | `/ai/quick` | Lista de respuestas rápidas disponibles |
 | `POST` | `/ai/quick/{id}` | Respuesta determinista con datos actuales (sin LLM) |
+| `GET` | `/ai/conversations` | Conversaciones activas (metadatos, sin contenido) |
+| `GET` | `/ai/conversations/{id}/messages` | Historial leído del agente, saneado y paginado |
+| `PATCH` | `/ai/conversations/{id}` | Renombra la conversación en el agente y en local |
 | `DELETE` | `/ai/conversations/{id}` | Cierra la conversación y la sesión del agente |
 
 ### Endpoints de solo lectura para el agente
@@ -215,11 +218,16 @@ ESP32; el navegador nunca lo llama. Si el asistente está deshabilitado
 `503` inalcanzable, `504` timeout. Documentación completa en
 `docs/AI-AGENT.md`.
 
-Cada `chat`, `quick`, `close` y `read` registra metadatos en `ai_audit`
-(administrador, estado, latencia, `conversation_id` o ruta), **nunca el texto**
-del chat ni el token. `GET /ai/metrics` resume peticiones, errores y latencias
-p50/p95; `GET /ai/usage` devuelve la cuota del día y `GET /ai/status` la última
-lectura del agente.
+Cada `chat`, `quick`, `messages`, `rename`, `close` y `read` registra metadatos
+en `ai_audit` (administrador, estado, latencia, `conversation_id` o ruta),
+**nunca el texto** del chat ni el token. `GET /ai/metrics` resume peticiones,
+errores y latencias p50/p95; `GET /ai/usage` devuelve la cuota del día y
+`GET /ai/status` la última lectura del agente.
+
+El historial (`/ai/conversations/{id}/messages`) se obtiene del agente y no
+consume cuota; cada mensaje se sanea y recorta, y el contexto *push* se elimina
+del mensaje del usuario antes de mostrarlo. `PATCH` guarda una etiqueta local de
+máximo 60 caracteres y la propaga al agente.
 
 ---
 

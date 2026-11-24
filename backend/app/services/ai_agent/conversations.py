@@ -11,11 +11,24 @@ from sqlalchemy.orm import Session
 from app.core.config import settings
 from app.models.ai import AiConversation
 from app.services.ai_agent.client import WebImClient
+from app.services.ai_agent.text import CONTROL_CHARS
 from app.utils.time import ensure_utc, utcnow
 
 
 class ConversationNotFoundError(Exception):
     pass
+
+
+class ConversationTitleError(Exception):
+    pass
+
+
+def clean_title(title: str) -> str:
+    """Normaliza la etiqueta local: sin controles, espacios simples y ≤ 60."""
+    cleaned = " ".join(CONTROL_CHARS.sub(" ", title or "").split())
+    if not cleaned:
+        raise ConversationTitleError("El título no puede estar vacío")
+    return cleaned[:60]
 
 
 def _session_expired(conversation: AiConversation) -> bool:
@@ -131,6 +144,66 @@ def get_or_create(
         conversation.agent_boot_id = boot_id
 
     conversation.last_used_at = utcnow()
+    db.add(conversation)
+    db.flush()
+    return conversation
+
+
+def get_conversation(
+    db: Session,
+    *,
+    admin_id: int,
+    conversation_id: uuid.UUID,
+) -> AiConversation:
+    conversation = db.scalar(
+        select(AiConversation).where(
+            AiConversation.id == conversation_id,
+            AiConversation.admin_id == admin_id,
+            AiConversation.closed_at.is_(None),
+        )
+    )
+    if conversation is None:
+        raise ConversationNotFoundError("Conversación no encontrada")
+    return conversation
+
+
+def list_recent(
+    db: Session,
+    *,
+    admin_id: int,
+    limit: int = 20,
+) -> list[AiConversation]:
+    """Conversaciones activas del administrador, de la más reciente a la antigua."""
+    bounded = max(1, min(50, limit))
+    return list(
+        db.scalars(
+            select(AiConversation)
+            .where(
+                AiConversation.admin_id == admin_id,
+                AiConversation.closed_at.is_(None),
+            )
+            .order_by(AiConversation.last_used_at.desc())
+            .limit(bounded)
+        )
+    )
+
+
+def rename_conversation(
+    db: Session,
+    *,
+    admin_id: int,
+    conversation_id: uuid.UUID,
+    title: str,
+    client: WebImClient,
+) -> AiConversation:
+    """Renombra la conversación en el agente y guarda la etiqueta local."""
+    conversation = get_conversation(
+        db, admin_id=admin_id, conversation_id=conversation_id
+    )
+    cleaned = clean_title(title)
+    if conversation.agent_session:
+        client.rename_session(conversation.agent_session, cleaned)
+    conversation.title = cleaned
     db.add(conversation)
     db.flush()
     return conversation

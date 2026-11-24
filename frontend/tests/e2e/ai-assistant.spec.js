@@ -30,9 +30,35 @@ const METRICS_OK = {
   latency_p95_ms: 9000,
 };
 
+const CONVERSATION_A = {
+  id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+  title: null,
+  created_at: "2026-11-24T16:00:00Z",
+  last_used_at: "2026-11-24T16:10:00Z",
+  last_seq: 2,
+};
+
+const CONVERSATION_MESSAGES = {
+  [CONVERSATION_A.id]: [
+    { seq: 1, role: "user", text: "¿Cuántas alertas hay?", truncated: false },
+    {
+      seq: 2,
+      role: "assistant",
+      text: "Hay **3 alertas activas**: temperatura 2 y puerta 1.",
+      truncated: false,
+    },
+  ],
+};
+
 async function mockAgent(
   page,
-  { status = STATUS_ONLINE, chat, usage = USAGE_OK } = {}
+  {
+    status = STATUS_ONLINE,
+    chat,
+    usage = USAGE_OK,
+    conversations = [],
+    messages = CONVERSATION_MESSAGES,
+  } = {}
 ) {
   await page.route("**/api/v1/ai/status", (route) =>
     route.fulfill({
@@ -67,6 +93,83 @@ async function mockAgent(
       }),
     })
   );
+  const historyState = {
+    conversations: conversations.map((item) => ({ ...item })),
+    messages,
+  };
+
+  await page.route(/\/api\/v1\/ai\/conversations(\?.*)?$/, (route) => {
+    if (route.request().method() !== "GET") return route.fallback();
+    return route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify(historyState.conversations),
+    });
+  });
+
+  await page.route(/\/api\/v1\/ai\/conversations\/[^/]+\/messages(\?.*)?$/, (route) => {
+    const path = new URL(route.request().url()).pathname;
+    const id = path.split("/").at(-2);
+    const items = historyState.messages[id];
+    if (!items) {
+      return route.fulfill({
+        status: 404,
+        contentType: "application/json",
+        body: JSON.stringify({ detail: "Conversación no encontrada" }),
+      });
+    }
+    return route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        conversation_id: id,
+        generated_at: "2026-11-24T16:11:00Z",
+        total: items.length,
+        returned: items.length,
+        truncated: false,
+        messages: items,
+      }),
+    });
+  });
+
+  await page.route(/\/api\/v1\/ai\/conversations\/[^/]+$/, (route) => {
+    const method = route.request().method();
+    const path = new URL(route.request().url()).pathname;
+    const id = path.split("/").pop();
+    const index = historyState.conversations.findIndex((item) => item.id === id);
+
+    if (method === "PATCH") {
+      if (index === -1) {
+        return route.fulfill({
+          status: 404,
+          contentType: "application/json",
+          body: JSON.stringify({ detail: "Conversación no encontrada" }),
+        });
+      }
+      const payload = route.request().postDataJSON();
+      historyState.conversations[index] = {
+        ...historyState.conversations[index],
+        title: payload.title,
+      };
+      return route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(historyState.conversations[index]),
+      });
+    }
+
+    if (method === "DELETE") {
+      if (index !== -1) historyState.conversations.splice(index, 1);
+      return route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ conversation_id: id, closed: true }),
+      });
+    }
+
+    return route.fallback();
+  });
+
   await page.route("**/api/v1/ai/chat", (route) => {
     if (chat?.error) {
       return route.fulfill({
@@ -149,4 +252,53 @@ test("asistente: cuota agotada deshabilita el envío", async ({ page }) => {
   await expect(page.locator("#aiUsageHint")).toHaveText("Sin consultas disponibles");
   await expect(page.getByText(/Se agotó la cuota diaria/)).toBeVisible();
   await expect(page.locator("#aiSend")).toBeDisabled();
+});
+
+test("historial: abre una conversación y la restaura al recargar", async ({ page }) => {
+  await mockAgent(page, { conversations: [CONVERSATION_A] });
+  await page.goto("/ai.html");
+
+  const openButton = page.getByRole("button", {
+    name: /Abrir Conversación del/,
+  });
+  await expect(openButton).toBeVisible();
+  await openButton.click();
+
+  await expect(page.getByText("¿Cuántas alertas hay?")).toBeVisible();
+  await expect(page.getByText("3 alertas activas")).toBeVisible();
+  await expect(page.locator("#aiEmpty")).toBeHidden();
+
+  await page.reload();
+  await expect(page.getByText("¿Cuántas alertas hay?")).toBeVisible();
+  await expect(page.locator("#aiEmpty")).toBeHidden();
+});
+
+test("historial: renombra una conversación", async ({ page }) => {
+  await mockAgent(page, { conversations: [CONVERSATION_A] });
+  await page.goto("/ai.html");
+
+  await page.getByRole("button", { name: "Renombrar conversación" }).click();
+  const input = page.getByRole("textbox", {
+    name: "Nuevo título de la conversación",
+  });
+  await input.fill("Ruta norte");
+  await page.getByRole("button", { name: "Guardar título" }).click();
+
+  await expect(page.getByRole("button", { name: "Abrir Ruta norte" })).toBeVisible();
+});
+
+test("historial: elimina una conversación", async ({ page }) => {
+  await mockAgent(page, { conversations: [CONVERSATION_A] });
+  page.on("dialog", (dialog) => dialog.accept());
+  await page.goto("/ai.html");
+
+  await expect(
+    page.getByRole("button", { name: /Abrir Conversación del/ })
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Eliminar conversación" }).click();
+
+  await expect(page.getByText("Sin conversaciones activas.")).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: /Abrir Conversación del/ })
+  ).toHaveCount(0);
 });

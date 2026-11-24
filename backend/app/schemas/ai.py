@@ -3,7 +3,7 @@
 from datetime import date, datetime
 from uuid import UUID
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class AiChatIn(BaseModel):
@@ -39,6 +39,36 @@ class AiUsageOut(BaseModel):
 class AiConversationClosedOut(BaseModel):
     conversation_id: UUID
     closed: bool = True
+
+
+class AiConversationOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    title: str | None = None
+    created_at: datetime
+    last_used_at: datetime
+    last_seq: int
+
+
+class AiConversationRenameIn(BaseModel):
+    title: str = Field(min_length=1, max_length=60)
+
+
+class AiConversationMessageOut(BaseModel):
+    seq: int
+    role: str
+    text: str
+    truncated: bool = False
+
+
+class AiConversationMessagesOut(BaseModel):
+    conversation_id: UUID
+    generated_at: datetime
+    total: int
+    returned: int
+    truncated: bool = False
+    messages: list[AiConversationMessageOut]
 
 
 class AiQuickItem(BaseModel):

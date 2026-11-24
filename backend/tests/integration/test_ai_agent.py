@@ -37,6 +37,7 @@ class FakeAgent:
         self.respond = respond
         self.boot_id = boot_id
         self.sessions: dict[str, list[dict]] = {}
+        self.titles: dict[str, str] = {}
         self.status_calls = 0
 
     def handler(self, request: httpx.Request) -> httpx.Response:
@@ -73,9 +74,19 @@ class FakeAgent:
                     }
                 )
             return httpx.Response(202, json={"run_id": 1, "state": "queued"})
+        if request.method == "PATCH" and path.startswith("/api/webim/sessions/"):
+            session = path.split("/")[4]
+            if session not in self.sessions:
+                return httpx.Response(404, json={"detail": "session not found"})
+            payload = json.loads(request.content)
+            self.titles[session] = payload.get("title")
+            return httpx.Response(
+                200, json={"session": session, "title": self.titles[session]}
+            )
         if request.method == "DELETE":
             session = path.rsplit("/", 1)[-1]
             self.sessions.pop(session, None)
+            self.titles.pop(session, None)
             return httpx.Response(200)
         return httpx.Response(404)
 
@@ -714,3 +725,179 @@ def test_usage_requires_admin(client, create_driver):
         == 200
     )
     assert client.get("/api/v1/ai/usage").status_code == 403
+
+
+def test_conversations_list_and_messages(
+    client, login, csrf_headers, ai_settings, monkeypatch
+):
+    agent = FakeAgent()
+    install_agent(monkeypatch, agent.handler)
+    assert login().status_code == 200
+
+    first = client.post(
+        "/api/v1/ai/chat", json={"message": "Hola"}, headers=csrf_headers()
+    )
+    assert first.status_code == 200
+    conversation_id = first.json()["conversation_id"]
+    second = client.post(
+        "/api/v1/ai/chat",
+        json={"message": "Otra", "conversation_id": conversation_id},
+        headers=csrf_headers(),
+    )
+    assert second.status_code == 200
+
+    listed = client.get("/api/v1/ai/conversations")
+    assert listed.status_code == 200
+    items = listed.json()
+    assert len(items) == 1
+    assert items[0]["id"] == conversation_id
+    assert items[0]["title"] is None
+    assert items[0]["last_seq"] == 4
+    assert "agent_session" not in items[0]
+
+    history = client.get(
+        f"/api/v1/ai/conversations/{conversation_id}/messages",
+        params={"limit": 10},
+    )
+    assert history.status_code == 200
+    body = history.json()
+    assert body["total"] == 4
+    assert body["returned"] == 4
+    assert body["truncated"] is False
+    assert [item["role"] for item in body["messages"]] == [
+        "user",
+        "assistant",
+        "user",
+        "assistant",
+    ]
+    assert body["messages"][0]["text"] == "Hola"
+    assert body["messages"][1]["text"] == "Hola desde el agente"
+
+    with SessionLocal() as db:
+        assert db.scalar(select(AiUsage)).count == 2
+
+
+def test_conversation_history_is_sanitized_and_limited(
+    client, login, csrf_headers, ai_settings, monkeypatch
+):
+    agent = FakeAgent()
+    install_agent(monkeypatch, agent.handler)
+    assert login().status_code == 200
+    created = client.post(
+        "/api/v1/ai/chat", json={"message": "Hola"}, headers=csrf_headers()
+    )
+    conversation_id = created.json()["conversation_id"]
+
+    with SessionLocal() as db:
+        conversation = db.get(AiConversation, uuid.UUID(conversation_id))
+        session = conversation.agent_session
+    agent.sessions[session].append(
+        {"seq": 3, "role": "assistant", "text": "\u0001" + "y" * 200}
+    )
+
+    monkeypatch.setattr(settings, "ai_agent_max_reply_chars", 50)
+    history = client.get(
+        f"/api/v1/ai/conversations/{conversation_id}/messages",
+        params={"limit": 2},
+    )
+    assert history.status_code == 200
+    body = history.json()
+    assert body["total"] == 3
+    assert body["returned"] == 2
+    assert body["truncated"] is True
+    last = body["messages"][-1]
+    assert len(last["text"]) == 50
+    assert last["truncated"] is True
+    assert "\u0001" not in last["text"]
+
+
+def test_rename_conversation(client, login, csrf_headers, ai_settings, monkeypatch):
+    agent = FakeAgent()
+    install_agent(monkeypatch, agent.handler)
+    assert login().status_code == 200
+    created = client.post(
+        "/api/v1/ai/chat", json={"message": "Hola"}, headers=csrf_headers()
+    )
+    conversation_id = created.json()["conversation_id"]
+
+    renamed = client.patch(
+        f"/api/v1/ai/conversations/{conversation_id}",
+        json={"title": "  Ruta   norte "},
+        headers=csrf_headers(),
+    )
+    assert renamed.status_code == 200
+    assert renamed.json()["title"] == "Ruta norte"
+
+    with SessionLocal() as db:
+        conversation = db.get(AiConversation, uuid.UUID(conversation_id))
+        assert conversation.title == "Ruta norte"
+        assert agent.titles[conversation.agent_session] == "Ruta norte"
+
+    listed = client.get("/api/v1/ai/conversations").json()
+    assert listed[0]["title"] == "Ruta norte"
+
+    blank = client.patch(
+        f"/api/v1/ai/conversations/{conversation_id}",
+        json={"title": "   "},
+        headers=csrf_headers(),
+    )
+    assert blank.status_code == 422
+
+
+def test_messages_returns_404_when_agent_lost_session(
+    client, login, csrf_headers, ai_settings, monkeypatch
+):
+    agent = FakeAgent()
+    install_agent(monkeypatch, agent.handler)
+    assert login().status_code == 200
+    created = client.post(
+        "/api/v1/ai/chat", json={"message": "Hola"}, headers=csrf_headers()
+    )
+    conversation_id = created.json()["conversation_id"]
+    agent.sessions.clear()
+
+    response = client.get(f"/api/v1/ai/conversations/{conversation_id}/messages")
+    assert response.status_code == 404
+    assert "sesión" in response.json()["detail"]
+
+    with SessionLocal() as db:
+        row = db.scalar(select(AiAudit).where(AiAudit.action == "messages"))
+        assert row is not None
+        assert row.http_status == 404
+
+
+def test_messages_is_free_and_requires_admin(
+    client, login, create_driver, csrf_headers, ai_settings, monkeypatch
+):
+    agent = FakeAgent()
+    install_agent(monkeypatch, agent.handler)
+    assert login().status_code == 200
+    created = client.post(
+        "/api/v1/ai/chat", json={"message": "Hola"}, headers=csrf_headers()
+    )
+    conversation_id = created.json()["conversation_id"]
+
+    for _ in range(2):
+        assert (
+            client.get(
+                f"/api/v1/ai/conversations/{conversation_id}/messages"
+            ).status_code
+            == 200
+        )
+    with SessionLocal() as db:
+        assert db.scalar(select(AiUsage)).count == 1
+
+    client.post("/api/v1/auth/logout", headers=csrf_headers())
+    _, email, password = create_driver(email="history.driver@frostbase.local")
+    assert (
+        client.post(
+            "/api/v1/auth/login",
+            json={"identifier": email, "password": password},
+        ).status_code
+        == 200
+    )
+    assert client.get("/api/v1/ai/conversations").status_code == 403
+    assert (
+        client.get(f"/api/v1/ai/conversations/{conversation_id}/messages").status_code
+        == 403
+    )

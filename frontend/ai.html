@@ -87,71 +87,107 @@
           </div>
         </section>
 
-        <section class="card ai-card" aria-label="Conversación con el asistente">
-          <div class="ai-chat" id="aiChat" aria-live="polite">
-            <div class="ai-empty" id="aiEmpty">
-              <div class="ai-empty__icon"><i class="fa-solid fa-microchip"></i></div>
-              <h2>¿Qué quieres consultar?</h2>
-              <p class="muted">
-                El asistente responde con los datos actuales del panel. Puede tardar
-                unos segundos.
-              </p>
-              <div class="ai-suggestions">
-                <button class="ai-suggestion" type="button" data-quick="fleet-summary">
-                  Resumen de la flota
-                </button>
-                <button class="ai-suggestion" type="button" data-quick="active-alerts">
-                  Alertas activas
-                </button>
-                <button class="ai-suggestion" type="button" data-quick="today-alerts">
-                  Alertas de hoy
-                </button>
-                <button class="ai-suggestion" type="button" data-quick="active-trips">
-                  Viajes en curso
-                </button>
-                <button
-                  class="ai-suggestion"
-                  type="button"
-                  data-quick="critical-containers"
-                >
-                  Contenedores críticos
-                </button>
-                <button class="ai-suggestion" type="button" data-quick="today-routes">
-                  Rutas de hoy
-                </button>
+        <div class="ai-layout">
+          <section class="card ai-card" aria-label="Conversación con el asistente">
+            <div class="ai-chat" id="aiChat" aria-live="polite">
+              <div class="ai-empty" id="aiEmpty">
+                <div class="ai-empty__icon"><i class="fa-solid fa-microchip"></i></div>
+                <h2>¿Qué quieres consultar?</h2>
+                <p class="muted">
+                  El asistente responde con los datos actuales del panel. Puede tardar
+                  unos segundos.
+                </p>
+                <div class="ai-suggestions">
+                  <button
+                    class="ai-suggestion"
+                    type="button"
+                    data-quick="fleet-summary"
+                  >
+                    Resumen de la flota
+                  </button>
+                  <button
+                    class="ai-suggestion"
+                    type="button"
+                    data-quick="active-alerts"
+                  >
+                    Alertas activas
+                  </button>
+                  <button class="ai-suggestion" type="button" data-quick="today-alerts">
+                    Alertas de hoy
+                  </button>
+                  <button class="ai-suggestion" type="button" data-quick="active-trips">
+                    Viajes en curso
+                  </button>
+                  <button
+                    class="ai-suggestion"
+                    type="button"
+                    data-quick="critical-containers"
+                  >
+                    Contenedores críticos
+                  </button>
+                  <button class="ai-suggestion" type="button" data-quick="today-routes">
+                    Rutas de hoy
+                  </button>
+                </div>
+              </div>
+              <div class="ai-typing" id="aiTyping" hidden>
+                <span></span><span></span><span></span>
+                <span class="muted" id="aiTypingText">El agente está escribiendo…</span>
               </div>
             </div>
-            <div class="ai-typing" id="aiTyping" hidden>
-              <span></span><span></span><span></span>
-              <span class="muted">El agente está escribiendo…</span>
-            </div>
-          </div>
 
-          <p class="ai-notice" id="aiNotice" role="status" hidden></p>
+            <p class="ai-notice" id="aiNotice" role="status" hidden></p>
 
-          <form class="ai-composer" id="aiForm" novalidate>
-            <label class="sr-only" for="aiMessage">Mensaje para el asistente</label>
-            <textarea
-              class="ai-composer__input"
-              id="aiMessage"
-              rows="2"
-              maxlength="500"
-              placeholder="Escribe tu pregunta… (máx. 500 caracteres)"
-              required
-            ></textarea>
-            <div class="ai-composer__actions">
-              <span class="ai-composer__count" id="aiCount">0/500</span>
-              <button class="btn btn--primary" id="aiSend" type="submit">
-                <i class="fa-solid fa-arrow-right"></i> Enviar
+            <form class="ai-composer" id="aiForm" novalidate>
+              <label class="sr-only" for="aiMessage">Mensaje para el asistente</label>
+              <textarea
+                class="ai-composer__input"
+                id="aiMessage"
+                rows="2"
+                maxlength="500"
+                placeholder="Escribe tu pregunta… (máx. 500 caracteres)"
+                required
+              ></textarea>
+              <div class="ai-composer__actions">
+                <span class="ai-composer__count" id="aiCount">0/500</span>
+                <button class="btn btn--primary" id="aiSend" type="submit">
+                  <i class="fa-solid fa-arrow-right"></i> Enviar
+                </button>
+              </div>
+            </form>
+            <p class="ai-privacy">
+              <i class="fa-solid fa-circle-info"></i>
+              Las consultas se procesan en un modelo externo (DeepSeek) a través del
+              agente local. El historial se lee del agente: FrostBase no guarda el
+              texto.
+            </p>
+          </section>
+
+          <aside class="card ai-history" aria-label="Conversaciones recientes">
+            <div class="ai-history__head">
+              <div>
+                <span class="ai-usage__label">Memoria del agente</span>
+                <h2>Conversaciones</h2>
+              </div>
+              <button
+                class="btn btn--ghost btn--sm"
+                id="refreshConversations"
+                type="button"
+                aria-label="Actualizar conversaciones"
+                title="Actualizar conversaciones"
+              >
+                <i class="fa-solid fa-rotate"></i>
               </button>
             </div>
-          </form>
-          <p class="ai-privacy">
-            <i class="fa-solid fa-circle-info"></i>
-            Las consultas se procesan en un modelo externo (DeepSeek) a través del
-            agente local. El texto del chat no se guarda en el servidor.
-          </p>
-        </section>
+            <div class="ai-history__list" id="aiConversationList" role="list"></div>
+            <p class="ai-history__empty" id="aiConversationEmpty">
+              Sin conversaciones activas.
+            </p>
+            <p class="ai-history__note">
+              El historial se lee del agente; se elimina al borrar la conversación.
+            </p>
+          </aside>
+        </div>
       </main>
     </div>
     <script type="module" src="js/pages/ai.js"></script>
