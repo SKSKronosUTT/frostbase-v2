@@ -390,7 +390,7 @@ pytest -q
 pytest --cov=app --cov-report=term-missing
 ```
 
-Resultado esperado: **204 passed** y cobertura **≥ 70 %** (actual: 85 %). Para limpiar la base de pruebas:
+Resultado esperado: **209 passed** y cobertura **≥ 70 %** (actual: 85 %). Para limpiar la base de pruebas:
 
 ```bash
 docker compose -f compose.test.yml down

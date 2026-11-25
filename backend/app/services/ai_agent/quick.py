@@ -15,8 +15,10 @@ from app.models.alert import Alert
 from app.models.route import Route, RouteDeliveryDay
 from app.models.trip import Trip, TripOrder
 from app.models.truck import Truck
+from app.schemas.agent_read import AgentTruckStatusOut
 from app.services import agent_read
 from app.services.ai_agent.context import collect_snapshot
+from app.services.ai_agent.text import sanitize_text
 from app.services.route_links import today_weekday
 from app.utils.time import ensure_utc, utcnow
 
@@ -27,10 +29,24 @@ QUICK_PROMPTS: dict[str, str] = {
     "active-trips": "Viajes en curso",
     "critical-containers": "Contenedores críticos",
     "today-routes": "Rutas de hoy",
+    "truck-status": "Estado del camión",
+    "truck-thresholds": "Umbrales del camión",
+    "trips-history": "Historial de viajes",
+    "alerts-by-type": "Alertas por tipo",
 }
+
+TRUCK_QUICKS = {"truck-status", "truck-thresholds"}
 
 
 class UnknownQuickError(Exception):
+    pass
+
+
+class QuickTruckRequiredError(Exception):
+    pass
+
+
+class QuickTruckNotFoundError(Exception):
     pass
 
 
@@ -128,6 +144,142 @@ def _today_alerts(db: Session) -> str:
             plate = item.truck_plate or "sin camión"
             hour = item.started_at[11:16]
             lines.append(f"- {plate} · {item.alert_type} · {item.status} · {hour}")
+    lines.append(_stamp())
+    return "\n".join(lines)
+
+
+def _age_minutes(value: datetime | None) -> int:
+    moment = ensure_utc(value) or utcnow()
+    return max(0, int((utcnow() - moment).total_seconds() // 60))
+
+
+def _status_label(status: str) -> str:
+    return {
+        "ok": "ok",
+        "out_of_range": "fuera de rango",
+        "door_open": "puerta abierta",
+        "no_signal": "sin señal",
+        "no_data": "sin datos",
+    }.get(status, status)
+
+
+def _truck_status_text(status: AgentTruckStatusOut) -> str:
+    lines = [f"Camión {status.plate} · {_status_label(status.status)}"]
+    reading = []
+    if status.temperature is not None:
+        reading.append(f"{status.temperature:.1f} °C")
+    if status.humidity is not None:
+        reading.append(f"{status.humidity:.1f} %")
+    if reading:
+        age = status.age_minutes or 0
+        lines.append(f"Lectura: {' / '.join(reading)} · hace {age} min")
+    else:
+        lines.append("Sin lecturas recientes.")
+    if status.door_open is not None:
+        lines.append(f"Puerta: {'abierta' if status.door_open else 'cerrada'}")
+    lines.append(
+        f"Umbrales: {status.temperature_min:g} a {status.temperature_max:g} °C · "
+        f"{status.humidity_min:g} a {status.humidity_max:g} %"
+    )
+    alerts = ", ".join(status.active_alerts) if status.active_alerts else "ninguna"
+    lines.append(f"Alertas activas: {alerts}")
+    lines.append(_stamp())
+    return "\n".join(lines)
+
+
+def _truck_thresholds_text(status: AgentTruckStatusOut) -> str:
+    lines = [
+        f"Umbrales de {status.plate} (valores efectivos):",
+        f"- Temperatura: {status.temperature_min:g} a {status.temperature_max:g} °C",
+        f"- Humedad: {status.humidity_min:g} a {status.humidity_max:g} %",
+        f"- Estado actual: {_status_label(status.status)}",
+    ]
+    alerts = ", ".join(status.active_alerts) if status.active_alerts else "ninguna"
+    lines.append(f"- Alertas activas: {alerts}")
+    lines.append(_stamp())
+    return "\n".join(lines)
+
+
+def _trips_history(db: Session) -> str:
+    trips = list(
+        db.scalars(
+            select(Trip)
+            .where(Trip.state == "completed")
+            .order_by(Trip.ended_at.desc())
+            .limit(5)
+        )
+    )
+    if not trips:
+        return f"No hay viajes completados recientes.\n{_stamp()}"
+    plates = {
+        truck.id: truck.plate
+        for truck in db.scalars(
+            select(Truck).where(Truck.id.in_({trip.truck_id for trip in trips}))
+        )
+    }
+    lines = [f"Historial reciente ({len(trips)} viajes completados):"]
+    for trip in trips:
+        orders = list(trip.orders)
+        failed = [order for order in orders if order.state == "failed"]
+        delivered = sum(1 for order in orders if order.state == "delivered")
+        pending = sum(
+            1 for order in orders if order.state in ("pending", "in_delivery")
+        )
+        when = ensure_utc(trip.ended_at or trip.started_at) or utcnow()
+        route_name = sanitize_text(trip.route.name, limit=60)[0] if trip.route else ""
+        suffix = f" · {route_name}" if route_name else ""
+        lines.append(
+            f"- {when.astimezone(settings.tz):%Y-%m-%d %H:%M} · "
+            f"{plates.get(trip.truck_id, 'sin camión')} · "
+            f"Conductor {trip.driver_id} · {delivered}/{len(orders)} entregadas, "
+            f"{len(failed)} fallidas, {pending} pendientes{suffix}"
+        )
+        for order in failed[:3]:
+            reason = " ".join((order.failure_reason or "").splitlines())
+            reason = sanitize_text(reason, limit=120)[0] or "sin motivo"
+            lines.append(f"  - Parada {order.order_index + 1}: {reason}")
+        if len(failed) > 3:
+            lines.append(f"  - ... y {len(failed) - 3} fallos más")
+    lines.append(_stamp())
+    return "\n".join(lines)
+
+
+def _alerts_by_type(db: Session) -> str:
+    rows = list(
+        db.execute(
+            select(
+                Alert.alert_type,
+                Alert.truck_id,
+                Alert.started_at,
+                Alert.value,
+            )
+            .where(Alert.status == "activa")
+            .order_by(Alert.alert_type, Alert.started_at.desc())
+        ).all()
+    )
+    if not rows:
+        return f"No hay alertas activas.\n{_stamp()}"
+    counts: dict[str, int] = {}
+    latest: dict[str, tuple[int | None, datetime, float | None]] = {}
+    for row in rows:
+        counts[row.alert_type] = counts.get(row.alert_type, 0) + 1
+        latest.setdefault(row.alert_type, (row.truck_id, row.started_at, row.value))
+    truck_ids = {truck_id for truck_id, _, _ in latest.values() if truck_id}
+    plates = {
+        truck.id: truck.plate
+        for truck in db.scalars(select(Truck).where(Truck.id.in_(truck_ids)))
+    }
+    lines = [f"Alertas activas por tipo ({sum(counts.values())}):"]
+    for alert_type, count in sorted(
+        counts.items(), key=lambda item: (-item[1], item[0])
+    ):
+        truck_id, started_at, value = latest[alert_type]
+        plate = plates.get(truck_id) if truck_id else "sin camión"
+        value_text = f" · {value:g}" if value is not None else ""
+        lines.append(
+            f"- {alert_type}: {count} · última {plate} "
+            f"hace {_age_minutes(started_at)} min{value_text}"
+        )
     lines.append(_stamp())
     return "\n".join(lines)
 
@@ -231,11 +383,27 @@ def _today_routes(db: Session) -> str:
     return "\n".join(lines)
 
 
-def quick_answer(db: Session, key: str) -> tuple[str, str]:
+def quick_answer(
+    db: Session, key: str, *, truck_id: int | None = None
+) -> tuple[str, str]:
     """Devuelve ``(título, texto)`` para una sugerencia rápida."""
     title = QUICK_PROMPTS.get(key)
     if title is None:
         raise UnknownQuickError("Sugerencia no encontrada")
+
+    if key in TRUCK_QUICKS:
+        if truck_id is None:
+            raise QuickTruckRequiredError("Selecciona un camión")
+        status = agent_read.truck_status(db, truck_id)
+        if status is None:
+            raise QuickTruckNotFoundError("Camión no encontrado")
+        text = (
+            _truck_status_text(status)
+            if key == "truck-status"
+            else _truck_thresholds_text(status)
+        )
+        return title, text
+
     builders = {
         "fleet-summary": _fleet_summary,
         "active-alerts": _active_alerts,
@@ -243,5 +411,7 @@ def quick_answer(db: Session, key: str) -> tuple[str, str]:
         "active-trips": _active_trips,
         "critical-containers": _critical_containers,
         "today-routes": _today_routes,
+        "trips-history": _trips_history,
+        "alerts-by-type": _alerts_by_type,
     }
     return title, builders[key](db)

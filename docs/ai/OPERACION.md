@@ -140,7 +140,7 @@ El backend no necesita cambios: el contrato WebIM es independiente del modelo.
 | Respuesta del agente | 4000 caracteres (`AI_AGENT_MAX_REPLY_CHARS`) |
 | Conversaciones activas/admin | 5 (`AI_AGENT_MAX_CONVERSATIONS`) |
 | Cortacircuito | 3 fallos → 30 s sin llamar (`AI_AGENT_BREAKER_*`) |
-| Respuestas rápidas | 30/min, sin cuota ni LLM |
+| Respuestas rápidas | 30/min, sin cuota ni LLM (10 respuestas; estado/umbrales por camión) |
 | `agent-read` | 60/min, solo GET |
 
 ## 10. Diagnóstico rápido

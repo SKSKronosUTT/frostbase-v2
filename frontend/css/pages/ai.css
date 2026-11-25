@@ -299,6 +299,31 @@
   background: var(--electric-soft);
 }
 
+.ai-suggestions--truck {
+  margin-top: 10px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.ai-truck-picker {
+  display: inline-flex;
+}
+
+.ai-truck-picker__select {
+  max-width: 190px;
+  padding: 8px 10px;
+  border: 2px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.82rem;
+}
+
+.ai-truck-picker__select:focus-visible {
+  outline: none;
+  border-color: var(--accent-mid);
+}
+
 /* Mensajes */
 
 .ai-message {
@@ -559,6 +584,12 @@
   .ai-suggestions {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .ai-truck-picker,
+  .ai-truck-picker__select {
+    width: 100%;
+    max-width: none;
   }
 
   .ai-status {

@@ -9,6 +9,7 @@ const STORAGE_KEY = "frostbase.ai.conversation";
 const state = {
   conversationId: null,
   conversations: [],
+  trucks: [],
   renamingId: null,
   busy: false,
   online: false,
@@ -43,6 +44,8 @@ const usageBoot = qs("#aiUsageBoot");
 const conversationList = qs("#aiConversationList");
 const conversationEmpty = qs("#aiConversationEmpty");
 const refreshConversationsButton = qs("#refreshConversations");
+const truckSelect = qs("#aiTruckSelect");
+const truckQuickButtons = document.querySelectorAll("[data-quick-truck]");
 
 // ===== Render seguro (sin innerHTML con datos) =====
 
@@ -223,6 +226,39 @@ function renderConversations() {
     }
 
     conversationList.appendChild(item);
+  }
+}
+
+async function loadTruckOptions() {
+  try {
+    const options = await api.get("/trucks/options");
+    state.trucks = Array.isArray(options) ? options : [];
+    truckSelect.replaceChildren();
+    const placeholder = document.createElement("option");
+    placeholder.value = "";
+    placeholder.textContent = state.trucks.length
+      ? "Selecciona un camión…"
+      : "Sin camiones";
+    truckSelect.appendChild(placeholder);
+    for (const truck of state.trucks) {
+      const option = document.createElement("option");
+      option.value = String(truck.id);
+      option.textContent = truck.label;
+      truckSelect.appendChild(option);
+    }
+    if (state.trucks.length === 1) {
+      truckSelect.value = String(state.trucks[0].id);
+    }
+    const enabled = state.trucks.length > 0;
+    truckSelect.disabled = !enabled;
+    truckQuickButtons.forEach((button) => {
+      button.disabled = !enabled;
+    });
+  } catch {
+    truckSelect.disabled = true;
+    truckQuickButtons.forEach((button) => {
+      button.disabled = true;
+    });
   }
 }
 
@@ -578,11 +614,12 @@ async function resetConversation() {
   input.focus();
 }
 
-async function runQuick(quickId) {
+async function runQuick(quickId, truckId = null) {
   if (state.busy) return;
   setBusy(true);
   try {
-    const quick = await api.post(`/ai/quick/${quickId}`);
+    const query = truckId ? `?truck_id=${encodeURIComponent(truckId)}` : "";
+    const quick = await api.post(`/ai/quick/${quickId}${query}`);
     appendMessage("user", quick.title || "Consulta rápida");
     appendMessage("assistant", quick.text || "(sin datos)", {
       label: "Datos del sistema",
@@ -611,6 +648,20 @@ document.querySelectorAll("[data-quick]").forEach((button) => {
   button.addEventListener("click", () => runQuick(button.dataset.quick || ""));
 });
 
+truckQuickButtons.forEach((button) => {
+  button.addEventListener("click", () => {
+    const truckId = truckSelect.value;
+    if (!truckId) {
+      appendMessage("system", "Selecciona un camión para esta consulta.", {
+        error: true,
+      });
+      truckSelect.focus();
+      return;
+    }
+    runQuick(button.dataset.quickTruck || "", truckId);
+  });
+});
+
 newConversation.addEventListener("click", resetConversation);
 refreshConversationsButton.addEventListener("click", refreshConversations);
 
@@ -618,7 +669,12 @@ async function init() {
   await initProtectedPage();
   updateCounter();
   input.focus();
-  await Promise.all([refreshStatus(), refreshUsage(), refreshConversations()]);
+  await Promise.all([
+    refreshStatus(),
+    refreshUsage(),
+    refreshConversations(),
+    loadTruckOptions(),
+  ]);
   await restoreConversation();
   setupPolling(() => {
     refreshStatus();

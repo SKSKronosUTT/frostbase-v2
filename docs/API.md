@@ -189,8 +189,8 @@ ser igual a la actual ni contener el nombre de usuario.
 | `GET` | `/ai/status` | Estado del agente (cacheado 15 s) e `last_agent_read_at` |
 | `GET` | `/ai/usage` | Cuota diaria: `limit`, `used`, `remaining`, `reset_at` |
 | `GET` | `/ai/metrics` | Uso agregado del asistente (`days` 1–30; sin contenido) |
-| `GET` | `/ai/quick` | Lista de respuestas rápidas disponibles |
-| `POST` | `/ai/quick/{id}` | Respuesta determinista con datos actuales (sin LLM) |
+| `GET` | `/ai/quick` | Lista de respuestas rápidas disponibles (10) |
+| `POST` | `/ai/quick/{id}` | Respuesta determinista con datos actuales (sin LLM); acepta `?truck_id` en `truck-status`/`truck-thresholds` |
 | `GET` | `/ai/conversations` | Conversaciones activas (metadatos, sin contenido) |
 | `GET` | `/ai/conversations/{id}/messages` | Historial leído del agente, saneado y paginado |
 | `PATCH` | `/ai/conversations/{id}` | Renombra la conversación en el agente y en local |
@@ -228,6 +228,12 @@ El historial (`/ai/conversations/{id}/messages`) se obtiene del agente y no
 consume cuota; cada mensaje se sanea y recorta, y el contexto *push* se elimina
 del mensaje del usuario antes de mostrarlo. `PATCH` guarda una etiqueta local de
 máximo 60 caracteres y la propaga al agente.
+
+Respuestas rápidas: `fleet-summary`, `active-alerts`, `today-alerts`,
+`active-trips`, `critical-containers`, `today-routes`, `trips-history`,
+`alerts-by-type`, `truck-status` y `truck-thresholds`. Las dos últimas exigen
+`truck_id` y usan el selector de camión de la UI; un camión inexistente devuelve
+`404`.
 
 ---
 

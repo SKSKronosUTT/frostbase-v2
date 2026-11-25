@@ -58,6 +58,7 @@ async function mockAgent(
     usage = USAGE_OK,
     conversations = [],
     messages = CONVERSATION_MESSAGES,
+    truckOptions = [{ id: 1, label: "ABC-123" }],
   } = {}
 ) {
   await page.route("**/api/v1/ai/status", (route) =>
@@ -81,18 +82,53 @@ async function mockAgent(
       body: JSON.stringify(METRICS_OK),
     })
   );
-  await page.route("**/api/v1/ai/quick/*", (route) =>
+  await page.route("**/api/v1/trucks/options", (route) =>
     route.fulfill({
       status: 200,
       contentType: "application/json",
-      body: JSON.stringify({
-        id: "fleet-summary",
-        title: "Resumen de la flota",
-        text: "Hay **3 alertas activas**: temperatura 2 y puerta 1.",
-        source: "system",
-      }),
+      body: JSON.stringify(truckOptions),
     })
   );
+  await page.route("**/api/v1/ai/quick/*", (route) => {
+    const url = new URL(route.request().url());
+    const id = url.pathname.split("/").pop();
+    const truckId = url.searchParams.get("truck_id");
+    if ((id === "truck-status" || id === "truck-thresholds") && !truckId) {
+      return route.fulfill({
+        status: 422,
+        contentType: "application/json",
+        body: JSON.stringify({ detail: "Selecciona un camión" }),
+      });
+    }
+    const responses = {
+      "truck-status": {
+        title: "Estado del camión",
+        text: "Camión ABC-123 · fuera de rango\nLectura: 4.0 °C / 80.0 % · hace 2 min\nAlertas activas: temperatura",
+      },
+      "truck-thresholds": {
+        title: "Umbrales del camión",
+        text: "Umbrales de ABC-123 (valores efectivos):\n- Temperatura: -1 a 1 °C",
+      },
+      "trips-history": {
+        title: "Historial de viajes",
+        text: "Historial reciente (1 viajes completados):\n- ABC-123 · 1 fallidas",
+      },
+      "alerts-by-type": {
+        title: "Alertas por tipo",
+        text: "Alertas activas por tipo (2):\n- temperatura: 1",
+      },
+    };
+    const response = responses[id] || {
+      id: "fleet-summary",
+      title: "Resumen de la flota",
+      text: "Hay **3 alertas activas**: temperatura 2 y puerta 1.",
+    };
+    return route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ id, ...response, source: "system" }),
+    });
+  });
   const historyState = {
     conversations: conversations.map((item) => ({ ...item })),
     messages,
@@ -301,4 +337,41 @@ test("historial: elimina una conversación", async ({ page }) => {
   await expect(
     page.getByRole("button", { name: /Abrir Conversación del/ })
   ).toHaveCount(0);
+});
+
+test("respuestas rápidas: estado de camión usa el selector", async ({ page }) => {
+  await mockAgent(page, {});
+  await page.goto("/ai.html");
+
+  await expect(page.locator("#aiTruckSelect")).toHaveValue("1");
+  await page.getByRole("button", { name: "Estado del camión" }).click();
+
+  await expect(page.getByText("Camión ABC-123 · fuera de rango")).toBeVisible();
+  await expect(page.getByText("Lectura: 4.0 °C / 80.0 %")).toBeVisible();
+});
+
+test("respuestas rápidas: exige camión seleccionado", async ({ page }) => {
+  await mockAgent(page, {});
+  await page.goto("/ai.html");
+
+  await page.locator("#aiTruckSelect").selectOption("");
+  await page.getByRole("button", { name: "Umbrales del camión" }).click();
+
+  await expect(
+    page.getByText("Selecciona un camión para esta consulta.")
+  ).toBeVisible();
+});
+
+test("respuestas rápidas: historial de viajes y alertas por tipo", async ({ page }) => {
+  await mockAgent(page, {});
+  await page.goto("/ai.html");
+
+  await page.getByRole("button", { name: "Historial de viajes" }).click();
+  await expect(
+    page.getByText("Historial reciente (1 viajes completados)")
+  ).toBeVisible();
+
+  await page.reload();
+  await page.getByRole("button", { name: "Alertas por tipo" }).click();
+  await expect(page.getByText("Alertas activas por tipo (2)")).toBeVisible();
 });

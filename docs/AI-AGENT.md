@@ -349,8 +349,9 @@ hasta habilitar/implementar el *pull* (`agent-read`, A2); sin streaming.
 | `POST` | `/api/v1/ai/quick/{id}` | Texto calculado con datos actuales |
 
 IDs: `fleet-summary`, `active-alerts`, `today-alerts`, `active-trips`,
-`critical-containers`, `today-routes`. La UI las marca como
-**«Datos del sistema»**.
+`critical-containers`, `today-routes`, `trips-history`, `alerts-by-type`,
+`truck-status` y `truck-thresholds` (estas dos con `truck_id`). La UI las marca
+como **«Datos del sistema»**.
 
 **Verificación en vivo (23/11/2026):**
 
@@ -440,6 +441,19 @@ Header obligatorio: Authorization: Bearer <AI_AGENT_READ_TOKEN>
   recargar leyendo el historial del agente. Si la sesión ya no existe, se avisa
   y se limpia el estado local.
 - **Auditoría**: acciones `messages` y `rename` (solo metadatos, sin contenido).
+
+**B4 · Más respuestas rápidas (2026-11-24)**
+
+- El catálogo determinista pasa de 6 a 10 respuestas. Nuevas:
+  - `truck-status` + `truck-thresholds` con `truck_id` (selector de camión).
+  - `trips-history`: últimos viajes completados, fallos y motivo saneado/truncado.
+  - `alerts-by-type`: conteo y última alerta por tipo.
+- `POST /ai/quick/{id}?truck_id=N`; sin `truck_id` en las respuestas por camión
+  devuelve `422`, y un camión inexistente `404`.
+- Todas se calculan con datos del panel: **sin LLM, sin cuota**, y siguen
+  auditándose como `quick` (el detalle incluye el camión cuando aplica).
+- La UI añade el selector (cargado de `/trucks/options`) y cuatro botones;
+  si no hay camiones, las consultas por camión quedan deshabilitadas.
 
 ## 12. Siguientes pasos
 

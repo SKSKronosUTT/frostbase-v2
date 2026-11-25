@@ -21,6 +21,8 @@ from app.services.ai_agent.conversations import (
     rename_conversation,
 )
 from app.services.ai_agent.quick import (
+    QuickTruckNotFoundError,
+    QuickTruckRequiredError,
     UnknownQuickError,
     list_quick,
     quick_answer,
@@ -41,6 +43,8 @@ __all__ = [
     "ChatReply",
     "ConversationNotFoundError",
     "ConversationTitleError",
+    "QuickTruckNotFoundError",
+    "QuickTruckRequiredError",
     "QuotaExceededError",
     "UnknownQuickError",
     "build_client",
