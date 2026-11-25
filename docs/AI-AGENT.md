@@ -455,6 +455,20 @@ Header obligatorio: Authorization: Bearer <AI_AGENT_READ_TOKEN>
 - La UI añade el selector (cargado de `/trucks/options`) y cuatro botones;
   si no hay camiones, las consultas por camión quedan deshabilitadas.
 
+**B5 fase 1 · endurecimiento de `agent-read` (2026-11-25)**
+
+- El rate limit se aplica **antes** de validar el token: los intentos fallidos
+  también están limitados (60/min por IP).
+- Allowlist de origen opcional (`AI_AGENT_READ_ALLOWED_IPS`, IPs/CIDR IPv4/IPv6)
+  y `X-Forwarded-For` solo con `AI_AGENT_TRUST_FORWARDED_FOR=true` detrás de un
+  proxy de confianza.
+- Los rechazos por origen se auditan como `read`/`403`/`ip_not_allowed`.
+- En Docker la IP vista suele ser la puerta NAT; la allowlist queda desactivada
+  por defecto y el procedimiento está en `docs/ai/SEGURIDAD.md`.
+- **Pendiente estratégico**: MCP/Lua para que el LLM no vea el token. El
+  transporte MCP y la API Lua del firmware aún deben validarse; mientras tanto
+  el token sigue en el prompt y debe rotarse.
+
 ## 12. Siguientes pasos
 
 1. ~~Sondeo, contrato, backend, UI, pull y respuestas rápidas~~ ✅.

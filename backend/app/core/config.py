@@ -1,3 +1,4 @@
+import ipaddress
 from functools import lru_cache
 from pathlib import Path
 from typing import Literal
@@ -90,6 +91,11 @@ class Settings(BaseSettings):
     ai_agent_breaker_failures: int = 3
     ai_agent_breaker_seconds: int = 30
     ai_agent_read_token: str = ""
+    # Allowlist opcional de origen para /agent-read (IPs o CIDR separados por
+    # coma). Vacío = sin restricción. En Docker el origen visto suele ser la
+    # puerta NAT; ver docs/ai/SEGURIDAD.md antes de activarlo.
+    ai_agent_read_allowed_ips: str = ""
+    ai_agent_trust_forwarded_for: bool = False
     # El agente llama al backend por su IP de LAN; se usa para generar el
     # prompt de operación (scripts.agent_prompt).
     ai_backend_url: str = ""
@@ -135,6 +141,24 @@ class Settings(BaseSettings):
             raise ValueError("no puede ser la contraseña por defecto del proyecto")
         return value
 
+    @field_validator("ai_agent_read_allowed_ips")
+    @classmethod
+    def _valid_agent_read_networks(cls, value: str) -> str:
+        normalized = value.strip()
+        if not normalized:
+            return ""
+        for item in normalized.split(","):
+            candidate = item.strip()
+            if not candidate:
+                continue
+            try:
+                ipaddress.ip_network(candidate, strict=False)
+            except ValueError as exc:
+                raise ValueError(
+                    f"AI_AGENT_READ_ALLOWED_IPS contiene un CIDR inválido: {candidate}"
+                ) from exc
+        return normalized
+
     @field_validator("app_timezone")
     @classmethod
     def _valid_timezone(cls, value: str) -> str:
@@ -179,6 +203,17 @@ class Settings(BaseSettings):
     @property
     def allowed_host_list(self) -> list[str]:
         return [host.strip() for host in self.allowed_hosts.split(",") if host.strip()]
+
+    @property
+    def ai_agent_read_allowed_networks(
+        self,
+    ) -> list[ipaddress.IPv4Network | ipaddress.IPv6Network]:
+        networks: list[ipaddress.IPv4Network | ipaddress.IPv6Network] = []
+        for item in self.ai_agent_read_allowed_ips.split(","):
+            candidate = item.strip()
+            if candidate:
+                networks.append(ipaddress.ip_network(candidate, strict=False))
+        return networks
 
     @property
     def is_production(self) -> bool:

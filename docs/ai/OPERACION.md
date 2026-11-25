@@ -17,6 +17,8 @@ Runbook para desplegar, mantener y diagnosticar el asistente ESP-Claw.
 AI_AGENT_ENABLED=true
 AI_AGENT_URL=http://192.168.100.52      # IP del ESP32 (LAN o AP)
 AI_AGENT_READ_TOKEN=<secreto>          # token que usa el agente para leer
+AI_AGENT_READ_ALLOWED_IPS=             # opcional: IP/CIDR de origen (ver SEGURIDAD.md)
+AI_AGENT_TRUST_FORWARDED_FOR=false     # solo detrás de un proxy de confianza
 AI_BACKEND_URL=http://192.168.100.16:8050  # IP del backend tal como la ve el ESP32
 AI_AGENT_TIMEOUT_SECONDS=90
 AI_AGENT_SESSION_TTL_HOURS=12          # rotación de memoria del agente
@@ -243,3 +245,19 @@ Detalles:
   únicamente las alertas vigentes. El suite E2E puede volver a crear alertas
   `E2E-`; ejecute la limpieza antes de una demo.
 - Si el watcher estaba en pleno ciclo, repita el comando; es idempotente.
+
+## 14. Endurecimiento de agent-read (B5)
+
+- El rate limit se aplica antes de validar el token; los intentos fallidos
+  también cuentan.
+- Allowlist opcional de origen:
+  ```env
+  AI_AGENT_READ_ALLOWED_IPS=192.168.0.103/32
+  ```
+  Vacío = sin restricción.
+- En Docker la IP de origen suele ser la puerta NAT. No active la allowlist con
+  la IP del ESP32 sin red de host o proxy de confianza; consulte
+  `docs/ai/SEGURIDAD.md`.
+- Los rechazos de origen se auditan como `read`/`403`/`ip_not_allowed`.
+- El token sigue en el prompt hasta completar MCP/Lua; rótelo ante cualquier
+  sospecha y mantenga el backend fuera de Internet.
