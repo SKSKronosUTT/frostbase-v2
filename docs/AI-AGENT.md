@@ -469,6 +469,23 @@ Header obligatorio: Authorization: Bearer <AI_AGENT_READ_TOKEN>
   transporte MCP y la API Lua del firmware aún deben validarse; mientras tanto
   el token sigue en el prompt y debe rotarse.
 
+**B5 fase 2 · skill Lua sin token en el prompt (2026-11-25)**
+
+- Se elige **Lua** en lugar de MCP: `cap_mcp_client` está expuesto pero el
+  cliente MCP del `edge_agent` no se inicializa correctamente (issue upstream
+  #129). La skill usa `cap_lua` + `capability.call("http_request", …)`.
+- Paquete en `esp-claw/skills/frostbase/`: `SKILL.md`, script Lua y
+  `private/config.example.txt`. El token se guarda en el dispositivo, no en el
+  prompt.
+- `python -m scripts.build_agent_skill` (`.\tasks.ps1 ai-skill`) genera
+  `dist/frostbase-skill.zip` con la URL y el token actuales. El ZIP es secreto.
+- `python -m scripts.agent_prompt --skill` (`.\tasks.ps1 ai-prompt -Skill`)
+  genera el prompt sin URL ni token, indicando cómo activar la skill.
+- El script solo permite endpoints de lectura conocidos y valida `truck_id`.
+- Límite: si `cap_files` está habilitado, un LLM malicioso podría intentar leer
+  `private/`; deshabilitarlo para usuarios no confiables. Esto reduce la
+  exposición, no sustituye a un sandbox.
+
 ## 12. Siguientes pasos
 
 1. ~~Sondeo, contrato, backend, UI, pull y respuestas rápidas~~ ✅.

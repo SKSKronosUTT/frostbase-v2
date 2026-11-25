@@ -3,7 +3,7 @@
 
 param(
     [Parameter(Position = 0)]
-    [ValidateSet("dev", "up", "down", "test", "lint", "build", "seed", "e2e", "backup", "ai-probe", "ai-prompt", "net-check", "clean-alerts", "help")]
+    [ValidateSet("dev", "up", "down", "test", "lint", "build", "seed", "e2e", "backup", "ai-probe", "ai-prompt", "ai-skill", "net-check", "clean-alerts", "help")]
     [string]$Task = "help",
     [switch]$Reset,
     [switch]$PrintKeys,
@@ -13,6 +13,7 @@ param(
     [string]$HostIp = "",
     [switch]$NoPrompt,
     [switch]$NoToken,
+    [switch]$Skill,
     [switch]$Apply,
     [switch]$KeepDevices,
     [int]$OlderThanDays = -1,
@@ -91,7 +92,11 @@ switch ($Task) {
     "ai-prompt" {
         $arguments = @("-m", "scripts.agent_prompt")
         if ($NoToken) { $arguments += "--no-token" }
+        if ($Skill) { $arguments += "--skill" }
         Invoke-BackendPython $arguments
+    }
+    "ai-skill" {
+        Invoke-BackendPython @("-m", "scripts.build_agent_skill")
     }
     "net-check" {
         $arguments = @("-m", "scripts.network_check")
@@ -134,6 +139,8 @@ switch ($Task) {
         Write-Host "  .\tasks.ps1 backup         Respaldo pg_dump (-Fc) con retención (default 14)"
         Write-Host "                           .\tasks.ps1 backup -Keep 30"
         Write-Host "  .\tasks.ps1 ai-probe       Sondeo A0 del agente ESP-Claw (HTTP + WebSocket)"
+        Write-Host "  .\tasks.ps1 ai-skill       Genera dist/frostbase-skill.zip (contiene token)"
+        Write-Host "                           .\tasks.ps1 ai-prompt -Skill  (sin token; usa skill Lua)"
         Write-Host "  .\tasks.ps1 ai-prompt      Prompt de operación con URL y token (contiene secreto)"
     }
 }
