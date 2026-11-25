@@ -206,25 +206,33 @@ async function mockAgent(
     return route.fallback();
   });
 
-  await page.route("**/api/v1/ai/chat", (route) => {
-    if (chat?.error) {
-      return route.fulfill({
-        status: chat.error.status,
+  await page.route("**/api/v1/ai/chat", async (route) => {
+    try {
+      if (chat?.delayMs) {
+        await new Promise((resolve) => setTimeout(resolve, chat.delayMs));
+      }
+      if (chat?.error) {
+        return await route.fulfill({
+          status: chat.error.status,
+          contentType: "application/json",
+          body: JSON.stringify({ detail: chat.error.detail }),
+          headers: chat.error.headers,
+        });
+      }
+      return await route.fulfill({
+        status: 200,
         contentType: "application/json",
-        body: JSON.stringify({ detail: chat.error.detail }),
-        headers: chat.error.headers,
+        body: JSON.stringify({
+          conversation_id: "11111111-1111-1111-1111-111111111111",
+          reply: chat?.reply || "Hay **3 alertas activas**: temperatura 2 y puerta 1.",
+          source: "agent",
+          latency_ms: 1200,
+        }),
       });
+    } catch {
+      // La petición se canceló localmente; no hay nada que responder.
+      return undefined;
     }
-    return route.fulfill({
-      status: 200,
-      contentType: "application/json",
-      body: JSON.stringify({
-        conversation_id: "11111111-1111-1111-1111-111111111111",
-        reply: chat?.reply || "Hay **3 alertas activas**: temperatura 2 y puerta 1.",
-        source: "agent",
-        latency_ms: 1200,
-      }),
-    });
   });
 }
 
@@ -374,4 +382,36 @@ test("respuestas rápidas: historial de viajes y alertas por tipo", async ({ pag
   await page.reload();
   await page.getByRole("button", { name: "Alertas por tipo" }).click();
   await expect(page.getByText("Alertas activas por tipo (2)")).toBeVisible();
+});
+
+test("espera: muestra tiempo transcurrido sin streaming", async ({ page }) => {
+  await mockAgent(page, { chat: { delayMs: 2200, reply: "Respuesta tardía" } });
+  await page.goto("/ai.html");
+
+  await page.locator("#aiMessage").fill("¿Alertas?");
+  await page.locator("#aiSend").click();
+
+  await expect(page.locator("#aiTyping")).toBeVisible();
+  await expect(page.locator("#aiTypingText")).toHaveText(/Enviando consulta… [1-9] s/, {
+    timeout: 4000,
+  });
+  await expect(page.getByText("Respuesta tardía")).toBeVisible();
+  await expect(page.locator("#aiTyping")).toBeHidden();
+});
+
+test("espera: cancelar pide confirmación y avisa del consumo", async ({ page }) => {
+  await mockAgent(page, { chat: { delayMs: 3000, reply: "No debería verse" } });
+  page.on("dialog", (dialog) => dialog.accept());
+  await page.goto("/ai.html");
+
+  await page.locator("#aiMessage").fill("¿Alertas?");
+  await page.locator("#aiSend").click();
+  await expect(page.locator("#aiCancel")).toBeVisible();
+  await page.locator("#aiCancel").click();
+
+  await expect(
+    page.getByText("Espera cancelada localmente. La consulta puede completarse")
+  ).toBeVisible();
+  await expect(page.locator("#aiTyping")).toBeHidden();
+  await expect(page.locator("#aiSend")).toBeEnabled();
 });

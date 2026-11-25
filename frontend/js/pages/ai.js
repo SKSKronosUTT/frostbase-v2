@@ -12,6 +12,10 @@ const state = {
   trucks: [],
   renamingId: null,
   busy: false,
+  chatController: null,
+  chatStartedAt: 0,
+  typingTimer: null,
+  chatCancelled: false,
   online: false,
   enabled: false,
   quota: null,
@@ -23,6 +27,7 @@ const chat = qs("#aiChat");
 const empty = qs("#aiEmpty");
 const typing = qs("#aiTyping");
 const typingText = qs("#aiTypingText");
+const cancelButton = qs("#aiCancel");
 const form = qs("#aiForm");
 const input = qs("#aiMessage");
 const sendButton = qs("#aiSend");
@@ -283,7 +288,7 @@ function clearChatView() {
 
 async function loadConversation(id) {
   if (!id || state.busy) return;
-  setBusy(true, "Cargando conversación…");
+  setBusy(true, { label: "Cargando conversación…" });
   try {
     const history = await api.get(`/ai/conversations/${id}/messages?limit=50`);
     rememberConversation(id);
@@ -376,13 +381,64 @@ function updateSendState() {
   sendButton.classList.toggle("is-loading", state.busy);
 }
 
-function setBusy(busy, message = "El agente está escribiendo…") {
+function typingPhase(seconds) {
+  if (seconds < 3) return "Enviando consulta";
+  if (seconds < 12) return "El agente está pensando";
+  if (seconds < 30) return "El agente sigue trabajando";
+  return "El agente está tardando más de lo normal";
+}
+
+function renderTypingProgress() {
+  if (!state.busy) return;
+  const seconds = Math.max(0, Math.floor((Date.now() - state.chatStartedAt) / 1000));
+  typingText.textContent = `${typingPhase(seconds)}… ${seconds} s`;
+}
+
+function stopTypingTimer() {
+  if (state.typingTimer) {
+    window.clearInterval(state.typingTimer);
+    state.typingTimer = null;
+  }
+}
+
+function startTypingTimer() {
+  stopTypingTimer();
+  state.chatStartedAt = Date.now();
+  state.typingTimer = window.setInterval(renderTypingProgress, 1000);
+  renderTypingProgress();
+}
+
+function setBusy(busy, { label = null, cancellable = false } = {}) {
   state.busy = busy;
   typing.hidden = !busy;
-  typingText.textContent = message;
+  cancelButton.hidden = !busy || !cancellable;
+  if (busy) {
+    if (cancellable) {
+      startTypingTimer();
+    } else {
+      stopTypingTimer();
+      typingText.textContent = label || "El agente está escribiendo…";
+    }
+    chat.scrollTop = chat.scrollHeight;
+  } else {
+    stopTypingTimer();
+    state.chatStartedAt = 0;
+    typingText.textContent = "El agente está escribiendo…";
+  }
   updateSendState();
-  if (busy) chat.scrollTop = chat.scrollHeight;
 }
+
+function cancelChat() {
+  if (!state.busy || !state.chatController) return;
+  const confirmed = window.confirm(
+    "La consulta ya consume cuota y puede completarse en el agente aunque canceles. ¿Cancelar la espera?"
+  );
+  if (!confirmed) return;
+  state.chatCancelled = true;
+  state.chatController.abort();
+}
+
+cancelButton.addEventListener("click", cancelChat);
 
 function updateCounter() {
   counter.textContent = `${input.value.length}/${MAX_CHARS}`;
@@ -541,18 +597,35 @@ async function sendMessage(text) {
   appendMessage("user", message);
   input.value = "";
   updateCounter();
-  setBusy(true);
+  const controller = new AbortController();
+  state.chatController = controller;
+  state.chatCancelled = false;
+  setBusy(true, { cancellable: true });
 
   try {
     const payload = { message };
     if (state.conversationId) payload.conversation_id = state.conversationId;
     // El agente puede tardar hasta AI_AGENT_TIMEOUT_SECONDS (90 s).
-    const response = await api.post("/ai/chat", payload, { timeout: 95000 });
+    const response = await api.post("/ai/chat", payload, {
+      timeout: 95000,
+      signal: controller.signal,
+    });
+    if (state.chatCancelled) return;
     rememberConversation(response.conversation_id);
     appendMessage("assistant", response.reply || "(sin contenido)");
     refreshUsage();
     refreshConversations();
   } catch (error) {
+    if (error?.cancelled) {
+      if (state.chatCancelled) {
+        appendMessage(
+          "assistant",
+          "Espera cancelada localmente. La consulta puede completarse en el agente y la cuota ya se consumió. Si el agente sigue ocupado, espera unos segundos.",
+          { label: "Sistema" }
+        );
+      }
+      return;
+    }
     appendMessage("system", errorMessage(error), { error: true });
     if (error?.status === 429 && error?.message?.includes("límite diario")) {
       if (state.quota) {
@@ -571,6 +644,8 @@ async function sendMessage(text) {
       startRetryCountdown(error.retryAfter || 30, "El agente no está disponible.");
     }
   } finally {
+    state.chatController = null;
+    state.chatCancelled = false;
     setBusy(false);
     input.focus();
   }

@@ -78,7 +78,13 @@ if (typeof document !== "undefined") {
 
 async function request(
   path,
-  { method = "GET", body, headers = {}, timeout = REQUEST_TIMEOUT_MS } = {},
+  {
+    method = "GET",
+    body,
+    headers = {},
+    timeout = REQUEST_TIMEOUT_MS,
+    signal = null,
+  } = {},
   retried = false
 ) {
   const requestHeaders = { Accept: "application/json", ...headers };
@@ -92,6 +98,11 @@ async function request(
 
   const controller = new AbortController();
   const timer = window.setTimeout(() => controller.abort(), timeout);
+  const onExternalAbort = () => controller.abort();
+  if (signal) {
+    if (signal.aborted) controller.abort();
+    else signal.addEventListener("abort", onExternalAbort, { once: true });
+  }
   inFlight.add(controller);
 
   let response;
@@ -106,6 +117,11 @@ async function request(
     emitConnection(true);
   } catch (error) {
     if (error?.name === "AbortError") {
+      if (signal?.aborted) {
+        throw new ApiError("Solicitud cancelada", 0, null, {
+          cancelled: true,
+        });
+      }
       const hidden = typeof document !== "undefined" && document.hidden;
       throw new ApiError(
         hidden
@@ -124,6 +140,7 @@ async function request(
     );
   } finally {
     window.clearTimeout(timer);
+    if (signal) signal.removeEventListener("abort", onExternalAbort);
     inFlight.delete(controller);
   }
 
@@ -145,7 +162,7 @@ async function request(
   ) {
     try {
       await request("/auth/refresh", { method: "POST" }, true);
-      return request(path, { method, body, headers, timeout }, true);
+      return request(path, { method, body, headers, timeout, signal }, true);
     } catch (refreshError) {
       redirectToLogin();
     }

@@ -265,3 +265,15 @@ Detalles:
   `.\tasks.ps1 ai-skill`; el ZIP contiene el token y no debe compartirse.
   Detalles y límites en `docs/ai/SKILL-LUA.md`.
 - Rote el token ante cualquier sospecha y mantenga el backend fuera de Internet.
+
+## 15. Espera y cancelación de una consulta (B6)
+
+- La UI muestra segundos transcurridos y una fase orientativa mientras el
+  agente responde (la latencia típica es 4–12 s).
+- **Cancelar** pide confirmación y corta solo la espera del navegador. El
+  backend y el ESP32 pueden completar la consulta; la cuota ya se consumió.
+- Si se envía otra consulta inmediatamente, el lock puede responder `429` con
+  un `Retry-After`; la UI muestra la cuenta atrás.
+- El WebSocket `/ws/webim` solo notifica cambios (`subscribe`/`webim`); no
+  entrega texto parcial. El streaming queda pendiente de una versión del
+  firmware que emita deltas.

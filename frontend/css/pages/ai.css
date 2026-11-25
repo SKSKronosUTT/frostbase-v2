@@ -420,6 +420,29 @@
   margin-left: 6px;
 }
 
+.ai-typing__cancel {
+  margin-left: 10px;
+  padding: 3px 8px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-soft);
+  font: inherit;
+  font-size: 0.68rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.ai-typing__cancel:hover,
+.ai-typing__cancel:focus-visible {
+  border-color: var(--danger);
+  color: var(--danger);
+  background: var(--danger-soft);
+}
+
+.ai-typing__cancel[hidden] {
+  display: none;
+}
+
 @keyframes ai-blink {
   0%,
   80%,
