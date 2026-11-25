@@ -3,7 +3,7 @@
 
 param(
     [Parameter(Position = 0)]
-    [ValidateSet("dev", "up", "down", "test", "lint", "build", "seed", "e2e", "backup", "ai-probe", "ai-prompt", "net-check", "help")]
+    [ValidateSet("dev", "up", "down", "test", "lint", "build", "seed", "e2e", "backup", "ai-probe", "ai-prompt", "net-check", "clean-alerts", "help")]
     [string]$Task = "help",
     [switch]$Reset,
     [switch]$PrintKeys,
@@ -12,7 +12,11 @@ param(
     [string]$Keep = "14",
     [string]$HostIp = "",
     [switch]$NoPrompt,
-    [switch]$NoToken
+    [switch]$NoToken,
+    [switch]$Apply,
+    [switch]$KeepDevices,
+    [int]$OlderThanDays = -1,
+    [string]$Prefix = ""
 )
 
 $ErrorActionPreference = "Stop"
@@ -96,6 +100,25 @@ switch ($Task) {
         if ($NoToken) { $arguments += "--no-token" }
         Invoke-BackendPython $arguments
     }
+    "clean-alerts" {
+        $arguments = @(
+            "compose", "exec", "-T", "app", "python", "-m",
+            "scripts.resolve_stale_alerts"
+        )
+        if ($Apply) { $arguments += "--apply" }
+        if ($KeepDevices) { $arguments += "--keep-devices" }
+        if ($OlderThanDays -ge 0) {
+            $arguments += @("--older-than-days", "$OlderThanDays")
+        }
+        if ($Prefix) {
+            foreach ($item in $Prefix.Split(",")) {
+                if ($item.Trim()) {
+                    $arguments += @("--device-prefix", $item.Trim())
+                }
+            }
+        }
+        & docker @arguments
+    }
     default {
         Write-Host "Tareas disponibles:"
         Write-Host "  .\tasks.ps1 dev            Levanta el stack con build"
@@ -106,6 +129,8 @@ switch ($Task) {
         Write-Host "  .\tasks.ps1 e2e            Playwright (requiere navegadores instalados)"
         Write-Host "  .\tasks.ps1 net-check      Diagnostico de red y prompt tras cambiar de red"
         Write-Host "                           .\tasks.ps1 net-check -HostIp 192.168.1.45 -NoToken"
+        Write-Host "  .\tasks.ps1 clean-alerts   Simula la limpieza de alertas LOAD-/E2E-"
+        Write-Host "                           .\tasks.ps1 clean-alerts -Apply [-OlderThanDays 2]"
         Write-Host "  .\tasks.ps1 backup         Respaldo pg_dump (-Fc) con retención (default 14)"
         Write-Host "                           .\tasks.ps1 backup -Keep 30"
         Write-Host "  .\tasks.ps1 ai-probe       Sondeo A0 del agente ESP-Claw (HTTP + WebSocket)"

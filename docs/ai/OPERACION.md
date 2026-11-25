@@ -202,3 +202,44 @@ Requisitos de la red: 2.4 GHz, WPA2, sin portal cautivo ni aislamiento de
 clientes; perfil de Windows **Privado** y puerto **8050** permitido en el
 firewall. Si el ESP32 y la PC quedan en subredes distintas, el diagnóstico por
 LAN fallará aunque el backend esté arriba.
+
+## 13. Higiene de alertas de prueba (B0)
+
+Las pruebas de carga y E2E dejan alertas activas con dispositivos `LOAD-`,
+`E2E-` y `ESP32-DOOR-`. El script las **resuelve** (no las borra) y conserva la
+demo `ESP32-DEMO-*`. Se ejecuta dentro del contenedor `app` (tiene acceso a la
+base de datos); el stack debe estar levantado.
+
+```powershell
+# Simulación: no modifica nada
+.\tasks.ps1 clean-alerts
+
+# Aplicar los prefijos por defecto
+.\tasks.ps1 clean-alerts -Apply
+
+# Solo alertas con más de 2 días (además de los prefijos)
+.\tasks.ps1 clean-alerts -OlderThanDays 2 -Apply
+
+# Un prefijo concreto (reemplaza los defaults)
+.\tasks.ps1 clean-alerts -Prefix LOAD- -Apply
+```
+
+En Linux/macOS: `make clean-alerts` para simular y
+`make clean-alerts APPLY=1` para aplicar.
+
+Detalles:
+
+- Prefijos por defecto: `LOAD-`, `E2E-`, `ESP32-DOOR-`.
+- Solo actúa sobre alertas con estado `activa`; es idempotente.
+- **Silencia los dispositivos de prueba** (`last_seen=NULL`) para que el watcher
+  no vuelva a crear alertas de desconexión. Si un simulador vuelve a enviar,
+  el dispositivo se reactiva y puede generar alertas de nuevo.
+- `--keep-devices` / `-KeepDevices` evita ese silenciado; en ese caso el
+  watcher puede recrear las desconexiones.
+- No toca `ESP32-DEMO-*` (demo) ni dispositivos reales.
+- No existe endpoint de escritura para el agente: es una tarea manual de
+  administración.
+- Tras aplicarlo, las respuestas rápidas de alertas y el panel deben mostrar
+  únicamente las alertas vigentes. El suite E2E puede volver a crear alertas
+  `E2E-`; ejecute la limpieza antes de una demo.
+- Si el watcher estaba en pleno ciclo, repita el comando; es idempotente.
