@@ -64,3 +64,8 @@ usa `/alerts/today` para el desglose.
 
 La IP y el token deben coincidir con `ALLOWED_HOSTS` y `AI_AGENT_READ_TOKEN`
 del `.env` de FrostBase. Si el host cambia, actualiza la instrucción.
+
+> **Modo recomendado (B5 fase 2):** usar la skill Lua `frostbase` y generar el
+> prompt con `.\tasks.ps1 ai-prompt -Skill`. En ese modo la URL y el token
+> quedan en la configuración privada del dispositivo y no viajan en el prompt.
+> Ver `docs/ai/SKILL-LUA.md`.

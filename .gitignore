@@ -31,3 +31,7 @@ frontend/tests/e2e/.auth/
 
 # Evidencia local del sondeo del agente (SSID/config del dispositivo)
 docs/ai/evidencia-a0*.json
+
+# Skill Lua: configuración privada con token y paquetes generados
+esp-claw/skills/*/private/config.txt
+dist/

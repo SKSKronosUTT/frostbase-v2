@@ -259,5 +259,9 @@ Detalles:
   la IP del ESP32 sin red de host o proxy de confianza; consulte
   `docs/ai/SEGURIDAD.md`.
 - Los rechazos de origen se auditan como `read`/`403`/`ip_not_allowed`.
-- El token sigue en el prompt hasta completar MCP/Lua; rótelo ante cualquier
-  sospecha y mantenga el backend fuera de Internet.
+- **Skill Lua (B5 fase 2)**: instale `esp-claw/skills/frostbase` en el
+  dispositivo y use `.\tasks.ps1 ai-prompt -Skill`. El token queda en
+  `private/config.txt`, no en el prompt. Genere el paquete con
+  `.\tasks.ps1 ai-skill`; el ZIP contiene el token y no debe compartirse.
+  Detalles y límites en `docs/ai/SKILL-LUA.md`.
+- Rote el token ante cualquier sospecha y mantenga el backend fuera de Internet.

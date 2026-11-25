@@ -9,8 +9,9 @@ y lo que queda pendiente para sacar el token del prompt.
   `Authorization: Bearer <AI_AGENT_READ_TOKEN>`.
 - El token es de **solo lectura**; no existe ningún endpoint de escritura para
   el agente.
-- El token vive en el prompt/skill del ESP-Claw, por lo que el LLM remoto lo
-  ve. Es un riesgo aceptado temporalmente.
+- En el modo HTTP clásico el token vive en el prompt y el LLM remoto lo ve. El
+  modo recomendado desde B5 fase 2 es la skill Lua, donde el token queda en un
+  archivo privado del dispositivo y no en el prompt.
 - El backend es el único cliente del ESP32; el navegador nunca habla con el
   dispositivo.
 - Cada lectura se audita sin token ni contenido, y `/ai/status` expone
@@ -77,25 +78,34 @@ order by id desc
 limit 5;
 ```
 
-## 5. Lo que sigue pendiente: MCP o Lua
+## 5. B5 fase 2: skill Lua
 
-El objetivo estratégico es que el LLM **no vea el token**. Para eso hay que
-sacar la llamada HTTP del prompt y encapsularla en una herramienta:
+El objetivo estratégico es que el LLM **no vea el token**. La vía implementada
+es una skill Lua:
 
-- **MCP**: el firmware expone `cap_mcp_client`, pero falta verificar el
-  transporte (stdio/SSE/HTTP), la autenticación y el formato de configuración.
-  Si se confirma, FrostBase puede publicar un servidor MCP de solo lectura con
-  herramientas tipadas y el token quedaría en la configuración del cliente MCP.
-- **Lua/skill**: encapsular la petición HTTP en un módulo del dispositivo; el
-  LLM solo vería una función. Requiere confirmar la API Lua del firmware.
+- El agente activa `frostbase` y ejecuta `frostbase_query.lua`.
+- El script llama a `http_request` mediante `capability.call` y lee la URL y el
+  token de `private/config.txt` en el dispositivo.
+- El prompt generado con `.\tasks.ps1 ai-prompt -Skill` **no contiene URL ni
+  token**.
+- MCP se descartó por ahora: `cap_mcp_client` está expuesto, pero el cliente MCP
+  del `edge_agent` no se inicializa correctamente
+  ([issue upstream #129](https://github.com/espressif/esp-claw/issues/129)).
 
-Hasta entonces:
+Instalación y límites en `docs/ai/SKILL-LUA.md`.
+
+**Riesgo residual**: si `cap_files` está habilitado, el LLM podría intentar leer
+`private/config.txt`. La skill lo prohíbe, pero la mitigación fuerte es no
+exponer herramientas de archivos o de creación de skills a usuarios no
+confiables. Esto reduce la exposición; no es un sandbox.
+
+Hasta completar una alternativa MCP operativa:
 
 - Rotar el token periódicamente y tras cualquier sospecha.
 - No exponer el backend a Internet sin VPN/proxy.
 - Mantener el token fuera de logs, issues y capturas.
 - Usar una VLAN/IoT separada y firewall restrictivo.
-- Recordar que el token sigue viajando al LLM como parte del prompt.
+- Regenerar el ZIP de la skill si cambia la URL o el token.
 
 ## 6. Si se sospecha una filtración
 

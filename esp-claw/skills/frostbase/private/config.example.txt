@@ -1,0 +1,4 @@
+# Copie este archivo como config.txt y complete los valores.
+# No suba config.txt al repositorio ni lo comparta.
+base=http://192.168.0.210:8050
+token=<AI_AGENT_READ_TOKEN>
