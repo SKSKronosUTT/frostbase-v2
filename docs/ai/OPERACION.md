@@ -277,3 +277,28 @@ Detalles:
 - El WebSocket `/ws/webim` solo notifica cambios (`subscribe`/`webim`); no
   entrega texto parcial. El streaming queda pendiente de una versión del
   firmware que emita deltas.
+
+## 16. Pruebas de carga y seguridad del asistente (B7)
+
+```powershell
+# Lock: una respuesta y N-1 ocupados. Consume 1 consulta de cuota.
+.\tasks.ps1 ai-loadtest -Concurrency 3
+
+# Variante con mensaje propio
+.\tasks.ps1 ai-loadtest -Concurrency 5 -Message "Responde solo: CARGA"
+```
+
+Resultado esperado:
+
+```text
+Estados: {'200': 1, '429': 2}
+OK: una respuesta y el resto 429 (lock global correcto).
+```
+
+- El script usa el administrador de `.env` y el stack local.
+- No lanzar con más de 5 para no chocar con el rate limit de 6/min.
+- `/ai/metrics` agrega en SQL; no carga la auditoría completa en memoria.
+- La página `ai.html` se revisa con axe y hay una prueba E2E de XSS.
+- Para una prueba de 100k filas en un entorno de staging, inserte auditoría
+  sintética con `generate_series` y mida `GET /ai/metrics?days=7`; no lo haga
+  sobre producción.

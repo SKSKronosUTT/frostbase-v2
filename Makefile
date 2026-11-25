@@ -1,10 +1,11 @@
-.PHONY: dev up down test lint build seed e2e openapi backup ai-prompt ai-skill net-check clean-alerts
+.PHONY: dev up down test lint build seed e2e openapi backup ai-prompt ai-skill ai-loadtest net-check clean-alerts
 
 PYTHON ?= backend/.venv/bin/python
 COMPOSE ?= docker compose
 TRUCKS ?= 3
 DEVICES ?= 2
 KEEP ?= 14
+CONCURRENCY ?= 3
 
 dev:
 	$(COMPOSE) up -d --build
@@ -48,6 +49,9 @@ ai-prompt:
 
 ai-skill:
 	cd backend && $(PYTHON) -m scripts.build_agent_skill
+
+ai-loadtest:
+	cd backend && $(PYTHON) -m scripts.loadtest_ai --concurrency $(CONCURRENCY)
 
 net-check:
 	cd backend && $(PYTHON) -m scripts.network_check

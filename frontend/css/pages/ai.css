@@ -548,6 +548,10 @@
 
 .ai-status--online {
   border-color: var(--success);
+  color: #0a7a6b;
+}
+
+[data-theme="dark"] .ai-status--online {
   color: var(--success);
 }
 

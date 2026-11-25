@@ -502,6 +502,21 @@ Header obligatorio: Authorization: Bearer <AI_AGENT_READ_TOKEN>
 - El temporizador se limpia al terminar o cancelar; el indicador no se anuncia
   cada segundo a lectores de pantalla (`aria-live="off"`).
 
+**B7 · Pruebas de carga y seguridad del asistente (2026-11-25)**
+
+- `scripts/loadtest_ai.py` (`.\tasks.ps1 ai-loadtest`) lanza N consultas
+  simultáneas contra `/ai/chat` y comprueba el lock: **1×200 y (N−1)×429**.
+  Imprime estados, p50/p95 y el delta de cuota; consume una consulta diaria.
+- `/ai/metrics` ahora agrega en PostgreSQL (`count`, `avg`,
+  `percentile_cont`) en lugar de cargar toda la auditoría en memoria. Una
+  prueba con 100 filas valida p50/p95, errores por estado y por acción.
+- La página `ai.html` entra en la batería axe (temas claro/oscuro) y se añadió
+  una prueba E2E de XSS: una respuesta con `<img onerror>` se muestra como
+  texto y no se ejecuta.
+- Siguen cubiertos por pruebas existentes: timeout, ESP32 caído, sesión
+  borrada, rotación por `boot_id`, cuota, lock, token RO sin escritura y
+  saneado de motivos de fallo.
+
 ## 12. Siguientes pasos
 
 1. ~~Sondeo, contrato, backend, UI, pull y respuestas rápidas~~ ✅.
