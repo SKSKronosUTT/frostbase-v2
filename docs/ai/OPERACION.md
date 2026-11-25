@@ -163,3 +163,42 @@ El backend no necesita cambios: el contrato WebIM es independiente del modelo.
 1. Actualice `AI_AGENT_URL` (IP del ESP32) y/o `AI_BACKEND_URL` + `ALLOWED_HOSTS`.
 2. Regenere el prompt (`scripts.agent_prompt`) y péguelo en el ESP32.
 3. Recrear `app` y comprobar `/ai/status` + `agent-read/fleet-summary`.
+
+Atajo: `.\tasks.ps1 net-check` (o `make net-check`) detecta la IP, compara la
+configuración, prueba los servicios y muestra las líneas de `.env` y el prompt.
+
+## 12. Mudanza de red en desarrollo (misma LAN)
+
+Escenario típico: el ESP32 y la computadora de desarrollo se mueven juntos a
+otra red 2.4 GHz, sin cambiar la zona horaria.
+
+1. **WiFi del ESP32**: conéctese al AP `esp-claw-XXXXXX`, abra
+   `http://192.168.4.1`, configure la red nueva y reinicie. Anote la IP nueva
+   (tabla DHCP del router o consola del dispositivo).
+2. **Diagnóstico** desde la raíz del repositorio:
+
+   ```powershell
+   .\tasks.ps1 net-check
+   # Si detecta una IP de VPN/interfaz equivocada:
+   .\tasks.ps1 net-check -HostIp 192.168.1.45
+   ```
+
+   El script muestra la IP local, la configuración actual, el resultado de
+   backend local/LAN, ESP32 y `agent-read`, las líneas sugeridas de `.env` y el
+   prompt listo para pegar.
+3. **Aplicar `.env`** con las líneas sugeridas y recrear:
+
+   ```powershell
+   docker compose up -d --force-recreate app watcher
+   ```
+
+4. **Repetir `net-check`** hasta que las comprobaciones estén en `OK`.
+5. **Pegar el prompt** impreso en ESP-Claw (contiene la URL nueva del backend).
+   Para compartirlo sin secreto: `.\tasks.ps1 net-check -NoToken`.
+6. **Validar**: chat simple, alertas, historial y reinicio del ESP32. Tras la
+   primera consulta, `last_agent_read_at` debe actualizarse.
+
+Requisitos de la red: 2.4 GHz, WPA2, sin portal cautivo ni aislamiento de
+clientes; perfil de Windows **Privado** y puerto **8050** permitido en el
+firewall. Si el ESP32 y la PC quedan en subredes distintas, el diagnóstico por
+LAN fallará aunque el backend esté arriba.
