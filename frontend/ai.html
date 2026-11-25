@@ -169,9 +169,12 @@
                   </button>
                 </div>
               </div>
-              <div class="ai-typing" id="aiTyping" hidden>
+              <div class="ai-typing" id="aiTyping" hidden aria-live="off">
                 <span></span><span></span><span></span>
                 <span class="muted" id="aiTypingText">El agente está escribiendo…</span>
+                <button class="ai-typing__cancel" id="aiCancel" type="button" hidden>
+                  Cancelar
+                </button>
               </div>
             </div>
 

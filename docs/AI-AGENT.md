@@ -486,6 +486,22 @@ Header obligatorio: Authorization: Bearer <AI_AGENT_READ_TOKEN>
   `private/`; deshabilitarlo para usuarios no confiables. Esto reduce la
   exposición, no sustituye a un sandbox.
 
+**B6 fase 1 · espera y cancelación (2026-11-25)**
+
+- Se confirmó el contrato del WebSocket: tras conectar se envía
+  `{"type":"subscribe","scope":"webim"}` y el dispositivo notifica cambios para
+  que la SPA recargue mensajes. **No emite deltas parciales de texto**, así que
+  el streaming token a token no es posible con este firmware; el backend
+  mantiene el sondeo de `/messages`.
+- La UI muestra tiempo transcurrido y fase aproximada
+  («Enviando consulta», «El agente está pensando», «sigue trabajando») durante
+  la espera.
+- Nuevo botón **Cancelar** en el indicador: pide confirmación, aborta la espera
+  HTTP y avisa de que el agente puede completar la consulta y la cuota ya se
+  consumió. No cancela el trabajo en el ESP32.
+- El temporizador se limpia al terminar o cancelar; el indicador no se anuncia
+  cada segundo a lectores de pantalla (`aria-live="off"`).
+
 ## 12. Siguientes pasos
 
 1. ~~Sondeo, contrato, backend, UI, pull y respuestas rápidas~~ ✅.
