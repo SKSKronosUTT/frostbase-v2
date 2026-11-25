@@ -5,6 +5,7 @@ from datetime import UTC, datetime, time, timedelta
 import pytest
 from sqlalchemy import select
 
+from app.api import deps as api_deps
 from app.core.config import settings
 from app.core.database import SessionLocal
 from app.models.ai import AiAudit
@@ -371,3 +372,49 @@ def test_agent_read_is_audited_for_pull_health(client, read_token, agent_data, l
     status = client.get("/api/v1/ai/status")
     assert status.status_code == 200
     assert status.json()["last_agent_read_at"] is not None
+
+
+def test_agent_read_ip_allowlist(client, read_token, monkeypatch):
+    monkeypatch.setattr(settings, "ai_agent_read_allowed_ips", "10.0.0.0/24")
+    monkeypatch.setattr(settings, "ai_agent_trust_forwarded_for", True)
+
+    allowed = client.get(
+        "/api/v1/agent-read/fleet-summary",
+        headers={**HEADERS, "X-Forwarded-For": "10.0.0.5"},
+    )
+    assert allowed.status_code == 200
+
+    denied = client.get(
+        "/api/v1/agent-read/fleet-summary",
+        headers={**HEADERS, "X-Forwarded-For": "192.168.1.5"},
+    )
+    assert denied.status_code == 403
+    assert "IP" in denied.json()["detail"]
+
+    with SessionLocal() as db:
+        row = db.scalar(
+            select(AiAudit).where(AiAudit.action == "read", AiAudit.http_status == 403)
+        )
+        assert row is not None
+        assert row.detail == "ip_not_allowed"
+
+    monkeypatch.setattr(settings, "ai_agent_trust_forwarded_for", False)
+    untrusted = client.get(
+        "/api/v1/agent-read/fleet-summary",
+        headers={**HEADERS, "X-Forwarded-For": "10.0.0.5"},
+    )
+    assert untrusted.status_code == 403
+
+
+def test_agent_read_rate_limit_applies_before_auth(client, read_token, monkeypatch):
+    monkeypatch.setattr(api_deps._agent_read_limiter, "limit", 2)
+    wrong = {"Authorization": "Bearer nope"}
+    assert (
+        client.get("/api/v1/agent-read/fleet-summary", headers=wrong).status_code == 401
+    )
+    assert (
+        client.get("/api/v1/agent-read/fleet-summary", headers=wrong).status_code == 401
+    )
+    limited = client.get("/api/v1/agent-read/fleet-summary", headers=wrong)
+    assert limited.status_code == 429
+    assert limited.headers["Retry-After"]

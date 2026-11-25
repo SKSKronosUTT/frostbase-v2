@@ -199,7 +199,9 @@ ser igual a la actual ni contener el nombre de usuario.
 ### Endpoints de solo lectura para el agente
 
 Autenticados con `Authorization: Bearer <AI_AGENT_READ_TOKEN>` (no JWT),
-solo GET y 60 req/min. Respuestas compactas y sin datos personales.
+solo GET y 60 req/min **antes de validar el token** (los intentos fallidos
+también cuentan). Respuestas compactas y sin datos personales. Si se configura
+`AI_AGENT_READ_ALLOWED_IPS`, un origen fuera de la allowlist recibe `403`.
 
 | Método | Ruta | Descripción |
 |---|---|---|

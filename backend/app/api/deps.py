@@ -1,19 +1,24 @@
 import hmac
 from typing import Annotated
 
-from fastapi import Depends, Header, HTTPException, Request, status
+from fastapi import Depends, Header, HTTPException, Request, Response, status
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.core.database import get_db
+from app.core.ratelimit import RateLimit
 from app.core.security import decode_access_token
 from app.models.admin import Admin
 from app.models.driver import Driver
 from app.repositories import admin as admin_repo
 from app.repositories import driver as driver_repo
 from app.services import device_service
+from app.services.ai_agent import audit
+from app.services.ai_agent.access import client_ip, is_ip_allowed
 
 DbSession = Annotated[Session, Depends(get_db)]
+
+_agent_read_limiter = RateLimit("agent-read", limit=60, window_seconds=60)
 
 
 def _token_from_request(request: Request) -> str | None:
@@ -155,13 +160,17 @@ CurrentPrincipal = Annotated[Admin | Driver, Depends(get_current_principal)]
 
 
 def require_agent_read_token(
+    request: Request,
+    response: Response,
     authorization: Annotated[str | None, Header()] = None,
 ) -> None:
-    """Token de solo lectura que usa el agente para ``/agent-read``.
+    """Token de solo lectura y origen permitido para ``/agent-read``.
 
-    Si el asistente o el token no están configurados, los endpoints no existen
-    (404) para no revelar su presencia.
+    El rate limit se aplica antes de validar el token para que los intentos
+    fallidos tampoco puedan martillar el backend. Si el asistente o el token no
+    están configurados, los endpoints no existen (404).
     """
+    _agent_read_limiter.check(request, response)
     if not settings.ai_agent_enabled or not settings.ai_agent_read_token:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -179,6 +188,22 @@ def require_agent_read_token(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Token de solo lectura inválido",
             headers={"WWW-Authenticate": "Bearer"},
+        )
+    origin = client_ip(
+        request,
+        trust_forwarded_for=settings.ai_agent_trust_forwarded_for,
+    )
+    if not is_ip_allowed(origin, settings.ai_agent_read_allowed_ips):
+        audit.record_event(
+            admin_id=None,
+            action="read",
+            status="error",
+            http_status=status.HTTP_403_FORBIDDEN,
+            detail="ip_not_allowed",
+        )
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="IP de origen no autorizada",
         )
 
 
