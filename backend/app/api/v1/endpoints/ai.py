@@ -17,6 +17,9 @@ from app.schemas.ai import (
     AiChatIn,
     AiChatOut,
     AiConversationClosedOut,
+    AiConversationMessagesOut,
+    AiConversationOut,
+    AiConversationRenameIn,
     AiMetricsOut,
     AiQuickItem,
     AiQuickOut,
@@ -24,8 +27,13 @@ from app.schemas.ai import (
     AiUsageOut,
 )
 from app.services import ai_agent
-from app.services.ai_agent import audit, quota
-from app.services.ai_agent.conversations import close_conversation
+from app.services.ai_agent import audit, history, quota
+from app.services.ai_agent.conversations import (
+    ConversationTitleError,
+    close_conversation,
+    list_recent,
+    rename_conversation,
+)
 
 router = APIRouter(prefix="/ai", tags=["Asistente IA"])
 
@@ -33,6 +41,7 @@ _chat_limiter = RateLimit(
     "ai:chat", limit=settings.ai_agent_rate_limit, window_seconds=60
 )
 _quick_limiter = RateLimit("ai:quick", limit=30, window_seconds=60)
+_history_limiter = RateLimit("ai:history", limit=30, window_seconds=60)
 
 
 def _audit(
@@ -202,6 +211,135 @@ def quick(
         detail=quick_id,
     )
     return AiQuickOut(id=quick_id, title=title, text=text)
+
+
+@router.get("/conversations", response_model=list[AiConversationOut])
+def conversations(
+    admin: CurrentAdmin,
+    db: DbSession,
+    limit: int = Query(default=20, ge=1, le=50),
+) -> list[AiConversationOut]:
+    """Conversaciones activas del administrador, de la más reciente a la antigua."""
+    return [
+        AiConversationOut.model_validate(conversation)
+        for conversation in list_recent(db, admin_id=admin.id, limit=limit)
+    ]
+
+
+@router.get(
+    "/conversations/{conversation_id}/messages",
+    response_model=AiConversationMessagesOut,
+)
+def conversation_messages(
+    conversation_id: UUID,
+    request: Request,
+    response: Response,
+    admin: CurrentAdmin,
+    db: DbSession,
+    limit: int = Query(default=50, ge=1, le=100),
+) -> AiConversationMessagesOut:
+    """Historial leído del agente (el backend no guarda el texto)."""
+    _history_limiter.check(request, response, extra=str(admin.id))
+    started = time.perf_counter()
+    try:
+        with ai_agent.build_client() as client:
+            data = history.read_messages(
+                db,
+                admin_id=admin.id,
+                conversation_id=conversation_id,
+                client=client,
+                limit=limit,
+            )
+    except (ai_agent.AgentDisabledError, ai_agent.ConversationNotFoundError) as exc:
+        _audit(admin.id, "messages", 404, conversation_id=conversation_id)
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)
+        ) from exc
+    except ai_agent.AgentSessionNotFoundError as exc:
+        _audit(admin.id, "messages", 404, conversation_id=conversation_id)
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="La sesión del agente ya no está disponible",
+        ) from exc
+    except ai_agent.AgentProtocolError as exc:
+        _audit(admin.id, "messages", 502, conversation_id=conversation_id)
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY, detail=str(exc)
+        ) from exc
+    except ai_agent.AgentTimeoutError as exc:
+        _audit(admin.id, "messages", 504, conversation_id=conversation_id)
+        raise HTTPException(
+            status_code=status.HTTP_504_GATEWAY_TIMEOUT, detail=str(exc)
+        ) from exc
+    except (ai_agent.AgentUnavailableError, ai_agent.AgentConfigError) as exc:
+        _audit(admin.id, "messages", 503, conversation_id=conversation_id)
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(exc)
+        ) from exc
+
+    _audit(
+        admin.id,
+        "messages",
+        200,
+        latency_ms=int((time.perf_counter() - started) * 1000),
+        conversation_id=conversation_id,
+        detail="history",
+    )
+    return AiConversationMessagesOut(**data)
+
+
+@router.patch("/conversations/{conversation_id}", response_model=AiConversationOut)
+def rename(
+    conversation_id: UUID,
+    payload: AiConversationRenameIn,
+    admin: CurrentAdmin,
+    db: DbSession,
+) -> AiConversationOut:
+    """Renombra la conversación en el agente y guarda la etiqueta local."""
+    try:
+        with ai_agent.build_client() as client:
+            conversation = rename_conversation(
+                db,
+                admin_id=admin.id,
+                conversation_id=conversation_id,
+                title=payload.title,
+                client=client,
+            )
+    except ConversationTitleError as exc:
+        _audit(admin.id, "rename", 422, conversation_id=conversation_id)
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=str(exc)
+        ) from exc
+    except (ai_agent.AgentDisabledError, ai_agent.ConversationNotFoundError) as exc:
+        _audit(admin.id, "rename", 404, conversation_id=conversation_id)
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)
+        ) from exc
+    except ai_agent.AgentSessionNotFoundError as exc:
+        _audit(admin.id, "rename", 404, conversation_id=conversation_id)
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="La sesión del agente ya no está disponible",
+        ) from exc
+    except ai_agent.AgentProtocolError as exc:
+        _audit(admin.id, "rename", 502, conversation_id=conversation_id)
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY, detail=str(exc)
+        ) from exc
+    except (ai_agent.AgentUnavailableError, ai_agent.AgentConfigError) as exc:
+        _audit(admin.id, "rename", 503, conversation_id=conversation_id)
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(exc)
+        ) from exc
+
+    _audit(
+        admin.id,
+        "rename",
+        200,
+        conversation_id=conversation_id,
+        detail="renamed",
+    )
+    return AiConversationOut.model_validate(conversation)
 
 
 @router.delete(

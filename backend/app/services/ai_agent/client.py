@@ -191,6 +191,19 @@ class WebImClient:
         )
         return response.json()
 
+    def rename_session(self, session: str, title: str) -> dict:
+        response = self._request(
+            "PATCH",
+            f"/api/webim/sessions/{session}",
+            json={"title": title},
+            timeout=10.0,
+        )
+        try:
+            payload = response.json()
+        except ValueError:
+            return {}
+        return payload if isinstance(payload, dict) else {}
+
     def delete_session(self, session: str) -> None:
         try:
             self._client.delete(f"/api/webim/sessions/{session}", timeout=5.0)

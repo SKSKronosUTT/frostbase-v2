@@ -89,6 +89,11 @@ docker compose exec -T app python -c "from app.core.database import SessionLocal
 - Máximo **5 conversaciones activas** por administrador
   (`AI_AGENT_MAX_CONVERSATIONS`); al crear otra se cierra la más antigua.
 - «Nueva conversación» cierra la sesión de inmediato.
+- El panel muestra las conversaciones activas y permite abrirlas, renombrarlas
+  y eliminarlas. El historial se lee del agente (no de FrostBase) y la
+  conversación activa se restaura al recargar la página.
+- Renombrar actualiza el título en el agente y la etiqueta local
+  `ai_conversations.title` (máx. 60 caracteres).
 - El backend **no guarda el texto** de los mensajes. Las conversaciones
   inactivas se purgan a los 30 días (`AI_CONVERSATIONS_RETENTION_DAYS`).
 - Las respuestas se recortan a `AI_AGENT_MAX_REPLY_CHARS` (4000) y se limpian
@@ -109,8 +114,9 @@ El backend no necesita cambios: el contrato WebIM es independiente del modelo.
 
 ## 8. Auditoría y métricas
 
-- **Auditoría** (`ai_audit`): administrador, acción (`chat`/`quick`/`close`/
-  `read`), estado, código HTTP, latencia, `conversation_id` y código de error.
+- **Auditoría** (`ai_audit`): administrador, acción (`chat`/`quick`/`messages`/
+  `rename`/`close`/`read`), estado, código HTTP, latencia, `conversation_id` y
+  código de error.
   **Nunca** el contenido del chat. En `read` solo se guarda la ruta consultada
   por el agente (sin token).
 - **Métricas**: `GET /api/v1/ai/metrics?days=7` (solo admin) devuelve peticiones,

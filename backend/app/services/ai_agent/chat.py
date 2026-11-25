@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import re
 import time
 import uuid
 from dataclasses import dataclass
@@ -28,9 +27,8 @@ from app.services.ai_agent.context import build_context
 from app.services.ai_agent.conversations import get_or_create, rotate_session
 from app.services.ai_agent.gate import agent_lock
 from app.services.ai_agent.quota import consume
+from app.services.ai_agent.text import sanitize_text
 from app.utils.time import utcnow
-
-_CONTROL_CHARS = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]")
 
 # Fallos que abren el cortacircuito (todo lo que implique que el agente no
 # respondió correctamente; la validación del mensaje nunca cuenta).
@@ -53,13 +51,6 @@ class ChatReply:
 
 def _last_seq(messages: list[dict]) -> int:
     return max((int(message.get("seq", 0)) for message in messages), default=0)
-
-
-def _prepare_reply(text: str) -> tuple[str, bool]:
-    """Quita caracteres de control y limita el tamaño de la respuesta."""
-    cleaned = _CONTROL_CHARS.sub("", text).strip()
-    limit = max(1, settings.ai_agent_max_reply_chars)
-    return cleaned[:limit], len(cleaned) > limit
 
 
 def _probe_boot_id(client: WebImClient) -> str | None:
@@ -186,7 +177,9 @@ def chat(
             agent_client.close()
 
     assert conversation is not None
-    reply_text, truncated = _prepare_reply(str(reply.get("text") or ""))
+    reply_text, truncated = sanitize_text(
+        str(reply.get("text") or ""), limit=settings.ai_agent_max_reply_chars
+    )
     return ChatReply(
         conversation_id=conversation.id,
         reply=reply_text,
