@@ -128,6 +128,45 @@
                   <button class="ai-suggestion" type="button" data-quick="today-routes">
                     Rutas de hoy
                   </button>
+                  <button
+                    class="ai-suggestion"
+                    type="button"
+                    data-quick="trips-history"
+                  >
+                    Historial de viajes
+                  </button>
+                  <button
+                    class="ai-suggestion"
+                    type="button"
+                    data-quick="alerts-by-type"
+                  >
+                    Alertas por tipo
+                  </button>
+                </div>
+                <div
+                  class="ai-suggestions ai-suggestions--truck"
+                  aria-label="Consultas por camión"
+                >
+                  <label class="ai-truck-picker">
+                    <span class="sr-only">Camión para la consulta</span>
+                    <select class="ai-truck-picker__select" id="aiTruckSelect">
+                      <option value="">Selecciona un camión…</option>
+                    </select>
+                  </label>
+                  <button
+                    class="ai-suggestion"
+                    type="button"
+                    data-quick-truck="truck-status"
+                  >
+                    Estado del camión
+                  </button>
+                  <button
+                    class="ai-suggestion"
+                    type="button"
+                    data-quick-truck="truck-thresholds"
+                  >
+                    Umbrales del camión
+                  </button>
                 </div>
               </div>
               <div class="ai-typing" id="aiTyping" hidden>

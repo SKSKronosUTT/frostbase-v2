@@ -193,13 +193,20 @@ def quick(
     response: Response,
     admin: CurrentAdmin,
     db: DbSession,
+    truck_id: int | None = Query(default=None, ge=1),
 ) -> AiQuickOut:
     _quick_limiter.check(request, response, extra=str(admin.id))
     started = time.perf_counter()
+    detail = f"{quick_id}:{truck_id}" if truck_id is not None else quick_id
     try:
-        title, text = ai_agent.quick_answer(db, quick_id)
-    except ai_agent.UnknownQuickError as exc:
-        _audit(admin.id, "quick", 404, detail=quick_id)
+        title, text = ai_agent.quick_answer(db, quick_id, truck_id=truck_id)
+    except ai_agent.QuickTruckRequiredError as exc:
+        _audit(admin.id, "quick", 422, detail=detail)
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=str(exc)
+        ) from exc
+    except (ai_agent.QuickTruckNotFoundError, ai_agent.UnknownQuickError) as exc:
+        _audit(admin.id, "quick", 404, detail=detail)
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)
         ) from exc
@@ -208,7 +215,7 @@ def quick(
         "quick",
         200,
         latency_ms=int((time.perf_counter() - started) * 1000),
-        detail=quick_id,
+        detail=detail,
     )
     return AiQuickOut(id=quick_id, title=title, text=text)
 

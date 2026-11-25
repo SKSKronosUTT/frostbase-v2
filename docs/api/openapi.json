@@ -5991,6 +5991,23 @@
               "title": "Quick Id",
               "type": "string"
             }
+          },
+          {
+            "in": "query",
+            "name": "truck_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "minimum": 1,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Truck Id"
+            }
           }
         ],
         "responses": {
