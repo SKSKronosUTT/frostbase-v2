@@ -140,9 +140,10 @@ def test_truck_route_prefers_today_and_single_fallback(
         "/api/v1/routes", json=_route_payload("Unica"), headers=admin_headers()
     )
     only_id = only.json()["id"]
+    other_day = (route_links.today_weekday() + 1) % 7
     client.put(
         f"/api/v1/routes/{only_id}/driver",
-        json={"driver_id": driver_id, "weekdays": [3]},
+        json={"driver_id": driver_id, "weekdays": [other_day]},
         headers=admin_headers(),
     )
     # Una sola ruta: fallback aunque hoy no sea su día.

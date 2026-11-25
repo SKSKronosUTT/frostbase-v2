@@ -390,7 +390,7 @@ pytest -q
 pytest --cov=app --cov-report=term-missing
 ```
 
-Resultado esperado: **209 passed** y cobertura **≥ 70 %** (actual: 85 %). Para limpiar la base de pruebas:
+Resultado esperado: **213 passed** y cobertura **≥ 70 %** (actual: 85 %). Para limpiar la base de pruebas:
 
 ```bash
 docker compose -f compose.test.yml down
@@ -570,7 +570,7 @@ El volumen de PostgreSQL conserva la contraseña con la que se creó. Si actuali
 | `frontend/tests/e2e/` | Flujos críticos con Playwright (login, flota, rutas, alertas, configuración). |
 | `iot-simulator/` | Simulador del dispositivo ESP32-S3. |
 | `deploy/nginx.conf` | Proxy inverso de referencia con TLS, gzip y rate limit. |
-| `tasks.ps1` / `Makefile` | Tareas `dev`, `test`, `lint`, `build`, `seed`, `e2e`, `ai-prompt` y `net-check`. |
+| `tasks.ps1` / `Makefile` | Tareas `dev`, `test`, `lint`, `build`, `seed`, `e2e`, `ai-prompt`, `net-check` y `clean-alerts`. |
 | `docs/` | Instalación, API, base de datos, integración IoT, runbook y respaldos. |
 | `PLAN-MEJORA.md` | Auditoría técnica y plan de mejora por fases. |
 
@@ -595,9 +595,10 @@ Navegador  →  FastAPI (backend)  →  PostgreSQL
 .\tasks.ps1 backup   # respaldo pg_dump con retención
 .\tasks.ps1 ai-prompt   # prompt del agente (contiene el token)
 .\tasks.ps1 net-check   # diagnóstico de red tras mudanza + prompt
+.\tasks.ps1 clean-alerts   # simula/apply limpieza de alertas LOAD-/E2E-
 ```
 
-En macOS/Linux use el `Makefile` equivalente (`make test`, `make lint`, `make build`, `make net-check`).
+En macOS/Linux use el `Makefile` equivalente (`make test`, `make lint`, `make build`, `make net-check`, `make clean-alerts`).
 
 ---
 

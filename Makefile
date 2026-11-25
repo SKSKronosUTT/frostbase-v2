@@ -1,4 +1,4 @@
-.PHONY: dev up down test lint build seed e2e openapi backup ai-prompt net-check
+.PHONY: dev up down test lint build seed e2e openapi backup ai-prompt net-check clean-alerts
 
 PYTHON ?= backend/.venv/bin/python
 COMPOSE ?= docker compose
@@ -48,3 +48,6 @@ ai-prompt:
 
 net-check:
 	cd backend && $(PYTHON) -m scripts.network_check
+
+clean-alerts:
+	$(COMPOSE) exec -T app python -m scripts.resolve_stale_alerts $(if $(filter 1,$(APPLY)),--apply) $(if $(filter 1,$(KEEP_DEVICES)),--keep-devices)
