@@ -11,7 +11,11 @@ from __future__ import annotations
 
 import argparse
 
-from app.core.config import settings
+from scripts.runtime import configure_stdio, load_project_env
+
+load_project_env()
+
+from app.core.config import settings  # noqa: E402
 
 
 def build_prompt(*, backend_url: str, token: str) -> str:
@@ -65,6 +69,7 @@ def parse_args() -> argparse.Namespace:
 
 
 def main() -> int:
+    configure_stdio()
     args = parse_args()
     if not settings.ai_agent_enabled:
         print(

@@ -3,13 +3,16 @@
 
 param(
     [Parameter(Position = 0)]
-    [ValidateSet("dev", "up", "down", "test", "lint", "build", "seed", "e2e", "backup", "ai-probe", "ai-prompt", "help")]
+    [ValidateSet("dev", "up", "down", "test", "lint", "build", "seed", "e2e", "backup", "ai-probe", "ai-prompt", "net-check", "help")]
     [string]$Task = "help",
     [switch]$Reset,
     [switch]$PrintKeys,
     [int]$Trucks = 3,
     [int]$Devices = 2,
-    [string]$Keep = "14"
+    [string]$Keep = "14",
+    [string]$HostIp = "",
+    [switch]$NoPrompt,
+    [switch]$NoToken
 )
 
 $ErrorActionPreference = "Stop"
@@ -24,7 +27,17 @@ function Invoke-BackendPython {
         throw "No existe $Python. Cree el entorno con: python -m venv backend\.venv && pip install -r backend\requirements-dev.txt"
     }
     Push-Location $Backend
-    try { & $Python @Arguments } finally { Pop-Location }
+    $previousEncoding = [Console]::OutputEncoding
+    $previousUtf8 = $env:PYTHONUTF8
+    try {
+        [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+        $env:PYTHONUTF8 = "1"
+        & $Python @Arguments
+    } finally {
+        $env:PYTHONUTF8 = $previousUtf8
+        [Console]::OutputEncoding = $previousEncoding
+        Pop-Location
+    }
 }
 
 switch ($Task) {
@@ -72,7 +85,16 @@ switch ($Task) {
         Invoke-BackendPython @("-m", "scripts.ai_probe", "--mode", "both")
     }
     "ai-prompt" {
-        Invoke-BackendPython @("-m", "scripts.agent_prompt")
+        $arguments = @("-m", "scripts.agent_prompt")
+        if ($NoToken) { $arguments += "--no-token" }
+        Invoke-BackendPython $arguments
+    }
+    "net-check" {
+        $arguments = @("-m", "scripts.network_check")
+        if ($HostIp) { $arguments += @("--host-ip", $HostIp) }
+        if ($NoPrompt) { $arguments += "--no-prompt" }
+        if ($NoToken) { $arguments += "--no-token" }
+        Invoke-BackendPython $arguments
     }
     default {
         Write-Host "Tareas disponibles:"
@@ -82,6 +104,8 @@ switch ($Task) {
         Write-Host "  .\tasks.ps1 build          Genera frontend/build con assets hasheados"
         Write-Host "  .\tasks.ps1 seed -Reset -PrintKeys -Trucks 20 -Devices 10"
         Write-Host "  .\tasks.ps1 e2e            Playwright (requiere navegadores instalados)"
+        Write-Host "  .\tasks.ps1 net-check      Diagnostico de red y prompt tras cambiar de red"
+        Write-Host "                           .\tasks.ps1 net-check -HostIp 192.168.1.45 -NoToken"
         Write-Host "  .\tasks.ps1 backup         Respaldo pg_dump (-Fc) con retención (default 14)"
         Write-Host "                           .\tasks.ps1 backup -Keep 30"
         Write-Host "  .\tasks.ps1 ai-probe       Sondeo A0 del agente ESP-Claw (HTTP + WebSocket)"

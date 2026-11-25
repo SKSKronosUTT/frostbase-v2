@@ -1,4 +1,4 @@
-.PHONY: dev up down test lint build seed e2e openapi backup
+.PHONY: dev up down test lint build seed e2e openapi backup ai-prompt net-check
 
 PYTHON ?= backend/.venv/bin/python
 COMPOSE ?= docker compose
@@ -45,3 +45,6 @@ backup:
 
 ai-prompt:
 	cd backend && $(PYTHON) -m scripts.agent_prompt
+
+net-check:
+	cd backend && $(PYTHON) -m scripts.network_check
