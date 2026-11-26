@@ -34,13 +34,13 @@
   margin-top: var(--space-7);
 }
 
-@media (max-width: 1180px) {
+@media (max-width: 1280px) {
   .dashboard-grid {
     grid-template-columns: minmax(0, 1fr) 300px;
   }
 }
 
-@media (max-width: 980px) {
+@media (max-width: 1024px) {
   .dashboard-grid {
     grid-template-columns: 1fr;
   }
@@ -133,7 +133,7 @@
 }
 
 /* Responsive al final para no ser anulada por las reglas base (FE-019). */
-@media (max-width: 640px) {
+@media (max-width: 480px) {
   .dashboard-side {
     grid-template-columns: 1fr;
   }

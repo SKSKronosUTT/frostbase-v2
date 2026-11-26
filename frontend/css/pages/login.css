@@ -276,7 +276,7 @@ body.login-page {
 
 /* ===== Responsive (T4.5 · orden final para que siempre gane en cascada) ===== */
 
-@media (max-width: 860px) {
+@media (max-width: 768px) {
   .login-shell {
     grid-template-columns: 1fr;
     width: min(520px, 100%);
@@ -377,7 +377,7 @@ body.login-page {
   }
 }
 
-@media (max-width: 360px) {
+@media (max-width: 480px) {
   body.login-page {
     padding: var(--space-5);
     padding-top: 58px;

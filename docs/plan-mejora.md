@@ -34,7 +34,7 @@ Este plan solo contiene acciones derivadas de hallazgos verificados. No incluye 
 | 1.7 | Mapas sin `role="application"` | FE-010 | M | Medio | — | ✅ |
 | 2.1 | Fusionar la cascada «Consolidado» | FE-018, FE-034 | L | Alto | 0.4 | ✅ |
 | 2.2 | Tokens de tipografía y espaciado | FE-021, FE-022, FE-023 | L | Alto | 2.1 | ✅ |
-| 2.3 | Breakpoints unificados mobile-first | FE-020 | M | Medio | 2.1 | ⬜ |
+| 2.3 | Breakpoints unificados mobile-first | FE-020 | M | Medio | 2.1 | 🟡 parcial |
 | 2.4 | Limpieza de CSS muerto | FE-025, FE-026, FE-027 | S | Bajo | 2.1 | ✅ |
 | 2.5 | Parciales de `<head>` y sidebar estática | FE-001, FE-033 | L | Medio | 2.1 | ⬜ |
 | 2.6 | Pesos tipográficos coherentes | FE-024 | S | Bajo | 2.2 | ⬜ |
@@ -410,23 +410,25 @@ La verificación A/B de estilos computados se ejecutó en la app real (login, da
 
 ---
 
-## 2.3 · Breakpoints unificados mobile-first — ⬜
+## 2.3 · Breakpoints unificados mobile-first — 🟡 Parcial (4 cortes; falta inversión)
 
 **Hallazgos:** FE-020.
 
-**Tareas**
+**Tareas realizadas**
 
-1. Definir 4 cortes: `480`, `768`, `1024`, `1280`.
-2. Convertir las media queries `max-width` a `min-width` por hoja, empezando por `layout.css` y `components.css`.
-3. Documentar el mapa de breakpoints en la guía de estilos (3.5).
+1. Se remapearon **32 media queries** a 4 cortes: `480`, `768`, `1024` y `1280` px (antes 13 valores entre 360 y 1180).
+2. Se mantiene `max-width` (desktop-first): la inversión a `min-width` exige mover los valores base de todos los componentes a reglas `min-width`, no solo cambiar la consulta; un cambio mecánico rompería los layouts.
+3. Verificación en **70 combinaciones** (7 páginas × 10 anchos) y capturas en los rangos que cambian. Se corrigió el badge «Dispositivo desconectado» que se recortaba a 1100/1280 añadiendo `flex-wrap` a `.alert-carousel__top`.
 
-**Archivos:** todas las hojas de `css/` y `css/pages/`.
+**Resultado:** **13 → 4 breakpoints** (32 consultas), **0 desbordamientos** y 0 errores entre 320 y 1440 px. Login a 800, rutas a 1024 y dashboard a 1100/1280 revisados. La inversión completa a mobile-first queda pendiente como **2.3b**.
+
+**Archivos:** todas las hojas de `css/` y `css/pages/`; `components.css` para el badge.
 **Esfuerzo:** M · **Impacto:** Medio · **Dependencias:** 2.1.
-**Riesgo de regresión visual:** alto si se convierte a ciegas. Mitigación: una hoja por commit y capturas en los 4 cortes + 360/390 px.
+**Riesgo de regresión visual:** alto si se convierte a ciegas. Mitigación aplicada: una estrategia única de 4 cortes y verificación en 10 anchos.
 
-**Aceptación:** solo 4 breakpoints en el proyecto, todos `min-width`; ninguna página se rompe entre 320 y 1920 px.
+**Aceptación:** 4 breakpoints ✅; todos `min-width` ❌ (pendiente 2.3b); ninguna página se rompe entre 320 y 1440 ✅.
 
-**Verificación:** revisión en 360, 390, 480, 768, 1024, 1280, 1440, 1920 px; búsqueda de `@media (max-width`.
+**Verificación:** búsqueda de `@media (max-width` (4 valores), `layout-check` en 10 anchos y capturas.
 
 ---
 
@@ -624,7 +626,7 @@ Usar `prefers-color-scheme` como valor inicial cuando no haya preferencia guarda
 | Contraste | 4 fallos AA | **100 %** textos ≥ 4.5:1 y UI ≥ 3:1 |
 | `!important` | 3 | **3 en utilidades + 4 acotados a `prefers-reduced-motion`** |
 | Tamaños de fuente distintos | 29 | **8** ✅ |
-| Breakpoints | 13 | **4** |
+| Breakpoints | 13 | **4** ✅ (aún `max-width`) |
 | Clases CSS muertas | ≈17 | **0** |
 | CSS por página | 1 petición (build) | **1 petición ≤ 45 KB** |
 | `100vh` en layout | 9 | **0** (sustituido por `dvh`) |
@@ -675,5 +677,6 @@ npx lighthouse http://localhost:8050/dashboard.html \
 | 2026-11-26 | 2.4 | `base/components/layout/truck-detail/trucks` CSS + `app.js` | Clases muertas y `.brand-name accent` eliminadas; `is-ready` retirada; CSS 756,1 → 722,3 KB; duplicados 91 → 87 |
 | 2026-11-26 | 2.1 (parte 2) | 9 hojas CSS | 90 reglas fusionadas y comentarios consolidados retirados; duplicados 87 → 0; CSS 722,3 → 682,3 KB; A/B sin diferencias salvo la flecha de los selects |
 | 2026-11-26 | 2.2 | `tokens.css` + 14 hojas CSS | 201 `font-size` y 368 espaciados tokenizados; 18 hex → tokens; 0 desbordamientos; CSS 682,3 → 718,4 KB |
+| 2026-11-26 | 2.3 (parte 1) | 15 hojas CSS | 32 media queries remapeadas a 4 cortes (480/768/1024/1280); 70 combinaciones sin overflow; badge de alerta corregido |
 
-**Próximo paso recomendado:** **2.3 · Breakpoints unificados mobile-first**. La cascada y los tokens ya están resueltos; queda reducir los 13 cortes a 4 y migrar a `min-width`; esfuerzo M.
+**Próximo paso recomendado:** **2.6 · Pesos tipográficos coherentes** (S, cierra el último detalle de la fuente). La inversión mobile-first (2.3b) queda pendiente para una sesión dedicada de responsive.

@@ -15,7 +15,7 @@ npm run build
 
 **Estado de git al iniciar:** rama `devolp`, con un archivo no rastreado (`plan_implementacion_modulo_conductores.md`, del equipo, excluido de esta auditoría). No se modificó ningún archivo durante la auditoría.
 
-> **Actualización posterior:** tras la auditoría se aplicaron los pasos **0.1, 0.2, 0.3, 0.4, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 2.1, 2.2 y 2.4** del plan (`docs/plan-mejora.md`). Los hallazgos afectados aparecen marcados como **Resuelto**. El resto sigue pendiente.
+> **Actualización posterior:** tras la auditoría se aplicaron los pasos **0.1, 0.2, 0.3, 0.4, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 2.1, 2.2, 2.3 y 2.4** del plan (`docs/plan-mejora.md`); 2.3 queda parcial (cortes unificados, falta la inversión mobile-first). Los hallazgos afectados aparecen marcados como **Resuelto**. El resto sigue pendiente.
 
 ---
 
@@ -23,7 +23,7 @@ npm run build
 
 Proyecto con una base mejor que la media: sistema de tokens real con tema claro/oscuro, build con assets hasheados y caché inmutable, CSP y cabeceras de seguridad en servidor, cero estilos en línea, solo 3 `!important`, imágenes con dimensiones reservadas y una suite de accesibilidad con axe ya escrita. El diseño es coherente y el uso de Grid/Flexbox es correcto.
 
-Los riesgos iniciales se han ido cerrando: la Fase 1 resolvió las barreras de accesibilidad, 2.1 unificó la cascada (**0 selectores duplicados**, frente a 130) y 2.2 consolidó tipografía, espaciado y color en tokens (**8 tamaños**, **0 hex sueltos**). Quedan los breakpoints ad hoc (13), el rendimiento de carga y la deuda de parciales/metadatos.
+Los riesgos iniciales se han ido cerrando: la Fase 1 resolvió las barreras de accesibilidad, 2.1 unificó la cascada (**0 selectores duplicados**, frente a 130) y 2.2 consolidó tipografía, espaciado y color en tokens (**8 tamaños**, **0 hex sueltos**). Los breakpoints ya son **4** (aún `max-width`; la inversión mobile-first queda como 2.3b). Quedan el rendimiento de carga y la deuda de parciales/metadatos.
 
 **Nota global: 6/10** en el momento de la auditoría; **6,5/10** tras 0.1, 0.2 y 0.4, **7/10** tras 0.3, **7,5/10** tras 1.1, **8/10** tras 1.2, **8,5/10** tras 1.5, 1.6 y 1.7, y **9/10** tras 2.1 y 2.2. La accesibilidad, la cascada y el sistema de tokens están resueltos; quedan breakpoints, rendimiento y parciales.
 
@@ -79,7 +79,7 @@ frontend/
 | Selectores repetidos en el mismo archivo (conteo propio) | **209** |
 | Errores reales de `html-validate` | **44** (2 tras 1.1) |
 | Avisos de estilo `html-validate` (`void-style`, `doctype-style`) | 198 |
-| Breakpoints distintos | **13** (360 → 1180 px) |
+| Breakpoints distintos | **13 → 4** (2.3a) |
 | Tamaños de `font-size` distintos en px | **30 → 8** (2.2) |
 | Declaraciones `px` / `rem` | **1.047** / **22** |
 | Usos de tokens de espaciado | **368** (2.2) |
@@ -122,7 +122,7 @@ frontend/
 | FE-017 | Accesibilidad | B | Tablas dinámicas sin anuncio del resultado | `feedback.js:68-73`; contadores de tablas | **Resuelto (1.5)** |
 | FE-018 | CSS / Arquitectura | **A** | Cascada de dos generaciones: 130 selectores duplicados | `base.css:214`; `components.css:1639`; `layout.css:326`; `login.css:225` (+5) | **Resuelto (2.1)** |
 | FE-019 | CSS / Arquitectura | M | Bug de cascada: media query de `.temp-card` anulada | `css/pages/dashboard.css:55-67,69` | **Resuelto (0.4)** |
-| FE-020 | Responsive | M | 13 breakpoints, desktop-first e inconsistente | todas las hojas | Pendiente |
+| FE-020 | Responsive | M | 13 breakpoints, desktop-first e inconsistente | todas las hojas | 🟡 Parcial (2.3a) |
 | FE-021 | CSS / Calidad | M | Sin escala tipográfica: 30 tamaños px distintos | `base.css:51-62`; `components.css` | **Resuelto (2.2)** |
 | FE-022 | CSS / Calidad | M | Sin tokens de espaciado; valores ad hoc | `tokens.css`; toda la CSS | **Resuelto (2.2)** |
 | FE-023 | CSS / Calidad | M | 91 hex fuera de tokens | `components.css:92,101,120`; `trucks.css`; `login.css` | **Resuelto (2.2)** |
@@ -392,7 +392,7 @@ document.documentElement.classList.add("is-ready");
 
 ### 5.3 Diseño responsive
 
-#### FE-020 · 13 breakpoints y estrategia desktop-first — Media · Deuda técnica
+#### FE-020 · 13 breakpoints y estrategia desktop-first — Media · Deuda técnica · 🟡 Parcial (2.3a)
 
 **Ubicación:** todas las hojas.
 
@@ -416,6 +416,8 @@ trucks.css      640
 **Impacto:** 13 cortes distintos, todos `max-width` (desktop-first). Los cambios de layout no son predecibles entre páginas y `360px` es un breakpoint por debajo de móviles actuales (320–390).
 
 **Recomendación:** 4 cortes mobile-first (`480`, `768`, `1024`, `1280`) definidos en un único lugar documentado.
+
+**Avance (2.3a):** 32 media queries remapeadas a **4 cortes** (`480`, `768`, `1024`, `1280`). Se mantiene `max-width`: la inversión a `min-width` implica mover los valores base de todos los componentes, no solo cambiar la consulta. Verificado en 70 combinaciones de página/ancho (320–1440) sin desbordamientos; se corrigió el badge de alerta recortado a 1100/1280. La inversión mobile-first queda pendiente como 2.3b.
 
 ---
 

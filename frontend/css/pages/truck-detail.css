@@ -138,13 +138,13 @@
   font-weight: 600;
 }
 
-@media (max-width: 1050px) {
+@media (max-width: 1024px) {
   .detail-layout {
     grid-template-columns: 1fr;
   }
 }
 
-@media (max-width: 640px) {
+@media (max-width: 480px) {
   .detail-hero {
     align-items: flex-start;
   }

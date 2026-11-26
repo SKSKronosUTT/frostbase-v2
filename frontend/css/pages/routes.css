@@ -323,13 +323,13 @@
   font-variant-numeric: tabular-nums;
 }
 
-@media (max-width: 1050px) {
+@media (max-width: 1024px) {
   .routes-layout.is-editing {
     grid-template-columns: 290px minmax(0, 1fr);
   }
 }
 
-@media (max-width: 900px) {
+@media (max-width: 1024px) {
   .routes-layout.is-editing {
     grid-template-columns: 1fr;
   }
@@ -343,7 +343,7 @@
   }
 }
 
-@media (max-width: 640px) {
+@media (max-width: 480px) {
   .point-row {
     grid-template-columns: 26px minmax(0, 1fr);
   }
