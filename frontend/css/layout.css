@@ -279,21 +279,41 @@
 
   .sidebar {
     transform: translateX(-105%);
+    visibility: hidden;
+    overscroll-behavior: contain;
     box-shadow: var(--shadow-md);
+    /* `visibility` retrasado mantiene la animación de salida y, al estar
+       oculto, sus enlaces quedan fuera del orden de tabulación. */
+    transition:
+      transform 220ms ease,
+      visibility 0s linear 220ms;
   }
 
   body.sidebar-open .sidebar {
     transform: translateX(0);
+    visibility: visible;
+    transition:
+      transform 220ms ease,
+      visibility 0s;
   }
 
   body.sidebar-open .sidebar-overlay {
     display: block;
   }
 
+  body.sidebar-open {
+    overflow: hidden;
+  }
+
   .sidebar-mobile-toggle {
     display: inline-flex;
     align-items: center;
     justify-content: center;
+  }
+
+  /* Abierto, el botón se coloca dentro del drawer para no tapar el logotipo. */
+  body.sidebar-open .sidebar-mobile-toggle {
+    left: calc(260px - 58px);
   }
 
   .main {

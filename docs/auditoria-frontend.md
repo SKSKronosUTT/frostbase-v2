@@ -15,7 +15,7 @@ npm run build
 
 **Estado de git al iniciar:** rama `devolp`, con un archivo no rastreado (`plan_implementacion_modulo_conductores.md`, del equipo, excluido de esta auditoría). No se modificó ningún archivo durante la auditoría.
 
-> **Actualización posterior:** tras la auditoría se aplicaron los pasos **0.1, 0.2 y 0.4** del plan (`docs/plan-mejora.md`). Los hallazgos afectados aparecen marcados como **Resuelto**. El resto sigue pendiente.
+> **Actualización posterior:** tras la auditoría se aplicaron los pasos **0.1, 0.2, 0.3 y 0.4** del plan (`docs/plan-mejora.md`). Los hallazgos afectados aparecen marcados como **Resuelto**. El resto sigue pendiente.
 
 ---
 
@@ -25,7 +25,7 @@ Proyecto con una base mejor que la media: sistema de tokens real con tema claro/
 
 Los riesgos se concentran en tres frentes: (1) la cascada está construida en dos generaciones superpuestas (130 selectores duplicados), lo que ya produjo un bug real y hace impredecible cada cambio; (2) existen barreras de accesibilidad concretas (botones sin nombre, buscadores sin etiqueta, contraste AA insuficiente, drawer móvil sin gestión de foco); (3) la escala tipográfica y los breakpoints son ad hoc (30 tamaños de fuente, 13 breakpoints).
 
-**Nota global: 6/10** en el momento de la auditoría; **6,5/10** tras aplicar la Fase 0.1–0.2 y 0.4. Aprueba en intención e infraestructura; la deuda de cascada y los fallos AA impedían una nota mayor. Todo es corregible sin rediseño.
+**Nota global: 6/10** en el momento de la auditoría; **6,5/10** tras aplicar 0.1, 0.2 y 0.4, y **7/10** tras 0.3. Aprueba en intención e infraestructura; la deuda de cascada y los fallos AA impedían una nota mayor. Todo es corregible sin rediseño.
 
 ---
 
@@ -101,7 +101,7 @@ frontend/
 | ID | Categoría | Sev. | Título | Ubicación | Estado |
 |---|---|---|---|---|---|
 | FE-001 | HTML / Semántica | M | Navegación principal inyectada por JS en `<aside>` vacío | `dashboard.html:23`; `js/components/sidebar.js:40` | Pendiente |
-| FE-002 | Accesibilidad | **A** | Drawer móvil sin foco, `aria-expanded` ni bloqueo de scroll | `css/layout.css:280-291`; `sidebar.js:87-108` | Pendiente |
+| FE-002 | Accesibilidad | **A** | Drawer móvil sin foco, `aria-expanded` ni bloqueo de scroll | `css/layout.css:280-291`; `sidebar.js:87-108` | **Resuelto (0.3)** |
 | FE-003 | Accesibilidad | **A** | Botones solo-icono sin nombre accesible | `driver.html:58-67` | **Resuelto (0.1)** |
 | FE-004 | Accesibilidad | **A** | Buscadores sin etiqueta (solo `placeholder`) | `trucks.html:57,95`; `routes.html:56` | **Resuelto (0.1)** |
 | FE-005 | Accesibilidad | **A** | Contraste AA insuficiente en tokens y badges | `tokens.css:33`; `components.css:1835`; `login.css:314` | **Resuelto (0.2)** |
@@ -396,7 +396,7 @@ trucks.css      640
 
 ### 5.4 Accesibilidad (WCAG 2.2 AA)
 
-#### FE-002 · Drawer móvil inaccesible — Alta · Error
+#### FE-002 · Drawer móvil inaccesible — Alta · Error · **Resuelto (0.3)**
 
 **Ubicación:** `frontend/css/layout.css:280-291` y `frontend/js/components/sidebar.js:87-108`.
 
@@ -428,6 +428,8 @@ toggle.setAttribute("aria-controls", "sidebar");
 ```
 
 y en CSS, para el sidebar cerrado en móvil, `visibility: hidden` / `inert` además de `transform`.
+
+**Corrección aplicada:** el toggle se inserta como primer elemento del `<body>` y anuncia el estado con `aria-expanded` + `aria-controls`; al abrir, el foco va al enlace activo, `.main` recibe `inert` y el `body` bloquea el scroll; el foco queda atrapado entre el toggle y el menú; `Escape`, el overlay y los enlaces cierran devolviendo el foco al toggle. En móvil cerrado, el sidebar combina `visibility: hidden` (con salida animada de 220 ms) e `inert`, de modo que sus enlaces nunca son tabulables. Al pasar a escritorio con el menú abierto, se cierra y se libera `inert`. Verificado en Chromium headless a 375×812 con 25 comprobaciones de estado, foco y tabulación.
 
 ---
 

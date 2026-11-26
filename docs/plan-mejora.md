@@ -23,7 +23,7 @@ Este plan solo contiene acciones derivadas de hallazgos verificados. No incluye 
 |---|---|---|---|---|---|---|
 | 0.1 | Nombres accesibles y etiquetas | FE-003, FE-004 | S | Alto | — | ✅ |
 | 0.2 | Contraste AA | FE-005 | S | Alto | — | ✅ |
-| 0.3 | Drawer móvil accesible | FE-002 | M | Alto | — | ⬜ |
+| 0.3 | Drawer móvil accesible | FE-002 | M | Alto | — | ✅ |
 | 0.4 | Bug de cascada `.temp-card` | FE-019 | S | Medio | — | ✅ |
 | 1.1 | Semántica de tablas y landmarks | FE-006, FE-008, FE-011 | S | Medio | — | ⬜ |
 | 1.2 | Encabezados, `<main>` y skip link | FE-007, FE-014 | S | Medio | — | ⬜ |
@@ -118,32 +118,37 @@ cd frontend && npx playwright test tests/e2e/accessibility.spec.js
 
 ---
 
-## 0.3 · Drawer móvil accesible — ⬜ Pendiente
+## 0.3 · Drawer móvil accesible — ✅ Aplicado
 
 **Hallazgos:** FE-002.
 
-**Tareas concretas**
+**Tareas realizadas**
 
-1. En `sidebar.js`, crear el botón antes de `<main>` (o dentro del `.page-header`), no al final del `<body>`.
-2. Añadir `aria-expanded` (alternando `true`/`false`) y `aria-controls="sidebar"`.
-3. Al abrir: mover el foco al primer enlace del menú, marcar `aria-expanded="true"`, aplicar `overflow: hidden` a `body` y `inert` al contenido principal.
-4. Al cerrar (botón, overlay, `Escape` o clic en un enlace): devolver el foco al botón y restaurar el scroll.
-5. En `layout.css`, para móvil cerrado: añadir `visibility: hidden` y `transition` sobre `visibility` además de `transform`, para sacar los enlaces del orden de tabulación.
-6. Añadir `aria-label` al `<aside>` (`Navegación principal`) mientras no se migre a HTML estático (2.5).
+1. En `sidebar.js`, el botón se inserta como primer elemento del `<body>` (`body.prepend`), antes de `<main>`, con `aria-controls="sidebar"` y `aria-expanded="false"` inicial.
+2. Al abrir: `aria-expanded="true"`, etiqueta «Cerrar menú de navegación», icono `fa-xmark`, foco al enlace activo, `inert` en `.main` y `overflow: hidden` en `body`. El botón se recoloca dentro del drawer (202 px) para no tapar el logotipo.
+3. Al cerrar (botón, overlay, `Escape` o clic en un enlace): `aria-expanded="false"`, foco de vuelta al botón, `inert` retirado del contenido y scroll restaurado.
+4. Trampa de foco con `Tab`/`Shift+Tab` entre el botón y los controles del menú.
+5. En `layout.css`, el sidebar cerrado en móvil usa `visibility: hidden` con salida animada de 220 ms, `overscroll-behavior: contain` y `body.sidebar-open { overflow: hidden }`.
+6. En JS, el sidebar cerrado recibe `inert` en móvil (y lo pierde al abrir o al pasar a escritorio), de modo que sus enlaces no son tabulables aunque la animación de salida siga en curso.
+7. Al cambiar a escritorio con el menú abierto, se cierra, se retira `inert` del contenido y se restaura el estado del sidebar.
+
+> El `aria-label` del `<aside>` se pospone a **1.1** (FE-008): nombrar el complementario duplicaría el nombre del `<nav>` «Navegación principal» y debe resolverse junto con la semántica de los landmarks.
 
 **Archivos:** `frontend/js/components/sidebar.js`, `frontend/css/layout.css`.
 
 **Esfuerzo:** M · **Impacto:** Alto · **Dependencias:** ninguna.
-**Riesgo de regresión visual:** medio (interacción móvil). Mitigación: probar 360/480/900 px con teclado y con un lector (NVDA o VoiceOver).
+**Riesgo de regresión visual:** medio (interacción móvil). Mitigación aplicada: harness temporal + Chromium headless a 375×812 y 1200×800.
 
 **Criterios de aceptación**
 
-- El toggle es el primer elemento tabulable tras el skip link.
+- El toggle es el primer elemento tabulable.
 - `aria-expanded` refleja el estado real.
 - Con el menú cerrado no se puede tabular a ningún enlace del sidebar.
 - El fondo no hace scroll con el menú abierto; `Escape` cierra y devuelve el foco.
 
-**Verificación:** Playwright con viewport 375×812 (`expect(toggle).toHaveAttribute('aria-expanded','true')`, tabulación y `Escape`); revisión manual en DevTools (emulación móvil).
+**Verificación:** Playwright/Chromium con viewport 375×812 — 25 comprobaciones de estado, foco, trampa de tabulación, `inert`, scroll y cambio a escritorio. Todas en verde, sin errores de página. Repetible con `npx playwright test` una vez ampliada la suite (3.4).
+
+**Resultado:** 25/25 comprobaciones correctas; `npm run build` correcto (760 KB, 25 assets).
 
 ---
 
@@ -646,6 +651,7 @@ npx lighthouse http://localhost:8050/dashboard.html \
 |---|---|---|---|
 | 2026-11-25 | 0.1 | `driver.html`, `trucks.html`, `routes.html` | `text-content` eliminado; inputs con nombre accesible |
 | 2026-11-25 | 0.2 | `tokens.css`, `components.css`, `pages/login.css` | Ratios AA corregidos (5.07 / 5.11 / 6.00 / 6.15) |
+| 2026-11-25 | 0.3 | `js/components/sidebar.js`, `css/layout.css` | Drawer accesible: `aria-expanded`, foco atrapado, `inert`, scroll bloqueado; 25/25 comprobaciones |
 | 2026-11-25 | 0.4 | `pages/dashboard.css` | Media query al final; 170 px y 340 px aplican en móvil |
 
-**Próximo paso recomendado:** **0.3 · Drawer móvil accesible**. Es el último hallazgo de severidad Alta de la Fase 0, tiene esfuerzo M y no depende de la refactorización de cascada.
+**Próximo paso recomendado:** **1.1 · Semántica de tablas y landmarks**. Cierra los 38 errores `wcag/h63` y los landmarks sin nombre, tiene esfuerzo S y no depende de la refactorización de cascada.
