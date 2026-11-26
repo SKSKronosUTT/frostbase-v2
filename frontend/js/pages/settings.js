@@ -131,10 +131,7 @@ function validate(payload) {
       message: "La tolerancia de humedad debe ser mayor que 0.",
     };
   }
-  if (
-    payload.offline_timeout_seconds < 10 ||
-    payload.offline_timeout_seconds > 86400
-  ) {
+  if (payload.offline_timeout_seconds < 10 || payload.offline_timeout_seconds > 86400) {
     return {
       field: fields.offlineTimeout,
       message: "El tiempo de desconexión debe estar entre 10 y 86400 segundos.",

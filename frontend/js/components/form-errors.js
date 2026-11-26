@@ -16,9 +16,7 @@ function errorContainer(field) {
 }
 
 function describedBy(field) {
-  return (field.getAttribute("aria-describedby") || "")
-    .split(/\s+/)
-    .filter(Boolean);
+  return (field.getAttribute("aria-describedby") || "").split(/\s+/).filter(Boolean);
 }
 
 function watchField(field) {
