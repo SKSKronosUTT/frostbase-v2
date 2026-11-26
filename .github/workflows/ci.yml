@@ -72,7 +72,7 @@ jobs:
         run: npx eslint js
       - name: Prettier
         working-directory: frontend
-        run: npx prettier --check js css
+        run: npx prettier --check js css "tests/**/*.js"
       - name: Stylelint
         working-directory: frontend
         run: npx stylelint "css/**/*.css"
