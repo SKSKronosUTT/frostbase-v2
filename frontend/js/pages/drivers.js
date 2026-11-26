@@ -17,6 +17,11 @@ import {
   tableSkeleton,
 } from "../components/feedback.js";
 import { activateModal } from "../components/modal.js";
+import {
+  clearFormErrors,
+  focusFirstError,
+  setFieldError,
+} from "../components/form-errors.js";
 
 const state = {
   page: 1,
@@ -175,6 +180,7 @@ async function openDriverModal(driverId = null) {
   try {
     driverForm.reset();
     qs("#driverPk").value = "";
+    clearFormErrors(driverForm);
 
     if (driverId) {
       const driver = await api.get(`/drivers/${driverId}`);
@@ -211,8 +217,41 @@ function showSecret(driverLabel, key) {
   openModal(secretModal);
 }
 
+function validateDriverForm() {
+  const required = [
+    [qs("#driverFirstName"), "Indica el nombre."],
+    [qs("#driverLastName"), "Indica el apellido paterno."],
+    [qs("#driverEmail"), "Indica el correo electrónico."],
+    [qs("#driverPhone"), "Indica el teléfono."],
+    [qs("#driverBirthdate"), "Indica la fecha de nacimiento."],
+  ];
+
+  let valid = true;
+  for (const [field, message] of required) {
+    if (!field.value.trim()) {
+      setFieldError(field, message);
+      valid = false;
+    }
+  }
+
+  const email = qs("#driverEmail");
+  if (email.value.trim() && email.validity.typeMismatch) {
+    setFieldError(email, "Introduce un correo electrónico válido.");
+    valid = false;
+  }
+
+  return valid;
+}
+
 async function submitDriver(event) {
   event.preventDefault();
+  clearFormErrors(driverForm);
+
+  if (!validateDriverForm()) {
+    focusFirstError(driverForm);
+    return;
+  }
+
   const id = qs("#driverPk")?.value;
   const payload = {
     first_name: qs("#driverFirstName").value.trim(),

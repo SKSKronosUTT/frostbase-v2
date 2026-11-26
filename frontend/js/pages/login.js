@@ -2,6 +2,11 @@ import { getMe, login } from "../core/auth.js";
 import { notify } from "../core/notifications.js";
 import { applyTheme, initTheme, toggleTheme } from "../core/theme.js";
 import { qs, setButtonLoading } from "../core/helpers.js";
+import {
+  clearFormErrors,
+  focusFirstError,
+  setFieldError,
+} from "../components/form-errors.js";
 
 const form = qs("#loginForm");
 const identifier = qs("#identifier");
@@ -50,9 +55,16 @@ form.addEventListener("submit", async (event) => {
   const user = identifier.value.trim();
   const secret = password.value;
 
+  clearFormErrors(form);
+
   if (!user || !secret) {
-    notify.warning("Ingresa tu usuario o correo y tu contraseña.");
-    (user ? password : identifier).focus();
+    if (!user) {
+      setFieldError(identifier, "Ingresa tu usuario o correo electrónico.");
+    }
+    if (!secret) {
+      setFieldError(password, "Ingresa tu contraseña.");
+    }
+    focusFirstError(form);
     return;
   }
 

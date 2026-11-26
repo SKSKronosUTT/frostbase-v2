@@ -27,7 +27,9 @@ function show(message, type = "info", options = {}) {
   const root = ensureToastRoot();
   const toast = document.createElement("div");
   toast.className = `toast toast--${type}`;
-  toast.setAttribute("role", "status");
+  // Los errores se anuncian de inmediato y no se autodescartan (FE-013).
+  toast.setAttribute("role", type === "error" ? "alert" : "status");
+  toast.setAttribute("aria-atomic", "true");
   toast.innerHTML = `
     <span class="toast__icon"><i class="fa-solid ${ICONS[type] || ICONS.info}"></i></span>
     <div class="toast__body">
@@ -39,24 +41,34 @@ function show(message, type = "info", options = {}) {
     </button>
     <span class="toast__progress"></span>
   `;
+
+  const duration = type === "error" ? 0 : options.duration || 4500;
   const progress = toast.querySelector(".toast__progress");
   if (progress) {
-    progress.style.animationDuration = `${options.duration || 4500}ms`;
+    if (duration > 0) progress.style.animationDuration = `${duration}ms`;
+    else progress.remove();
   }
+
   const close = () => {
     toast.classList.add("toast--leaving");
     setTimeout(() => toast.remove(), 220);
   };
   toast.querySelector(".toast__close").addEventListener("click", close);
   root.appendChild(toast);
-  const timeout = setTimeout(close, options.duration || 4500);
-  toast.addEventListener("mouseenter", () => clearTimeout(timeout), { once: true });
+
+  if (duration > 0) {
+    const timeout = setTimeout(close, duration);
+    const pause = () => clearTimeout(timeout);
+    toast.addEventListener("mouseenter", pause, { once: true });
+    toast.addEventListener("focusin", pause, { once: true });
+  }
+
   return toast;
 }
 
 export const notify = {
   success: (message, options) => show(message, "success", options),
-  error: (message, options) => show(message, "error", { duration: 6000, ...options }),
+  error: (message, options) => show(message, "error", options),
   warning: (message, options) => show(message, "warning", options),
   info: (message, options) => show(message, "info", options),
 };

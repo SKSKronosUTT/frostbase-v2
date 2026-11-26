@@ -292,6 +292,19 @@
   color: var(--text-soft);
 }
 
+.field-error {
+  color: var(--danger);
+  font-size: 11.5px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.input[aria-invalid="true"],
+.select[aria-invalid="true"],
+.textarea[aria-invalid="true"] {
+  border-color: var(--danger);
+}
+
 .input,
 .select,
 .textarea {
