@@ -52,20 +52,6 @@
   }
 }
 
-@media (max-width: 640px) {
-  .dashboard-side {
-    grid-template-columns: 1fr;
-  }
-
-  .map--dashboard {
-    height: 340px;
-  }
-
-  .temp-card {
-    flex-basis: 170px;
-  }
-}
-
 .temp-card {
   flex: 0 0 188px;
   scroll-snap-align: start;
@@ -161,4 +147,19 @@
 .temp-card--alert {
   border-color: var(--danger);
   background: var(--danger-soft);
+}
+
+/* Responsive al final para no ser anulada por las reglas base (FE-019). */
+@media (max-width: 640px) {
+  .dashboard-side {
+    grid-template-columns: 1fr;
+  }
+
+  .map--dashboard {
+    height: 340px;
+  }
+
+  .temp-card {
+    flex: 0 0 170px;
+  }
 }

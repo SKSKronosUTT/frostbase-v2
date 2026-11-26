@@ -219,7 +219,7 @@
 
 .badge--muted {
   background: var(--offline-soft);
-  color: var(--offline);
+  color: var(--offline-text);
 }
 
 .badge--plain::before {
@@ -1833,7 +1833,7 @@
 }
 
 .badge--muted {
-  color: var(--offline);
+  color: var(--offline-text);
 }
 
 .status-dot.is-online {

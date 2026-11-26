@@ -17,6 +17,7 @@
   --warning: #d69a1e;
   --danger: #c9404c;
   --offline: #6b8199;
+  --offline-text: #4f6479;
 
   --bg: #e8f1f7;
   --bg-soft: #f2f8fc;
@@ -29,7 +30,7 @@
   --sidebar-text-strong: #eaf4fa;
   --text: #0a1b2b;
   --text-muted: #4f6479;
-  --text-soft: #5b7288;
+  --text-soft: #50687e;
 
   --ink: #0a1b2b;
   --border-ink: #0a1b2b;
@@ -76,6 +77,7 @@
   --text: #eaf4fa;
   --text-muted: #9fb6c8;
   --text-soft: #7e96aa;
+  --offline-text: #9fb6c8;
 
   --ink: #000000;
   --border-ink: #8fcadd;
