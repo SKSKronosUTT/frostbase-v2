@@ -37,7 +37,7 @@ Este plan solo contiene acciones derivadas de hallazgos verificados. No incluye 
 | 2.3 | Breakpoints unificados mobile-first | FE-020 | M | Medio | 2.1 | 🟡 parcial |
 | 2.4 | Limpieza de CSS muerto | FE-025, FE-026, FE-027 | S | Bajo | 2.1 | ✅ |
 | 2.5 | Parciales de `<head>` y sidebar estática | FE-001, FE-033 | L | Medio | 2.1 | ⬜ |
-| 2.6 | Pesos tipográficos coherentes | FE-024 | S | Bajo | 2.2 | ⬜ |
+| 2.6 | Pesos tipográficos coherentes | FE-024 | S | Bajo | 2.2 | ✅ |
 | 3.1 | Linters y validación en CI | FE-034, FE-036 | M | Alto | 2.1 | ⬜ |
 | 3.2 | Rendimiento de carga | FE-028, FE-030, FE-031, FE-032 | M | Medio | 2.5 | ⬜ |
 | 3.3 | `100dvh` y Safari | FE-029 | S | Bajo | — | ⬜ |
@@ -477,17 +477,21 @@ La verificación A/B de estilos computados se ejecutó en la app real (login, da
 
 ---
 
-## 2.6 · Pesos tipográficos coherentes — ⬜
+## 2.6 · Pesos tipográficos coherentes — ✅ Aplicado
 
 **Hallazgos:** FE-024.
 
-**Tareas:** bajar los `font-weight: 800/900` a 700 (o cargar el eje completo si se quiere mantener el contraste actual). Ajustar `base.css:42-49`, `components.css:1665-1669`, `.btn` y los badges.
+**Tareas realizadas:** se comprobó con `fontTools` que el WOFF2 es una fuente variable con eje `wght` **100–900**. En lugar de bajar los pesos, se declaró el rango real en `@font-face` (`font-weight: 400 900`) y se actualizó `vendor_assets.py` (URL `wght@400..900` y CSS generado) para que una regeneración no lo revierta.
 
-**Archivos:** `base.css`, `components.css`, `fonts.css` (si se opta por el eje completo).
+**Archivos:** `css/fonts.css`, `tools/vendor_assets.py`.
 **Esfuerzo:** S · **Impacto:** Bajo · **Dependencias:** 2.2.
-**Riesgo:** visible en titulares; comparar capturas. Si el diseño exige 900, cargar el eje variable completo (verificar peso del archivo).
+**Riesgo:** visible en titulares; se comparó la captura del login.
 
-**Aceptación:** ningún `font-weight` fuera del rango declarado en `@font-face`; los titulares mantienen el aspecto acordado.
+**Aceptación:** ningún `font-weight` fuera del rango declarado; los titulares mantienen el aspecto.
+
+**Verificación:** `fontTools` (`fvar` 100–900), `document.fonts.check("900 …")`, `FontFace.weight = "400 900"` cargado, `getComputedStyle` de `h1/h2` = 900, captura comparada, build/checks.
+
+**Resultado:** el navegador usa la instancia real 900 (sin negrita sintética); la captura del login no muestra diferencias apreciables. `npm run build`, `check:css` y `check:html` correctos.
 
 **Verificación:** `grep font-weight` + capturas de `login`, `dashboard` y `driver`.
 
@@ -678,5 +682,6 @@ npx lighthouse http://localhost:8050/dashboard.html \
 | 2026-11-26 | 2.1 (parte 2) | 9 hojas CSS | 90 reglas fusionadas y comentarios consolidados retirados; duplicados 87 → 0; CSS 722,3 → 682,3 KB; A/B sin diferencias salvo la flecha de los selects |
 | 2026-11-26 | 2.2 | `tokens.css` + 14 hojas CSS | 201 `font-size` y 368 espaciados tokenizados; 18 hex → tokens; 0 desbordamientos; CSS 682,3 → 718,4 KB |
 | 2026-11-26 | 2.3 (parte 1) | 15 hojas CSS | 32 media queries remapeadas a 4 cortes (480/768/1024/1280); 70 combinaciones sin overflow; badge de alerta corregido |
+| 2026-11-26 | 2.6 | `css/fonts.css`, `tools/vendor_assets.py` | Rango `wght` 400–900 declarado; 800/900 reales; verificado con fontTools y `document.fonts` |
 
-**Próximo paso recomendado:** **2.6 · Pesos tipográficos coherentes** (S, cierra el último detalle de la fuente). La inversión mobile-first (2.3b) queda pendiente para una sesión dedicada de responsive.
+**Próximo paso recomendado:** **2.5 · Parciales de `<head>` y sidebar estática** (L, cierra FE-001 y FE-033) o **3.1 · Linters en CI** (M) para fijar los avances. La inversión mobile-first (2.3b) sigue pendiente como sesión dedicada.

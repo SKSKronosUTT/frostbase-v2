@@ -41,7 +41,7 @@ METADATA_URL = (
     f"{FA_VERSION}/metadata/icons.json"
 )
 OUTFIT_CSS_URL = (
-    "https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap"
+    "https://fonts.googleapis.com/css2?family=Outfit:wght@400..900&display=swap"
 )
 UA = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
@@ -124,7 +124,7 @@ def parse_outfit() -> None:
                 "@font-face {",
                 '  font-family: "Outfit";',
                 "  font-style: normal;",
-                "  font-weight: 400 700;",
+                "  font-weight: 400 900;",
                 "  font-display: swap;",
                 '  src: url("/assets/fonts/outfit-latin.woff2") format("woff2");',
                 "}",

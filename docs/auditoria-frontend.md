@@ -15,7 +15,7 @@ npm run build
 
 **Estado de git al iniciar:** rama `devolp`, con un archivo no rastreado (`plan_implementacion_modulo_conductores.md`, del equipo, excluido de esta auditoría). No se modificó ningún archivo durante la auditoría.
 
-> **Actualización posterior:** tras la auditoría se aplicaron los pasos **0.1, 0.2, 0.3, 0.4, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 2.1, 2.2, 2.3 y 2.4** del plan (`docs/plan-mejora.md`); 2.3 queda parcial (cortes unificados, falta la inversión mobile-first). Los hallazgos afectados aparecen marcados como **Resuelto**. El resto sigue pendiente.
+> **Actualización posterior:** tras la auditoría se aplicaron los pasos **0.1, 0.2, 0.3, 0.4, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 2.1, 2.2, 2.3, 2.4 y 2.6** del plan (`docs/plan-mejora.md`); 2.3 queda parcial (cortes unificados, falta la inversión mobile-first). Los hallazgos afectados aparecen marcados como **Resuelto**. El resto sigue pendiente.
 
 ---
 
@@ -126,7 +126,7 @@ frontend/
 | FE-021 | CSS / Calidad | M | Sin escala tipográfica: 30 tamaños px distintos | `base.css:51-62`; `components.css` | **Resuelto (2.2)** |
 | FE-022 | CSS / Calidad | M | Sin tokens de espaciado; valores ad hoc | `tokens.css`; toda la CSS | **Resuelto (2.2)** |
 | FE-023 | CSS / Calidad | M | 91 hex fuera de tokens | `components.css:92,101,120`; `trucks.css`; `login.css` | **Resuelto (2.2)** |
-| FE-024 | UI/UX | M | `font-weight: 800/900` con fuente declarada 400–700 | `fonts.css:5`; `base.css:46`; `components.css:1667` | Pendiente |
+| FE-024 | UI/UX | M | `font-weight: 800/900` con fuente declarada 400–700 | `fonts.css:5`; `base.css:46`; `components.css:1667` | **Resuelto (2.6)** |
 | FE-025 | CSS / Calidad | B | ≈17 clases/componentes muertos | `components.css:43-50,95-102`; `layout.css:263-267` | **Resuelto (2.4)** |
 | FE-026 | CSS / Calidad | B | Selector imposible `.brand-name accent` | `layout.css:61-63` | **Resuelto (2.4)** |
 | FE-027 | CSS / Calidad | B | Clase `is-ready` añadida sin CSS que la use | `app.js:160` | **Resuelto (2.4)** |
@@ -769,7 +769,7 @@ export function renderTableState(container, html, { onRetry } = {}) {
 
 ### 5.6 UI/UX y consistencia visual
 
-#### FE-024 · Pesos tipográficos fuera del rango de la fuente — Media · Riesgo
+#### FE-024 · Pesos tipográficos fuera del rango de la fuente — Media · Riesgo · **Resuelto (2.6)**
 
 **Ubicación:** `fonts.css:5`, `base.css:42-49`, `components.css:1665-1669`.
 
@@ -787,6 +787,8 @@ h1, h2, h3, h4 { font-weight: 900; }
 **Impacto:** la UI pide 800 y 900 en 13 declaraciones. El navegador sintetiza la negrita por encima de 700: el trazo engorda de forma distinta en cada motor y los titulares pierden definición. Además contradice el sistema de diseño.
 
 **Recomendación:** usar 700 como máximo o cargar el eje `wght` completo del variable font (comprobando peso del archivo).
+
+**Corrección aplicada:** `fontTools` confirmó que el WOFF2 es variable con eje `wght` **100–900**. Se cambió `@font-face` a `font-weight: 400 900` y el generador `vendor_assets.py` a `wght@400..900`, de modo que los 13 usos de 800/900 se resuelven con la instancia real y no con negrita sintética. Verificado: `FontFace.weight = "400 900"` cargado, `document.fonts.check("900 …")` = true y `h1/h2` computan 900. La captura del login no muestra diferencias apreciables.
 
 ---
 
