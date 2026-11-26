@@ -15,7 +15,7 @@ npm run build
 
 **Estado de git al iniciar:** rama `devolp`, con un archivo no rastreado (`plan_implementacion_modulo_conductores.md`, del equipo, excluido de esta auditoría). No se modificó ningún archivo durante la auditoría.
 
-> **Actualización posterior:** tras la auditoría se aplicaron los pasos **0.1, 0.2, 0.3, 0.4, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 2.1 y 2.4** del plan (`docs/plan-mejora.md`). Los hallazgos afectados aparecen marcados como **Resuelto**. El resto sigue pendiente.
+> **Actualización posterior:** tras la auditoría se aplicaron los pasos **0.1, 0.2, 0.3, 0.4, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 2.1, 2.2 y 2.4** del plan (`docs/plan-mejora.md`). Los hallazgos afectados aparecen marcados como **Resuelto**. El resto sigue pendiente.
 
 ---
 
@@ -23,9 +23,9 @@ npm run build
 
 Proyecto con una base mejor que la media: sistema de tokens real con tema claro/oscuro, build con assets hasheados y caché inmutable, CSP y cabeceras de seguridad en servidor, cero estilos en línea, solo 3 `!important`, imágenes con dimensiones reservadas y una suite de accesibilidad con axe ya escrita. El diseño es coherente y el uso de Grid/Flexbox es correcto.
 
-Los riesgos iniciales se han ido cerrando: la Fase 1 resolvió las barreras de accesibilidad y 2.1 unificó la cascada (**0 selectores duplicados**, frente a 130 en la auditoría). Quedan la escala tipográfica y los breakpoints ad hoc (30 tamaños de fuente, 13 breakpoints), el rendimiento de carga y la deuda de parciales/metadatos.
+Los riesgos iniciales se han ido cerrando: la Fase 1 resolvió las barreras de accesibilidad, 2.1 unificó la cascada (**0 selectores duplicados**, frente a 130) y 2.2 consolidó tipografía, espaciado y color en tokens (**8 tamaños**, **0 hex sueltos**). Quedan los breakpoints ad hoc (13), el rendimiento de carga y la deuda de parciales/metadatos.
 
-**Nota global: 6/10** en el momento de la auditoría; **6,5/10** tras 0.1, 0.2 y 0.4, **7/10** tras 0.3, **7,5/10** tras 1.1, **8/10** tras 1.2, **8,5/10** tras 1.5, 1.6 y 1.7 y **9/10** tras 2.1. La accesibilidad y la cascada están resueltas; quedan tipografía/breakpoints, rendimiento y parciales.
+**Nota global: 6/10** en el momento de la auditoría; **6,5/10** tras 0.1, 0.2 y 0.4, **7/10** tras 0.3, **7,5/10** tras 1.1, **8/10** tras 1.2, **8,5/10** tras 1.5, 1.6 y 1.7, y **9/10** tras 2.1 y 2.2. La accesibilidad, la cascada y el sistema de tokens están resueltos; quedan breakpoints, rendimiento y parciales.
 
 ---
 
@@ -80,9 +80,10 @@ frontend/
 | Errores reales de `html-validate` | **44** (2 tras 1.1) |
 | Avisos de estilo `html-validate` (`void-style`, `doctype-style`) | 198 |
 | Breakpoints distintos | **13** (360 → 1180 px) |
-| Tamaños de `font-size` distintos en px | **30** |
+| Tamaños de `font-size` distintos en px | **30 → 8** (2.2) |
 | Declaraciones `px` / `rem` | **1.047** / **22** |
-| Hex fuera de `tokens.css` | **91** (44 únicos) |
+| Usos de tokens de espaciado | **368** (2.2) |
+| Hex fuera de `tokens.css` | **91 → 0** (2.2) |
 | Clases CSS sin uso confirmado | **≈17 → 0** (2.4) |
 | Tokens definidos / sin uso | 73 / 3 (`--color-cream`, `--bg-soft`, `--shadow-lg`) |
 | CSS por página (crudo) | 51–63 KB + 4,1 KB FontAwesome |
@@ -122,9 +123,9 @@ frontend/
 | FE-018 | CSS / Arquitectura | **A** | Cascada de dos generaciones: 130 selectores duplicados | `base.css:214`; `components.css:1639`; `layout.css:326`; `login.css:225` (+5) | **Resuelto (2.1)** |
 | FE-019 | CSS / Arquitectura | M | Bug de cascada: media query de `.temp-card` anulada | `css/pages/dashboard.css:55-67,69` | **Resuelto (0.4)** |
 | FE-020 | Responsive | M | 13 breakpoints, desktop-first e inconsistente | todas las hojas | Pendiente |
-| FE-021 | CSS / Calidad | M | Sin escala tipográfica: 30 tamaños px distintos | `base.css:51-62`; `components.css` | Pendiente |
-| FE-022 | CSS / Calidad | M | Sin tokens de espaciado; valores ad hoc | `tokens.css`; toda la CSS | Pendiente |
-| FE-023 | CSS / Calidad | M | 91 hex fuera de tokens | `components.css:92,101,120`; `trucks.css`; `login.css` | Pendiente |
+| FE-021 | CSS / Calidad | M | Sin escala tipográfica: 30 tamaños px distintos | `base.css:51-62`; `components.css` | **Resuelto (2.2)** |
+| FE-022 | CSS / Calidad | M | Sin tokens de espaciado; valores ad hoc | `tokens.css`; toda la CSS | **Resuelto (2.2)** |
+| FE-023 | CSS / Calidad | M | 91 hex fuera de tokens | `components.css:92,101,120`; `trucks.css`; `login.css` | **Resuelto (2.2)** |
 | FE-024 | UI/UX | M | `font-weight: 800/900` con fuente declarada 400–700 | `fonts.css:5`; `base.css:46`; `components.css:1667` | Pendiente |
 | FE-025 | CSS / Calidad | B | ≈17 clases/componentes muertos | `components.css:43-50,95-102`; `layout.css:263-267` | **Resuelto (2.4)** |
 | FE-026 | CSS / Calidad | B | Selector imposible `.brand-name accent` | `layout.css:61-63` | **Resuelto (2.4)** |
@@ -298,7 +299,7 @@ sidebar.innerHTML = `
 
 ---
 
-#### FE-021 · Sin escala tipográfica — Media · Deuda técnica
+#### FE-021 · Sin escala tipográfica — Media · Deuda técnica · **Resuelto (2.2)**
 
 **Ubicación:** `frontend/css/base.css:51-62` y resto de hojas.
 
@@ -308,9 +309,11 @@ sidebar.innerHTML = `
 
 **Recomendación:** definir 7–8 tokens (`--text-xs` … `--text-3xl`) y sustituir los valores sueltos. Los títulos ya usan `clamp()` (3 usos), patrón a conservar.
 
+**Corrección aplicada:** escala de 8 pasos en `tokens.css` (`--text-xs` 11px → `--text-3xl` 32px) + `--icon-xs` 8px para iconos. Se migraron 201 declaraciones `font-size` (incluidas las `rem` del asistente); los `clamp()` se conservan. Quedan **0 tamaños literales** frente a 29 distintos.
+
 ---
 
-#### FE-022 · Sin tokens de espaciado — Media · Deuda técnica
+#### FE-022 · Sin tokens de espaciado — Media · Deuda técnica · **Resuelto (2.2)**
 
 **Ubicación:** `frontend/css/tokens.css` (no existen tokens de espacio) y todas las hojas.
 
@@ -318,9 +321,11 @@ sidebar.innerHTML = `
 
 **Recomendación:** escala base 4 (`--space-1: 4px` … `--space-8: 48px`) y sustitución progresiva.
 
+**Corrección aplicada:** escala `--space-1` 2px → `--space-12` 40px y **368** valores de `gap`/`margin`/`padding` sustituidos por tokens en las coincidencias exactas. Los valores intermedios de un solo uso (34px, 48px, 82px…) se dejan como excepciones puntuales para no alterar el layout.
+
 ---
 
-#### FE-023 · Colores fuera de tokens — Media · Deuda técnica
+#### FE-023 · Colores fuera de tokens — Media · Deuda técnica · **Resuelto (2.2)**
 
 **Ubicación:** `components.css:92` (`#2469de`), `components.css:101` (`#022f6d`), `components.css:120` (`#d94e58`), `components.css:199/208` (`#0a6f60`, `#a86b00`), `trucks.css`, `login.css:310` (`#0a1b2b`).
 
@@ -332,6 +337,8 @@ sidebar.innerHTML = `
 ```
 
 **Impacto:** 91 hex fuera de `tokens.css` (44 únicos). Varios pertenecen a la primera generación y ya no se aplican, pero siguen ahí y confunden. Rompen la promesa del sistema de diseño y el cambio de tema.
+
+**Corrección aplicada:** tras 2.1 quedaban 18 hex; se sustituyeron todos por tokens semánticos (`--success-text`, `--warning-text`, `--danger-text`, variantes oscuras, `--info-text-dark`, `--accent-periwinkle`, `--text-soft`). **0 hex fuera de `tokens.css`**.
 
 **Recomendación:** tras 2.1, sustituir por tokens semánticos (`--color-on-accent`, `--state-success-text`…).
 

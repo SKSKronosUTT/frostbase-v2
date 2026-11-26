@@ -47,9 +47,43 @@
   --electric-soft: rgba(27, 134, 214, 0.14);
   --offline-soft: rgba(107, 129, 153, 0.16);
 
+  /* Colores semánticos de estado (texto) */
+  --success-text: #096b5c;
+  --success-text-dark: #5fe0c8;
+  --warning-text: #8a5a00;
+  --danger-text: #a8232f;
+  --danger-text-dark: #ff9aa2;
+  --info-text-dark: #b9d2ff;
+  --accent-periwinkle: #5b6fc0;
+
   --font-sans:
     "Outfit", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial,
     sans-serif;
+
+  /* Escala tipográfica: 8 pasos */
+  --text-xs: 11px;
+  --text-sm: 12px;
+  --text-md: 13px;
+  --text-base: 14px;
+  --text-lg: 16px;
+  --text-xl: 20px;
+  --text-2xl: 26px;
+  --text-3xl: 32px;
+  --icon-xs: 8px;
+
+  /* Escala de espaciado (base 2/4 px) */
+  --space-1: 2px;
+  --space-2: 4px;
+  --space-3: 6px;
+  --space-4: 8px;
+  --space-5: 10px;
+  --space-6: 12px;
+  --space-7: 14px;
+  --space-8: 16px;
+  --space-9: 20px;
+  --space-10: 24px;
+  --space-11: 32px;
+  --space-12: 40px;
 
   --radius-xs: 0px;
   --radius-sm: 0px;

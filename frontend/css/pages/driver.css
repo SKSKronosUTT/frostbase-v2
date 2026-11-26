@@ -6,7 +6,7 @@ body.driver-page {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 16px 14px 40px;
+  padding: var(--space-8) var(--space-7) var(--space-12);
 }
 
 .driver-theme-toggle {
@@ -30,7 +30,7 @@ body.driver-page {
   width: min(560px, 100%);
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: var(--space-7);
 }
 
 /* ===== Cabecera ===== */
@@ -39,14 +39,14 @@ body.driver-page {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: var(--space-6);
   flex-wrap: wrap;
 }
 
 .driver-header__user {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--space-5);
 }
 
 .driver-header__logo {
@@ -58,29 +58,29 @@ body.driver-page {
 
 .driver-header__user strong {
   display: block;
-  font-size: 16px;
+  font-size: var(--text-lg);
 }
 
 .driver-header__user .muted {
-  font-size: 12px;
+  font-size: var(--text-sm);
   word-break: break-all;
 }
 
 .driver-header__meta {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-4);
 }
 
 .driver-truck-chip {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 5px 10px;
+  gap: var(--space-3);
+  padding: 5px var(--space-5);
   border: 2px solid var(--border-ink);
   background: var(--surface);
   font-weight: 700;
-  font-size: 12px;
+  font-size: var(--text-sm);
   box-shadow: 2px 2px 0 var(--ink);
 }
 
@@ -95,16 +95,16 @@ body.driver-page {
 
 .driver-metric {
   background: var(--surface);
-  padding: 18px 14px;
+  padding: 18px var(--space-7);
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
+  gap: var(--space-3);
   text-align: center;
 }
 
 .driver-metric__label {
-  font-size: 11px;
+  font-size: var(--text-xs);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -112,7 +112,7 @@ body.driver-page {
 }
 
 .driver-metric__value {
-  font-size: 28px;
+  font-size: var(--text-2xl);
   font-weight: 900;
   letter-spacing: -0.03em;
 }
@@ -126,17 +126,17 @@ body.driver-page {
 }
 
 .driver-metric__range {
-  font-size: 11px;
+  font-size: var(--text-xs);
   color: var(--text-muted);
 }
 
 .driver-connection {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 14px;
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-7);
   background: var(--surface-soft);
-  font-size: 12px;
+  font-size: var(--text-sm);
   color: var(--text-muted);
 }
 
@@ -161,19 +161,19 @@ body.driver-page {
 /* ===== Ruta ===== */
 
 .driver-route-body {
-  padding: 16px 18px;
+  padding: var(--space-8) 18px;
 }
 
 .driver-route-detail {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: var(--space-5);
 }
 
 .driver-route-detail .detail-row {
   display: flex;
   justify-content: space-between;
-  padding: 4px 0;
+  padding: var(--space-2) 0;
 }
 
 /* ===== Alertas ===== */
@@ -181,13 +181,13 @@ body.driver-page {
 .driver-alerts-list {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: var(--space-5);
 }
 
 .driver-alert-item {
   display: flex;
-  gap: 12px;
-  padding: 12px 14px;
+  gap: var(--space-6);
+  padding: var(--space-6) var(--space-7);
   border: 2px solid var(--border);
   background: var(--surface);
 }
@@ -205,7 +205,7 @@ body.driver-page {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 14px;
+  font-size: var(--text-base);
   flex-shrink: 0;
 }
 
@@ -220,41 +220,41 @@ body.driver-page {
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--space-2);
 }
 
 .driver-alert-item__title {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap: var(--space-4);
 }
 
 .driver-alert-item__title strong {
-  font-size: 13px;
+  font-size: var(--text-md);
 }
 
 .driver-alert-item__msg {
   margin: 0;
-  font-size: 12px;
+  font-size: var(--text-sm);
   color: var(--text-muted);
 }
 
 .driver-alert-item .badge {
-  font-size: 10px;
-  padding: 2px 6px;
+  font-size: var(--text-xs);
+  padding: var(--space-1) var(--space-3);
 }
 
 /* ===== Responsive ===== */
 
 @media (max-width: 480px) {
   body.driver-page {
-    padding: 12px 10px 32px;
+    padding: var(--space-6) var(--space-5) var(--space-11);
     padding-top: 58px;
   }
 
   .driver-shell {
-    gap: 10px;
+    gap: var(--space-5);
   }
 
   .driver-container-grid {
@@ -267,7 +267,7 @@ body.driver-page {
   }
 
   .driver-metric__value {
-    font-size: 24px;
+    font-size: var(--text-2xl);
   }
 
   .driver-header {
@@ -294,32 +294,32 @@ body.driver-page {
 /* ===== Viaje y entregas (G6) ===== */
 
 .driver-trip-start {
-  padding: 16px;
-  font-size: 15px;
+  padding: var(--space-8);
+  font-size: var(--text-lg);
 }
 
 .driver-trip-blocked {
-  margin-top: 10px;
-  font-size: 13px;
+  margin-top: var(--space-5);
+  font-size: var(--text-md);
   text-align: center;
 }
 
 .driver-trip-end {
-  margin-top: 12px;
-  padding: 14px;
-  font-size: 14px;
+  margin-top: var(--space-6);
+  padding: var(--space-7);
+  font-size: var(--text-base);
 }
 
 .driver-trip-progress {
-  margin-bottom: 14px;
+  margin-bottom: var(--space-7);
 }
 
 .driver-trip-progress__label {
   display: block;
-  font-size: 12px;
+  font-size: var(--text-sm);
   font-weight: 700;
   color: var(--text-muted);
-  margin-bottom: 6px;
+  margin-bottom: var(--space-3);
 }
 
 .driver-trip-progress__bar {
@@ -337,14 +337,14 @@ body.driver-page {
 .driver-orders {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--space-4);
 }
 
 .driver-order {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 12px 14px;
+  gap: var(--space-5);
+  padding: var(--space-6) var(--space-7);
   border: 2px solid var(--border);
   background: var(--surface);
 }
@@ -372,7 +372,7 @@ body.driver-page {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 12px;
+  font-size: var(--text-sm);
   font-weight: 900;
   flex-shrink: 0;
 }
@@ -393,12 +393,12 @@ body.driver-page {
 }
 
 .driver-order__name {
-  font-size: 13px;
+  font-size: var(--text-md);
   font-weight: 700;
 }
 
 .driver-order__address {
-  font-size: 11px;
+  font-size: var(--text-xs);
   color: var(--text-muted);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -406,13 +406,13 @@ body.driver-page {
 }
 
 .driver-order__reason {
-  font-size: 11px;
+  font-size: var(--text-xs);
   color: var(--danger);
 }
 
 .driver-order__actions {
   display: flex;
-  gap: 6px;
+  gap: var(--space-3);
   flex-shrink: 0;
 }
 
@@ -428,5 +428,5 @@ body.driver-page {
 }
 
 .driver-alert-ack {
-  margin-top: 6px;
+  margin-top: var(--space-3);
 }

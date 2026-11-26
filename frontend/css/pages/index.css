@@ -10,13 +10,13 @@ body.splash-page {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 14px;
+  gap: var(--space-7);
   color: var(--text-muted);
-  font-size: 13px;
+  font-size: var(--text-md);
 }
 
 .splash strong {
   color: var(--text);
-  font-size: 19px;
+  font-size: var(--text-xl);
   letter-spacing: -0.02em;
 }

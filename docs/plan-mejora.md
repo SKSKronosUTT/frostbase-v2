@@ -33,7 +33,7 @@ Este plan solo contiene acciones derivadas de hallazgos verificados. No incluye 
 | 1.6 | Patrón de tabs accesible | FE-009 | M | Medio | — | ✅ |
 | 1.7 | Mapas sin `role="application"` | FE-010 | M | Medio | — | ✅ |
 | 2.1 | Fusionar la cascada «Consolidado» | FE-018, FE-034 | L | Alto | 0.4 | ✅ |
-| 2.2 | Tokens de tipografía y espaciado | FE-021, FE-022, FE-023 | L | Alto | 2.1 | ⬜ |
+| 2.2 | Tokens de tipografía y espaciado | FE-021, FE-022, FE-023 | L | Alto | 2.1 | ✅ |
 | 2.3 | Breakpoints unificados mobile-first | FE-020 | M | Medio | 2.1 | ⬜ |
 | 2.4 | Limpieza de CSS muerto | FE-025, FE-026, FE-027 | S | Bajo | 2.1 | ✅ |
 | 2.5 | Parciales de `<head>` y sidebar estática | FE-001, FE-033 | L | Medio | 2.1 | ⬜ |
@@ -386,24 +386,27 @@ La verificación A/B de estilos computados se ejecutó en la app real (login, da
 
 ---
 
-## 2.2 · Tokens de tipografía y espaciado — ⬜
+## 2.2 · Tokens de tipografía y espaciado — ✅ Aplicado
 
 **Hallazgos:** FE-021, FE-022, FE-023.
 
-**Tareas**
+**Tareas realizadas**
 
-1. Añadir a `tokens.css` una escala de 7–8 pasos (`--text-xs` 11px, `--text-sm` 12px, `--text-md` 13px, `--text-base` 14px, `--text-lg` 16px, `--text-xl` 20px, `--text-2xl` 26px, `--text-3xl` 32px) y otra de espaciado base 4 (`--space-1` … `--space-8`).
-2. Sustituir los 30 tamaños sueltos por los tokens; resolver los `.5` px a un paso adyacente.
-3. Crear tokens semánticos para los hex repetidos (`--state-success-text`, `--state-warning-text`, `--color-on-accent`, `--color-hover-primary`).
-4. Eliminar los hex que pertenecían a la primera generación.
+1. `tokens.css`: escala de 8 pasos (`--text-xs` 11px → `--text-3xl` 32px) + `--icon-xs` 8px; escala de espaciado `--space-1` 2px → `--space-12` 40px; tokens semánticos de estado (`--success-text`, `--warning-text`, `--danger-text` y variantes oscuras) y `--accent-periwinkle`.
+2. 201 declaraciones `font-size` migradas a los tokens (incluidas las `rem` del asistente); los `clamp()` se conservan.
+3. 368 valores de `gap`/`margin`/`padding` tokenizados al coincidir exactamente con la escala.
+4. 18 hex sustituidos por tokens; 0 hex fuera de `tokens.css`.
+5. `overflow-x: clip` en `.main` para contener el desbordamiento del carrusel/mapa que la nueva escala provocaba a 390 px.
 
-**Archivos:** `tokens.css` y todas las hojas de `css/` y `css/pages/`.
+**Archivos:** `tokens.css` y todas las hojas de `css/` y `css/pages/`; `layout.css` para el clip.
 **Esfuerzo:** L · **Impacto:** Alto · **Dependencias:** 2.1.
-**Riesgo de regresión visual:** medio (0,5–1 px de diferencia en textos). Mitigación: revisar jerarquía en `dashboard`, `trucks` y `settings`; no tocar tamaños de `clamp()` sin captura.
+**Riesgo de regresión visual:** medio; la escala cambia tamaños en 0,5–2 px. Mitigación: comprobación de overflow en 32 combinaciones y capturas en 1440/390.
 
 **Aceptación:** ≤ 8 tamaños de fuente distintos; 0 hex fuera de `tokens.css`; escala documentada.
 
-**Verificación:** búsqueda de `font-size:` con valores literales y de `#[0-9a-f]` fuera de tokens; revisión visual.
+**Verificación:** medición de `font-size:`/hex; `layout-check` en 9 páginas × 4 anchos; capturas; build/checks.
+
+**Resultado:** tamaños literales 29 → **0** (8 pasos + icono); hex fuera de tokens 18 → **0**; **368** usos de `var(--space-*)`; **0 desbordamientos** en 32 combinaciones; capturas de login, dashboard, configuración y móvil revisadas. El CSS de producción sube de 682,3 a **718,4 KB** por la verbosidad de `var()` (trade-off de mantenibilidad).
 
 ---
 
@@ -620,7 +623,7 @@ Usar `prefers-color-scheme` como valor inicial cuando no haya preferencia guarda
 | Lighthouse accesibilidad (login, dashboard, trucks) | Sin medir | **≥ 95** |
 | Contraste | 4 fallos AA | **100 %** textos ≥ 4.5:1 y UI ≥ 3:1 |
 | `!important` | 3 | **3 en utilidades + 4 acotados a `prefers-reduced-motion`** |
-| Tamaños de fuente distintos | 30 | **≤ 8** |
+| Tamaños de fuente distintos | 29 | **8** ✅ |
 | Breakpoints | 13 | **4** |
 | Clases CSS muertas | ≈17 | **0** |
 | CSS por página | 1 petición (build) | **1 petición ≤ 45 KB** |
@@ -671,5 +674,6 @@ npx lighthouse http://localhost:8050/dashboard.html \
 | 2026-11-26 | 2.1 (parte 1) | 8 hojas CSS (`base`, `components`, `layout`, `dashboard`, `login`, `routes`, `settings`, `truck-detail`) | 39 reglas totalmente sobrescritas eliminadas; duplicados 130 → 91; sin cambios de cascada |
 | 2026-11-26 | 2.4 | `base/components/layout/truck-detail/trucks` CSS + `app.js` | Clases muertas y `.brand-name accent` eliminadas; `is-ready` retirada; CSS 756,1 → 722,3 KB; duplicados 91 → 87 |
 | 2026-11-26 | 2.1 (parte 2) | 9 hojas CSS | 90 reglas fusionadas y comentarios consolidados retirados; duplicados 87 → 0; CSS 722,3 → 682,3 KB; A/B sin diferencias salvo la flecha de los selects |
+| 2026-11-26 | 2.2 | `tokens.css` + 14 hojas CSS | 201 `font-size` y 368 espaciados tokenizados; 18 hex → tokens; 0 desbordamientos; CSS 682,3 → 718,4 KB |
 
-**Próximo paso recomendado:** **2.2 · Tokens de tipografía y espaciado**. La cascada ya está unificada, así que se puede abordar la escala tipográfica, el espaciado y los hex sueltos sin el riesgo de la doble generación; esfuerzo L.
+**Próximo paso recomendado:** **2.3 · Breakpoints unificados mobile-first**. La cascada y los tokens ya están resueltos; queda reducir los 13 cortes a 4 y migrar a `min-width`; esfuerzo M.
