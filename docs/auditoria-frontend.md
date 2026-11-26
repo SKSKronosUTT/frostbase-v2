@@ -15,7 +15,7 @@ npm run build
 
 **Estado de git al iniciar:** rama `devolp`, con un archivo no rastreado (`plan_implementacion_modulo_conductores.md`, del equipo, excluido de esta auditoría). No se modificó ningún archivo durante la auditoría.
 
-> **Actualización posterior:** tras la auditoría se aplicaron los pasos **0.1, 0.2, 0.3, 0.4, 1.1 y 1.2** del plan (`docs/plan-mejora.md`). Los hallazgos afectados aparecen marcados como **Resuelto**. El resto sigue pendiente.
+> **Actualización posterior:** tras la auditoría se aplicaron los pasos **0.1, 0.2, 0.3, 0.4, 1.1, 1.2 y 1.3** del plan (`docs/plan-mejora.md`). Los hallazgos afectados aparecen marcados como **Resuelto**. El resto sigue pendiente.
 
 ---
 
@@ -116,7 +116,7 @@ frontend/
 | FE-012 | Accesibilidad | M | Errores de formulario no asociados al campo | `login.html:48`; `login.js:54-66`; `settings.html:32` | Pendiente |
 | FE-013 | Accesibilidad | M | Toasts de error con `role="status"` y autodescarte sin pausa por teclado | `notifications.js:30,52` | Pendiente |
 | FE-014 | Accesibilidad | M | `login` e `index` sin `<main>`; no hay skip link | `login.html:23`; `index.html:17` | **Resuelto (1.2)** |
-| FE-015 | Accesibilidad | M | Foco visible eliminado en inputs del asistente | `ai.css:322-325,484-487` | Pendiente |
+| FE-015 | Accesibilidad | M | Foco visible eliminado en inputs del asistente | `ai.css:322-325,484-487` | **Resuelto (1.3)** |
 | FE-016 | Accesibilidad | M | Sin `prefers-reduced-motion` pese a 14 animaciones | `base.css:161-202`; `components.css:1229-1301` | Pendiente |
 | FE-017 | Accesibilidad | B | Tablas dinámicas sin `aria-live`/`aria-busy` | `feedback.js:68-73` | Pendiente |
 | FE-018 | CSS / Arquitectura | **A** | Cascada de dos generaciones: 130 selectores duplicados | `base.css:214`; `components.css:1639`; `layout.css:326`; `login.css:225` (+5) | Pendiente |
@@ -625,7 +625,7 @@ toast.addEventListener("mouseenter", () => clearTimeout(timeout), { once: true }
 
 ---
 
-#### FE-015 · Foco visible eliminado en inputs del asistente — Media · Error
+#### FE-015 · Foco visible eliminado en inputs del asistente — Media · Error · **Resuelto (1.3)**
 
 **Ubicación:** `ai.css:322-325` y `ai.css:484-487`.
 
@@ -641,6 +641,8 @@ toast.addEventListener("mouseenter", () => clearTimeout(timeout), { once: true }
 **Impacto:** se anula el `outline` global (`base.css:232-235`) y solo cambia el color del borde, un indicador de 1–2 px y bajo contraste. WCAG 2.4.7/2.4.11.
 
 **Recomendación:** mantener el outline (`outline: 2px solid var(--accent-mid); outline-offset: 2px`) o añadir un `box-shadow` de 3 px visible.
+
+**Corrección aplicada:** ambas reglas declaran ahora `outline: 2px solid var(--accent-mid)` con `outline-offset: 2px` y mantienen el `border-color`. Verificado en Chromium: `:focus-visible` coincide en el selector y el textarea, con `outline` sólido de 2 px en `rgb(27, 134, 214)`; la captura del estado enfocado confirma que el anillo es visible.
 
 ---
 
