@@ -95,15 +95,6 @@ svg {
   display: block;
 }
 
-::selection {
-  background: var(--electric-soft);
-}
-
-:focus-visible {
-  outline: 2px solid var(--color-electric);
-  outline-offset: 2px;
-}
-
 .hidden {
   display: none !important;
 }

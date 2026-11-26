@@ -86,11 +86,6 @@
   background: var(--surface-muted);
 }
 
-.route-list-item.is-active {
-  background: var(--electric-soft);
-  box-shadow: inset 3px 0 0 var(--color-electric);
-}
-
 .route-list-item__top {
   display: flex;
   align-items: center;

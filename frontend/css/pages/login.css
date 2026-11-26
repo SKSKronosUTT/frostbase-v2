@@ -55,13 +55,6 @@ body.login-page {
   pointer-events: none;
 }
 
-.login-brand::before {
-  width: 420px;
-  height: 420px;
-  right: -190px;
-  top: -170px;
-}
-
 .login-brand::after {
   width: 280px;
   height: 280px;
@@ -105,12 +98,6 @@ body.login-page {
   display: flex;
   flex-direction: column;
   gap: 14px;
-}
-
-.login-brand__content h1 {
-  font-size: 30px;
-  line-height: 1.15;
-  letter-spacing: -0.03em;
 }
 
 .login-brand__content p {

@@ -32,7 +32,7 @@ Este plan solo contiene acciones derivadas de hallazgos verificados. No incluye 
 | 1.5 | Errores de formulario y toasts | FE-012, FE-013, FE-017 | M | Medio | 0.1 | ✅ |
 | 1.6 | Patrón de tabs accesible | FE-009 | M | Medio | — | ✅ |
 | 1.7 | Mapas sin `role="application"` | FE-010 | M | Medio | — | ✅ |
-| 2.1 | Fusionar la cascada «Consolidado» | FE-018, FE-034 | L | Alto | 0.4 | ⬜ |
+| 2.1 | Fusionar la cascada «Consolidado» | FE-018, FE-034 | L | Alto | 0.4 | 🟡 parcial |
 | 2.2 | Tokens de tipografía y espaciado | FE-021, FE-022, FE-023 | L | Alto | 2.1 | ⬜ |
 | 2.3 | Breakpoints unificados mobile-first | FE-020 | M | Medio | 2.1 | ⬜ |
 | 2.4 | Limpieza de CSS muerto | FE-025, FE-026, FE-027 | S | Bajo | 2.1 | ⬜ |
@@ -356,7 +356,7 @@ cd frontend && npx playwright test tests/e2e/accessibility.spec.js
 
 # Fase 2 · Mejoras estructurales
 
-## 2.1 · Fusionar la cascada «Consolidado» — ⬜
+## 2.1 · Fusionar la cascada «Consolidado» — 🟡 Parcial (39/130)
 
 **Hallazgos:** FE-018, FE-034.
 
@@ -379,6 +379,8 @@ cd frontend && npx playwright test tests/e2e/accessibility.spec.js
 - El CSS resultante mantiene el orden: base → componentes → layout → página → responsive.
 
 **Verificación:** `npx stylelint "frontend/css/**/*.css"` + comparación de capturas + `npm run build`.
+
+**Estado de ejecución (2026-11-26, parte 1):** se eliminaron **39 reglas totalmente sobrescritas** (su selector se repite y la regla consolidada posterior vuelve a declarar todas sus propiedades), lo que es un no-op en la cascada. `no-duplicate-selectors` pasa de **130 a 91**. Quedan: `components.css` 45, `login.css` 17, `layout.css` 16, `routes.css` 3, `settings.css` 2, `truck-detail.css` 2, `alerts.css` 2, `base.css` 1, `dashboard.css` 1. La parte 2 exige fusionar declaraciones que no están cubiertas íntegramente y, por tanto, una baseline de estilos computados/capturas en las 12 páginas × breakpoints × temas antes de tocar cada hoja. No se fuerza el resto para no arriesgar la UI.
 
 ---
 
@@ -607,7 +609,7 @@ Usar `prefers-color-scheme` como valor inicial cuando no haya preferencia guarda
 | Métrica | Antes | Objetivo |
 |---|---|---|
 | `html-validate` (errores reales) | 44 (2 tras 1.1) | **0** |
-| `stylelint no-duplicate-selectors` | 130 | **0** |
+| `stylelint no-duplicate-selectors` | 91 | **0** |
 | axe (`wcag2a/aa`, incl. moderate) | Sin medir (≥2 probables) | **0 violaciones** en 12 páginas × 2 temas |
 | Lighthouse accesibilidad (login, dashboard, trucks) | Sin medir | **≥ 95** |
 | Contraste | 4 fallos AA | **100 %** textos ≥ 4.5:1 y UI ≥ 3:1 |
@@ -660,5 +662,6 @@ npx lighthouse http://localhost:8050/dashboard.html \
 | 2026-11-25 | 1.5 | `js/components/form-errors.js` (nuevo), `js/pages/{login,settings,drivers}.js`, `js/core/notifications.js`, `css/components.css`, 10 `.html` | Errores inline con `aria-invalid`/`aria-describedby` y foco; toasts `alert` persistentes y pausables; contadores `role="status"` |
 | 2026-11-25 | 1.6 | `trucks.html`, `js/pages/trucks.js` | Tabs con `aria-controls`/`tabpanel`, roving tabindex y navegación con flechas/Home/End; verificado en Chromium |
 | 2026-11-25 | 1.7 | `dashboard.html`, `routes.html`, `route-detail.html`, `truck-detail.html`, `js/pages/{routes,route-detail,truck-detail}.js` | `role="img"` + `aria-describedby`, resúmenes dinámicos y 0 `role="application"`; verificado en Chromium |
+| 2026-11-26 | 2.1 (parte 1) | 8 hojas CSS (`base`, `components`, `layout`, `dashboard`, `login`, `routes`, `settings`, `truck-detail`) | 39 reglas totalmente sobrescritas eliminadas; duplicados 130 → 91; sin cambios de cascada |
 
-**Próximo paso recomendado:** **2.1 · Fusionar la cascada «Consolidado»**. Es el prerrequisito de la Fase 2: elimina 130 selectores duplicados y desbloquea la nota ≥ 9; esfuerzo L y riesgo visual alto, con capturas antes/después.
+**Próximo paso recomendado:** **2.1 (parte 2)**: construir la baseline de estilos computados/capturas en 12 páginas × breakpoints × temas y fusionar `login.css`, `layout.css` y `components.css` por archivo. Si se prefiere cerrar antes un paso completo y seguro, **2.4 · Limpieza de CSS muerto**.
