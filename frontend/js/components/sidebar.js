@@ -161,9 +161,7 @@ function setupMobileDrawer(sidebar) {
   overlay.addEventListener("click", () => setOpen(false));
 
   sidebar.querySelectorAll("a.nav-link").forEach((link) => {
-    link.addEventListener("click", () =>
-      setOpen(false, { restoreFocus: false })
-    );
+    link.addEventListener("click", () => setOpen(false, { restoreFocus: false }));
   });
 
   document.addEventListener("keydown", (event) => {
