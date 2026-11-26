@@ -265,6 +265,18 @@ function updateMap() {
     ? `Última lectura ${timeAgo(reading.received_at)}`
     : "Sin lecturas";
 
+  const summary = [
+    hasGps
+      ? `Ubicación del camión ${truck.plate} en ${Number(reading.latitude).toFixed(
+          5
+        )}, ${Number(reading.longitude).toFixed(5)}.`
+      : `El camión ${truck.plate} no tiene coordenadas GPS disponibles.`,
+  ];
+  if (Array.isArray(truck.route?.geometry) && truck.route.geometry.length > 1) {
+    summary.push(`Geometría de ${truck.route.name} dibujada en el mapa.`);
+  }
+  qs("#truckMapSummary").textContent = summary.join(" ");
+
   if (!state.fitted) {
     const latLngs = [];
     if (hasGps) latLngs.push([Number(reading.latitude), Number(reading.longitude)]);
