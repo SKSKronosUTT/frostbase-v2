@@ -15,7 +15,7 @@ npm run build
 
 **Estado de git al iniciar:** rama `devolp`, con un archivo no rastreado (`plan_implementacion_modulo_conductores.md`, del equipo, excluido de esta auditoría). No se modificó ningún archivo durante la auditoría.
 
-> **Actualización posterior:** tras la auditoría se aplicaron los pasos **0.1, 0.2, 0.3, 0.4 y 1.1** del plan (`docs/plan-mejora.md`). Los hallazgos afectados aparecen marcados como **Resuelto**. El resto sigue pendiente.
+> **Actualización posterior:** tras la auditoría se aplicaron los pasos **0.1, 0.2, 0.3, 0.4, 1.1 y 1.2** del plan (`docs/plan-mejora.md`). Los hallazgos afectados aparecen marcados como **Resuelto**. El resto sigue pendiente.
 
 ---
 
@@ -25,7 +25,7 @@ Proyecto con una base mejor que la media: sistema de tokens real con tema claro/
 
 Los riesgos se concentran en tres frentes: (1) la cascada está construida en dos generaciones superpuestas (130 selectores duplicados), lo que ya produjo un bug real y hace impredecible cada cambio; (2) existen barreras de accesibilidad concretas (botones sin nombre, buscadores sin etiqueta, contraste AA insuficiente, drawer móvil sin gestión de foco); (3) la escala tipográfica y los breakpoints son ad hoc (30 tamaños de fuente, 13 breakpoints).
 
-**Nota global: 6/10** en el momento de la auditoría; **6,5/10** tras aplicar 0.1, 0.2 y 0.4, **7/10** tras 0.3 y **7,5/10** tras 1.1. Aprueba en intención e infraestructura; la deuda de cascada y los fallos AA impedían una nota mayor. Todo es corregible sin rediseño.
+**Nota global: 6/10** en el momento de la auditoría; **6,5/10** tras 0.1, 0.2 y 0.4, **7/10** tras 0.3, **7,5/10** tras 1.1 y **8/10** tras 1.2. Aprueba en intención e infraestructura; la deuda de cascada y los fallos de rendimiento impiden una nota mayor. Todo es corregible sin rediseño.
 
 ---
 
@@ -91,6 +91,8 @@ frontend/
 | Imágenes sin `width`/`height` | 0 |
 | `target="_blank"`, HTTP mixto, CDN | 0 |
 | IDs duplicados por página | 0 |
+| Páginas con `<main id="main">` | **12/12** |
+| Páginas con skip link funcional | **12/12** |
 
 ---
 
@@ -106,14 +108,14 @@ frontend/
 | FE-004 | Accesibilidad | **A** | Buscadores sin etiqueta (solo `placeholder`) | `trucks.html:57,95`; `routes.html:56` | **Resuelto (0.1)** |
 | FE-005 | Accesibilidad | **A** | Contraste AA insuficiente en tokens y badges | `tokens.css:33`; `components.css:1835`; `login.css:314` | **Resuelto (0.2)** |
 | FE-006 | HTML / Semántica | M | `<th>` sin `scope` en 5 tablas | `alerts.html:80-86`; `drivers.html:89-95`; `trucks.html:72-79,109-114`; `truck-detail.html:92-96` | **Resuelto (1.1)** |
-| FE-007 | HTML / Semántica | M | Sin `h1` o saltos de nivel | `driver.html:38-113`; `settings.html:38,64,90,106`; `index.html:17` | Pendiente |
+| FE-007 | HTML / Semántica | M | Sin `h1` o saltos de nivel | `driver.html:38-113`; `settings.html:38,64,90,106`; `index.html:17` | **Resuelto (1.2)** |
 | FE-008 | Accesibilidad | M | Landmarks `aside` sin nombre único | `dashboard.html:113`; `routes.html:40,48` | **Resuelto (1.1)** |
 | FE-009 | Accesibilidad | M | Patrón `tablist` incompleto (sin `aria-controls`, `tabpanel`, flechas) | `trucks.html:39-46`; `trucks.js:498-518` | Pendiente |
 | FE-010 | Accesibilidad | M | `role="application"` en 4 mapas | `dashboard.html:79`; `routes.html:129`; `route-detail.html:52`; `truck-detail.html:60` | Pendiente |
 | FE-011 | HTML / Semántica | M | `aria-label` en elemento no interactivo | `ai.html:146-149` | **Resuelto (1.1)** |
 | FE-012 | Accesibilidad | M | Errores de formulario no asociados al campo | `login.html:48`; `login.js:54-66`; `settings.html:32` | Pendiente |
 | FE-013 | Accesibilidad | M | Toasts de error con `role="status"` y autodescarte sin pausa por teclado | `notifications.js:30,52` | Pendiente |
-| FE-014 | Accesibilidad | M | `login` e `index` sin `<main>`; no hay skip link | `login.html:23`; `index.html:17` | Pendiente |
+| FE-014 | Accesibilidad | M | `login` e `index` sin `<main>`; no hay skip link | `login.html:23`; `index.html:17` | **Resuelto (1.2)** |
 | FE-015 | Accesibilidad | M | Foco visible eliminado en inputs del asistente | `ai.css:322-325,484-487` | Pendiente |
 | FE-016 | Accesibilidad | M | Sin `prefers-reduced-motion` pese a 14 animaciones | `base.css:161-202`; `components.css:1229-1301` | Pendiente |
 | FE-017 | Accesibilidad | B | Tablas dinámicas sin `aria-live`/`aria-busy` | `feedback.js:68-73` | Pendiente |
@@ -201,7 +203,7 @@ sidebar.innerHTML = `
 
 ---
 
-#### FE-007 · Sin `h1` o saltos de nivel — Media · Error
+#### FE-007 · Sin `h1` o saltos de nivel — Media · Error · **Resuelto (1.2)**
 
 **Ubicación:** `driver.html` (todo el documento), `settings.html:38,64,90,106`, `index.html:17`.
 
@@ -222,6 +224,8 @@ sidebar.innerHTML = `
 **Impacto:** la jerarquía de encabezados es el mecanismo principal de navegación por lector de pantalla. Un salto `h1 → h3` oculta un nivel y `driver.html` no tiene título de página.
 
 **Recomendación:** `h1` (puede ser `.sr-only` si el diseño no lo contempla) en `driver.html` y `index.html`; subir los `h3` de `settings.html` a `h2` (los `h2` de las tarjetas laterales ya existen y quedarían al mismo nivel, que es lo correcto).
+
+**Corrección aplicada:** `h1` con `.sr-only` en `driver.html` («Portal del conductor») e `index.html` («FrostBase»); los cuatro `h3` de `settings.html` pasaron a `h2` y el selector `.settings-section__head h2` conserva los 14 px, sin cambio visual. La secuencia resultante es `h1 → h2` en las 12 páginas.
 
 ---
 
@@ -601,7 +605,7 @@ toast.addEventListener("mouseenter", () => clearTimeout(timeout), { once: true }
 
 ---
 
-#### FE-014 · `login` e `index` sin `<main>` y sin skip link — Media · Error
+#### FE-014 · `login` e `index` sin `<main>` y sin skip link — Media · Error · **Resuelto (1.2)**
 
 **Ubicación:** `login.html:23`, `index.html:17`, todas las páginas.
 
@@ -616,6 +620,8 @@ toast.addEventListener("mouseenter", () => clearTimeout(timeout), { once: true }
 **Impacto:** el contenido principal de login y splash no está dentro de un landmark `main`, por lo que «saltar al contenido» no existe. En las páginas internas no hay skip link: con el sidebar de 7 enlaces, un usuario de teclado tabula por toda la navegación en cada página.
 
 **Recomendación:** añadir `<main>` en login/index y un skip link global (`position:absolute` fuera de pantalla hasta `:focus`) hacia `#main`.
+
+**Corrección aplicada:** `.login-shell` y `.splash` son ahora el `<main>` de sus páginas (misma clase, sin CSS nuevo, centrado intacto a 1280 y 375 px). Las 12 páginas incorporan `<main id="main" tabindex="-1">` y un `<a class="skip-link" href="#main">` como primer elemento del `<body>`, visible al enfocar mediante `transform`. El toggle del drawer se inserta después del skip link. Verificado en Chromium: `Tab` enfoca el skip link, `Enter` mueve el foco a `main` y el drawer mantiene su comportamiento.
 
 ---
 

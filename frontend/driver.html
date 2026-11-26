@@ -26,6 +26,7 @@
     <script src="js/core/theme-boot.js"></script>
   </head>
   <body class="driver-page">
+    <a class="skip-link" href="#main">Saltar al contenido</a>
     <button
       class="driver-theme-toggle"
       id="themeToggle"
@@ -35,7 +36,8 @@
       <i class="fa-solid fa-moon"></i>
     </button>
 
-    <main class="driver-shell">
+    <main id="main" tabindex="-1" class="driver-shell">
+      <h1 class="sr-only">Portal del conductor</h1>
       <!-- ===== Cabecera ===== -->
       <header class="driver-header">
         <div class="driver-header__user">

@@ -18,9 +18,10 @@
   <script src="js/core/theme-boot.js"></script>
 </head>
 <body data-page="settings">
+  <a class="skip-link" href="#main">Saltar al contenido</a>
   <div class="app-shell">
     <div class="sidebar" id="sidebar"></div>
-    <main class="main">
+    <main id="main" tabindex="-1" class="main">
       <header class="page-header">
         <div class="page-header__title">
           <span class="eyebrow">Sistema</span>
@@ -35,7 +36,7 @@
             <header class="settings-section__head">
               <span class="settings-section__icon"><i class="fa-solid fa-temperature-half"></i></span>
               <div>
-                <h3>Rango de temperatura</h3>
+                <h2>Rango de temperatura</h2>
                 <p>El ideal y la tolerancia definen los límites permitidos para la cadena de frío.</p>
               </div>
             </header>
@@ -61,7 +62,7 @@
             <header class="settings-section__head">
               <span class="settings-section__icon"><i class="fa-solid fa-droplet"></i></span>
               <div>
-                <h3>Rango de humedad</h3>
+                <h2>Rango de humedad</h2>
                 <p>Controla la humedad relativa óptima dentro del compartimiento refrigerado.</p>
               </div>
             </header>
@@ -87,7 +88,7 @@
             <header class="settings-section__head">
               <span class="settings-section__icon"><i class="fa-solid fa-plug-circle-check"></i></span>
               <div>
-                <h3>Monitoreo de conexión</h3>
+                <h2>Monitoreo de conexión</h2>
                 <p>Si un dispositivo deja de enviar lecturas durante este tiempo se generará una alerta.</p>
               </div>
             </header>
@@ -103,7 +104,7 @@
             <header class="settings-section__head">
               <span class="settings-section__icon"><i class="fa-solid fa-cloud-sun"></i></span>
               <div>
-                <h3>Ubicación climática</h3>
+                <h2>Ubicación climática</h2>
                 <p>Se usa para mostrar el clima actual del destino en el panel principal.</p>
               </div>
             </header>
