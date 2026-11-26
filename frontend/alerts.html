@@ -19,7 +19,7 @@
 </head>
 <body data-page="alerts">
   <div class="app-shell">
-    <aside class="sidebar" id="sidebar"></aside>
+    <div class="sidebar" id="sidebar"></div>
     <main class="main">
       <header class="page-header">
         <div class="page-header__title">
@@ -77,13 +77,13 @@
           <table class="table">
             <thead>
               <tr>
-                <th>Fecha y hora</th>
-                <th>Camión</th>
-                <th>Tipo de alerta</th>
-                <th>Valor detectado</th>
-                <th>Rango permitido</th>
-                <th>Estado</th>
-                <th aria-label="Acciones"></th>
+                <th scope="col">Fecha y hora</th>
+                <th scope="col">Camión</th>
+                <th scope="col">Tipo de alerta</th>
+                <th scope="col">Valor detectado</th>
+                <th scope="col">Rango permitido</th>
+                <th scope="col">Estado</th>
+                <th scope="col"><span class="sr-only">Acciones</span></th>
               </tr>
             </thead>
             <tbody id="alertsTableBody">

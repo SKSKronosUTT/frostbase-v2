@@ -19,7 +19,7 @@
 </head>
 <body data-page="trucks">
   <div class="app-shell">
-    <aside class="sidebar" id="sidebar"></aside>
+    <div class="sidebar" id="sidebar"></div>
     <main class="main">
       <header class="page-header">
         <div class="page-header__title">
@@ -69,14 +69,14 @@
             <table class="table fleet-table">
               <thead>
                 <tr>
-                  <th>Placas</th>
-                  <th>Vehículo</th>
-                  <th>Estado</th>
-                  <th>Ruta</th>
-                  <th>Temperatura</th>
-                  <th>Humedad</th>
-                  <th>Última comunicación</th>
-                  <th aria-label="Acciones"></th>
+                  <th scope="col">Placas</th>
+                  <th scope="col">Vehículo</th>
+                  <th scope="col">Estado</th>
+                  <th scope="col">Ruta</th>
+                  <th scope="col">Temperatura</th>
+                  <th scope="col">Humedad</th>
+                  <th scope="col">Última comunicación</th>
+                  <th scope="col"><span class="sr-only">Acciones</span></th>
                 </tr>
               </thead>
               <tbody id="trucksTableBody">
@@ -106,12 +106,12 @@
             <table class="table fleet-table">
               <thead>
                 <tr>
-                  <th>Identificador</th>
-                  <th>Camión asignado</th>
-                  <th>Estado</th>
-                  <th>Última comunicación</th>
-                  <th>Registro</th>
-                  <th aria-label="Acciones"></th>
+                  <th scope="col">Identificador</th>
+                  <th scope="col">Camión asignado</th>
+                  <th scope="col">Estado</th>
+                  <th scope="col">Última comunicación</th>
+                  <th scope="col">Registro</th>
+                  <th scope="col"><span class="sr-only">Acciones</span></th>
                 </tr>
               </thead>
               <tbody id="devicesTableBody">

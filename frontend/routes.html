@@ -20,7 +20,7 @@
 </head>
 <body data-page="routes">
   <div class="app-shell">
-    <aside class="sidebar" id="sidebar"></aside>
+    <div class="sidebar" id="sidebar"></div>
     <main class="main">
       <header class="page-header">
         <div class="page-header__title">
@@ -37,15 +37,15 @@
 
       <div class="routes-layout" id="routesLayout">
         <div class="routes-side">
-          <aside class="card route-hint" id="routeEditorEmpty">
+          <section class="card route-hint" id="routeEditorEmpty">
             <div class="route-hint__icon"><i class="fa-solid fa-circle-info"></i></div>
             <div>
               <h2 class="card__title">Cómo editar una ruta</h2>
               <p class="route-hint__text">Selecciona una ruta de la lista para abrir el editor, o pulsa «Nueva ruta» arriba para crear una desde cero. Después podrás agregar puntos sobre el mapa.</p>
             </div>
-          </aside>
+          </section>
 
-          <aside class="card routes-list-card">
+          <section class="card routes-list-card">
           <div class="routes-list__head">
             <h2 class="card__title"><i class="fa-solid fa-route"></i> Rutas registradas</h2>
             <span class="section-header__meta" id="routesCount">—</span>
@@ -73,7 +73,7 @@
             <div class="loading-block"><span class="spinner"></span> Cargando rutas…</div>
           </div>
           <div class="pagination" id="routesPagination"></div>
-          </aside>
+          </section>
         </div>
 
         <section class="card route-editor" id="routeEditor" hidden>

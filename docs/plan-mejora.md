@@ -25,7 +25,7 @@ Este plan solo contiene acciones derivadas de hallazgos verificados. No incluye 
 | 0.2 | Contraste AA | FE-005 | S | Alto | — | ✅ |
 | 0.3 | Drawer móvil accesible | FE-002 | M | Alto | — | ✅ |
 | 0.4 | Bug de cascada `.temp-card` | FE-019 | S | Medio | — | ✅ |
-| 1.1 | Semántica de tablas y landmarks | FE-006, FE-008, FE-011 | S | Medio | — | ⬜ |
+| 1.1 | Semántica de tablas y landmarks | FE-006, FE-008, FE-011 | S | Medio | — | ✅ |
 | 1.2 | Encabezados, `<main>` y skip link | FE-007, FE-014 | S | Medio | — | ⬜ |
 | 1.3 | Foco visible en el asistente | FE-015 | S | Medio | — | ⬜ |
 | 1.4 | `prefers-reduced-motion` | FE-016 | S | Medio | — | ⬜ |
@@ -179,25 +179,29 @@ cd frontend && npx playwright test tests/e2e/accessibility.spec.js
 
 # Fase 1 · Quick wins
 
-## 1.1 · Semántica de tablas y landmarks — ⬜
+## 1.1 · Semántica de tablas y landmarks — ✅ Aplicado
 
 **Hallazgos:** FE-006, FE-008, FE-011.
 
-**Tareas**
+**Tareas realizadas**
 
-1. Añadir `scope="col"` a todos los `<th>` de `alerts.html`, `drivers.html`, `trucks.html` (2 tablas) y `truck-detail.html`.
-2. Sustituir el `<th aria-label="Acciones"></th>` por `<th scope="col"><span class="sr-only">Acciones</span></th>`.
-3. Nombrar los `aside` complementarios (`aria-label="Panel lateral de estado"` en `dashboard.html:113`, `aria-label="Lista de rutas"` en `routes.html:48`) y convertir `routes.html:40` en `<section>`.
-4. Cambiar `ai.html:148` por `role="group" aria-label="Consultas por camión"`.
+1. `scope="col"` en los **33 `<th>`** de las 5 tablas: `alerts.html`, `drivers.html`, `trucks.html` (2 tablas) y `truck-detail.html`.
+2. `<th aria-label="Acciones">` → `<th scope="col"><span class="sr-only">Acciones</span></th>` en las 4 tablas con columna de acciones.
+3. Landmarks: el envoltorio del sidebar pasó de `<aside>` a `<div>` en las 9 páginas internas (la navegación ya está en su `<nav>`); `dashboard-side` pasó a `<div>`; las dos tarjetas de `routes.html` pasaron a `<section>` porque tienen encabezado propio.
+4. `ai.html`: `role="group"` en el contenedor de sugerencias por camión.
 
-**Archivos:** `alerts.html`, `drivers.html`, `trucks.html`, `truck-detail.html`, `dashboard.html`, `routes.html`, `ai.html`.
+> No se usó `aria-label` en los `aside` de contenido: no eran complementarios y habría duplicado el nombre del `<nav>` «Navegación principal».
+
+**Archivos:** `ai.html`, `alerts.html`, `dashboard.html`, `drivers.html`, `route-detail.html`, `routes.html`, `settings.html`, `truck-detail.html`, `trucks.html`.
 
 **Esfuerzo:** S · **Impacto:** Medio · **Dependencias:** ninguna.
-**Riesgo de regresión visual:** nulo.
+**Riesgo de regresión visual:** nulo (cambian etiquetas y roles, no clases ni estilos).
 
 **Aceptación:** 0 errores `wcag/h63`, `unique-landmark` y `aria-label-misuse`; axe `td-headers-attr`/`th-has-data-cells` sin avisos.
 
-**Verificación:** `npx html-validate "frontend/*.html"` + axe en las 7 páginas.
+**Verificación:** `npx html-validate "frontend/*.html"` + axe en las 9 páginas.
+
+**Resultado:** `html-validate` pasa de 240 a **200 problemas** y de **42 a 2 errores reales**; los 2 restantes son `prefer-native-element` en `ai.html` (sugerencias de mejora, fuera del alcance de 1.1). `npm run build`, `check:css` y `check:html` correctos.
 
 ---
 
@@ -606,7 +610,7 @@ Usar `prefers-color-scheme` como valor inicial cuando no haya preferencia guarda
 
 | Métrica | Antes | Objetivo |
 |---|---|---|
-| `html-validate` (errores reales) | 44 (42 tras 0.1) | **0** |
+| `html-validate` (errores reales) | 44 (2 tras 1.1) | **0** |
 | `stylelint no-duplicate-selectors` | 130 | **0** |
 | axe (`wcag2a/aa`, incl. moderate) | Sin medir (≥2 probables) | **0 violaciones** en 12 páginas × 2 temas |
 | Lighthouse accesibilidad (login, dashboard, trucks) | Sin medir | **≥ 95** |
@@ -653,5 +657,6 @@ npx lighthouse http://localhost:8050/dashboard.html \
 | 2026-11-25 | 0.2 | `tokens.css`, `components.css`, `pages/login.css` | Ratios AA corregidos (5.07 / 5.11 / 6.00 / 6.15) |
 | 2026-11-25 | 0.3 | `js/components/sidebar.js`, `css/layout.css` | Drawer accesible: `aria-expanded`, foco atrapado, `inert`, scroll bloqueado; 25/25 comprobaciones |
 | 2026-11-25 | 0.4 | `pages/dashboard.css` | Media query al final; 170 px y 340 px aplican en móvil |
+| 2026-11-25 | 1.1 | 9 `.html` (`ai`, `alerts`, `dashboard`, `drivers`, `route-detail`, `routes`, `settings`, `truck-detail`, `trucks`) | 33 `<th scope="col">`, sidebar a `<div>`, tarjetas de rutas a `<section>`, `role="group"` en IA; errores reales 42 → 2 |
 
-**Próximo paso recomendado:** **1.1 · Semántica de tablas y landmarks**. Cierra los 38 errores `wcag/h63` y los landmarks sin nombre, tiene esfuerzo S y no depende de la refactorización de cascada.
+**Próximo paso recomendado:** **1.2 · Encabezados, `<main>` y skip link**. Cierra el `h1` ausente en `driver.html`/`index.html`, el salto `h1 → h3` de `settings.html` y la falta de landmark principal y de skip link; esfuerzo S.
