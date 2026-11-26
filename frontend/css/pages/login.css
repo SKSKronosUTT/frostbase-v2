@@ -1,5 +1,5 @@
 body.login-page {
-  min-height: 100vh;
+  min-height: var(--viewport-height);
   background: var(--bg);
   display: flex;
   align-items: center;
