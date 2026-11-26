@@ -15,7 +15,7 @@ npm run build
 
 **Estado de git al iniciar:** rama `devolp`, con un archivo no rastreado (`plan_implementacion_modulo_conductores.md`, del equipo, excluido de esta auditoría). No se modificó ningún archivo durante la auditoría.
 
-> **Actualización posterior:** tras la auditoría se aplicaron los pasos **0.1, 0.2, 0.3, 0.4, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6 y 1.7** del plan (`docs/plan-mejora.md`). Los hallazgos afectados aparecen marcados como **Resuelto**. El resto sigue pendiente.
+> **Actualización posterior:** tras la auditoría se aplicaron los pasos **0.1, 0.2, 0.3, 0.4, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6 y 1.7**, y la **parte 1 de 2.1** del plan (`docs/plan-mejora.md`). Los hallazgos afectados aparecen marcados como **Resuelto**; 2.1 queda en progreso. El resto sigue pendiente.
 
 ---
 
@@ -23,7 +23,7 @@ npm run build
 
 Proyecto con una base mejor que la media: sistema de tokens real con tema claro/oscuro, build con assets hasheados y caché inmutable, CSP y cabeceras de seguridad en servidor, cero estilos en línea, solo 3 `!important`, imágenes con dimensiones reservadas y una suite de accesibilidad con axe ya escrita. El diseño es coherente y el uso de Grid/Flexbox es correcto.
 
-Los riesgos se concentran en tres frentes: (1) la cascada está construida en dos generaciones superpuestas (130 selectores duplicados), lo que ya produjo un bug real y hace impredecible cada cambio; (2) existen barreras de accesibilidad concretas (botones sin nombre, buscadores sin etiqueta, contraste AA insuficiente, drawer móvil sin gestión de foco); (3) la escala tipográfica y los breakpoints son ad hoc (30 tamaños de fuente, 13 breakpoints).
+Los riesgos se concentran en tres frentes: (1) la cascada está construida en dos generaciones superpuestas (130 selectores duplicados; 91 tras 2.1a), lo que ya produjo un bug real y hace impredecible cada cambio; (2) existen barreras de accesibilidad concretas (botones sin nombre, buscadores sin etiqueta, contraste AA insuficiente, drawer móvil sin gestión de foco); (3) la escala tipográfica y los breakpoints son ad hoc (30 tamaños de fuente, 13 breakpoints).
 
 **Nota global: 6/10** en el momento de la auditoría; **6,5/10** tras 0.1, 0.2 y 0.4, **7/10** tras 0.3, **7,5/10** tras 1.1, **8/10** tras 1.2 y **8,5/10** tras 1.5, 1.6 y 1.7. La Fase 1 cierra la accesibilidad; la deuda de cascada (FE-018) y los fallos de rendimiento impiden una nota mayor. Todo es corregible sin rediseño.
 
@@ -75,7 +75,7 @@ frontend/
 | Módulos JS | 24 (± 6.116 líneas) |
 | `!important` | **7**: 3 en utilidades de ocultación + 4 en el guard de `prefers-reduced-motion` |
 | Atributos `style=""` | **0** |
-| Selectores duplicados (`no-duplicate-selectors`) | **130** |
+| Selectores duplicados (`no-duplicate-selectors`) | **130 → 91** (2.1 parte 1) |
 | Selectores repetidos en el mismo archivo (conteo propio) | **209** |
 | Errores reales de `html-validate` | **44** (2 tras 1.1) |
 | Avisos de estilo `html-validate` (`void-style`, `doctype-style`) | 198 |
@@ -119,7 +119,7 @@ frontend/
 | FE-015 | Accesibilidad | M | Foco visible eliminado en inputs del asistente | `ai.css:322-325,484-487` | **Resuelto (1.3)** |
 | FE-016 | Accesibilidad | M | Sin `prefers-reduced-motion` pese a 14 animaciones | `base.css:161-202`; `components.css:1229-1301` | **Resuelto (1.4)** |
 | FE-017 | Accesibilidad | B | Tablas dinámicas sin anuncio del resultado | `feedback.js:68-73`; contadores de tablas | **Resuelto (1.5)** |
-| FE-018 | CSS / Arquitectura | **A** | Cascada de dos generaciones: 130 selectores duplicados | `base.css:214`; `components.css:1639`; `layout.css:326`; `login.css:225` (+5) | Pendiente |
+| FE-018 | CSS / Arquitectura | **A** | Cascada de dos generaciones: 130 selectores duplicados | `base.css:214`; `components.css:1639`; `layout.css:326`; `login.css:225` (+5) | 🟡 Parcial (2.1a) |
 | FE-019 | CSS / Arquitectura | M | Bug de cascada: media query de `.temp-card` anulada | `css/pages/dashboard.css:55-67,69` | **Resuelto (0.4)** |
 | FE-020 | Responsive | M | 13 breakpoints, desktop-first e inconsistente | todas las hojas | Pendiente |
 | FE-021 | CSS / Calidad | M | Sin escala tipográfica: 30 tamaños px distintos | `base.css:51-62`; `components.css` | Pendiente |
@@ -249,7 +249,7 @@ sidebar.innerHTML = `
 
 ### 5.2 CSS: calidad y arquitectura
 
-#### FE-018 · Cascada de dos generaciones — Alta · Deuda técnica
+#### FE-018 · Cascada de dos generaciones — Alta · Deuda técnica · 🟡 Parcial (2.1a)
 
 **Ubicación:** `base.css:214`, `components.css:1639`, `layout.css:326`, `alerts.css:122`, `dashboard.css:146`, `login.css:225`, `routes.css:372`, `settings.css:138`, `truck-detail.css:174`.
 
@@ -291,6 +291,8 @@ sidebar.innerHTML = `
 **Corrección aplicada:** se movió el bloque `@media (max-width: 640px)` al final de la hoja y se declaró `flex: 0 0 170px`. Verificado con `npm run build`.
 
 **Recomendación estructural:** al fusionar la cascada (2.1), mantener las media queries al final de cada hoja o migrar a mobile-first (2.3).
+
+**Avance (2.1a):** se eliminaron 39 reglas cuyo selector se repite y cuyas propiedades se vuelven a declarar íntegramente en la regla consolidada posterior (no-op en la cascada). `no-duplicate-selectors` pasa de **130 a 91**. Quedan 91 duplicados (`components.css` 45, `login.css` 17, `layout.css` 16, páginas 11, `base.css` 1, `dashboard.css` 1) que requieren fusionar declaraciones no cubiertas y una baseline visual antes de tocarlas; no se fuerzan para no arriesgar la UI.
 
 ---
 

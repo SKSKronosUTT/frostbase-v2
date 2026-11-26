@@ -105,11 +105,6 @@
   color: var(--text-soft);
 }
 
-.reading-tile--alert {
-  border-color: rgba(240, 91, 101, 0.32);
-  background: var(--danger-soft);
-}
-
 .reading-tile--alert .reading-tile__value {
   color: var(--danger);
 }

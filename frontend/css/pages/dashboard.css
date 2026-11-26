@@ -65,16 +65,6 @@
     background var(--transition);
 }
 
-.temp-card:hover {
-  border-color: var(--border-strong);
-  background: var(--surface);
-}
-
-.temp-card--alert {
-  border-color: rgba(240, 91, 101, 0.4);
-  background: var(--danger-soft);
-}
-
 .temp-card__top {
   display: flex;
   align-items: center;

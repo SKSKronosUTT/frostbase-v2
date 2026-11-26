@@ -97,12 +97,6 @@
   color: var(--sidebar-text-strong);
 }
 
-.nav-link.is-active {
-  background: var(--color-electric);
-  color: #ffffff;
-  box-shadow: 0 8px 20px rgba(47, 123, 255, 0.28);
-}
-
 .nav-link--button {
   cursor: pointer;
 }
