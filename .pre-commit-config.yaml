@@ -5,3 +5,18 @@ repos:
       - id: ruff
         args: [--fix]
       - id: ruff-format
+
+  - repo: local
+    hooks:
+      - id: frontend-lint
+        name: frontend lint (ESLint, Prettier, Stylelint)
+        entry: npm --prefix frontend run lint
+        language: system
+        files: ^frontend/(js|css)/.*\.(js|css)$
+        pass_filenames: false
+      - id: frontend-html
+        name: frontend build + html-validate
+        entry: npm --prefix frontend run verify:html
+        language: system
+        files: ^frontend/(.*\.html|partials/.*\.html|pages\.config\.json)$
+        pass_filenames: false

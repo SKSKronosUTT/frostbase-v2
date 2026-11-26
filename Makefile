@@ -25,9 +25,7 @@ lint:
 	cd backend && $(PYTHON) -m ruff check .
 	cd backend && $(PYTHON) -m ruff format --check .
 	cd backend && $(PYTHON) -m mypy app
-	cd frontend && npx --yes eslint@8 js
-	cd frontend && npx --yes prettier@3 --check js css
-	cd frontend && npm run check:css && npm run check:html
+	cd frontend && npm run verify
 
 build:
 	cd frontend && npm run build

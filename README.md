@@ -594,7 +594,7 @@ Navegador  →  FastAPI (backend)  →  PostgreSQL
 ```powershell
 .\tasks.ps1 dev      # docker compose up -d --build
 .\tasks.ps1 test     # PostgreSQL de test + pytest con cobertura
-.\tasks.ps1 lint     # ruff, mypy, ESLint, Prettier y checks de CSS/HTML
+.\tasks.ps1 lint     # ruff, mypy, ESLint, Prettier, Stylelint, html-validate y checks
 .\tasks.ps1 build    # frontend/build con assets hasheados
 .\tasks.ps1 seed     # datos demo (idempotente; -Reset para recrearlos)
 .\tasks.ps1 seed -Reset -PrintKeys -Trucks 20 -Devices 10
@@ -609,6 +609,15 @@ Navegador  →  FastAPI (backend)  →  PostgreSQL
 ```
 
 En macOS/Linux use el `Makefile` equivalente (`make test`, `make lint`, `make build`, `make net-check`, `make clean-alerts`).
+
+Dentro de `frontend/` también están disponibles las verificaciones directas:
+
+```bash
+npm run lint       # ESLint, Prettier, Stylelint y checks de CSS/HTML
+npm run verify     # lo anterior + build + html-validate del HTML generado
+```
+
+Los hooks de `pre-commit` ejecutan `npm run lint` y `npm run verify:html` cuando cambian archivos de `frontend/`; requieren `npm ci` y `pre-commit install` una vez.
 
 ---
 

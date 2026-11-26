@@ -40,7 +40,7 @@ Este plan solo contiene acciones derivadas de hallazgos verificados. No incluye 
 | 2.4 | Limpieza de CSS muerto | FE-025, FE-026, FE-027 | S | Bajo | 2.1 | ✅ |
 | 2.5 | Parciales de `<head>` y sidebar estática | FE-001, FE-033 | L | Medio | 2.1 | ✅ |
 | 2.6 | Pesos tipográficos coherentes | FE-024 | S | Bajo | 2.2 | ✅ |
-| 3.1 | Linters y validación en CI | FE-034, FE-036 | M | Alto | 2.1 | ⬜ |
+| 3.1 | Linters y validación en CI | FE-034 | M | Alto | 2.1 | ✅ |
 | 3.2 | Rendimiento de carga | FE-028, FE-030, FE-031, FE-032 | M | Medio | 2.5 | ⬜ |
 | 3.3 | `100dvh` y Safari | FE-029 | S | Bajo | — | ⬜ |
 | 3.4 | Ampliar suite a11y | FE-036 | M | Medio | 1.x | ⬜ |
@@ -550,24 +550,28 @@ La verificación A/B de estilos computados se ejecutó en la app real (login, da
 
 # Fase 3 · Calidad sostenible
 
-## 3.1 · Linters y validación en CI — ⬜
+## 3.1 · Linters y validación en CI — ✅ Aplicado
 
-**Hallazgos:** FE-034, FE-036.
+**Hallazgos:** FE-034 (FE-036 se aborda en 3.4).
 
-**Tareas**
+**Tareas realizadas**
 
-1. Añadir `stylelint` + `stylelint-config-standard` como `devDependency` y un `.stylelintrc` con `no-duplicate-selectors`, `declaration-block-no-duplicate-properties`, `shorthand-property-no-redundant-values`, `custom-property-pattern`.
-2. Añadir `html-validate` con `void-style: "selfclosing"` y `doctype-style` configurados para no generar 198 falsos positivos, y activar `no-dup-id`.
-3. Enganchar ambos a `.pre-commit-config.yaml` y a GitHub Actions, junto con `npm run build` y Playwright.
-4. Sustituir `check-css.mjs` por `stylelint` (o ampliarlo para duplicados intra-archivo).
+1. `stylelint` 16 + `stylelint-config-recommended`, con `no-duplicate-selectors`, `declaration-block-no-duplicate-properties`, `shorthand-property-no-redundant-values` y `custom-property-pattern`. Se descartó `stylelint-config-standard`: sus reglas de estilo (BEM, `rgb()` heredado, `currentColor`, orden de especificidad) chocan con el código y Prettier ya cubre el formato. `no-descending-specificity` queda desactivado por la cascada existente.
+2. `html-validate` 8 con `void-style: selfclosing`, `doctype-style: uppercase`, `no-dup-id` y `prefer-native-element` desactivado (mapas y tablas usan roles ARIA sobre contenedores de layout y los widgets de IA usan roles dinámicos). Se valida el HTML **generado** (`build/*.html`), no las plantillas.
+3. Scripts `lint`, `lint:html`, `verify:html` y `verify`; CI añade Stylelint y html-validate al job `frontend-lint`; pre-commit (añadido a `requirements-dev.txt`) ejecuta los hooks locales; `Makefile` y `tasks.ps1` usan `npm run verify`. `.prettierrc` pasa a `endOfLine: auto` para que el check funcione igual con checkouts CRLF (Windows) y LF (CI).
+4. Se conserva `check-css.mjs`: stylelint detecta duplicados **intra-archivo** y el script sigue cubriendo los **entre archivos**, que stylelint no puede ver.
+5. Correcciones reales que destaparon los linters: `@media (max-width: 1280px) {}` vacío en `layout.css` y `border-color` redundante en `login.css`.
+6. El build se hizo inmune a CRLF al leer plantillas y páginas (normaliza a LF) y se unificó el doctype en `ai`, `driver` y `drivers`. Sin esto, en un checkout Windows quedaban `{{description}}` sin resolver y html-validate fallaba.
 
-**Archivos:** `frontend/package.json`, `.stylelintrc*`, `.htmlvalidate.json`, `.github/workflows/*`, `.pre-commit-config.yaml`, `frontend/scripts/check-css.mjs`.
+**Archivos:** `frontend/package.json`, `package-lock.json`, `.stylelintrc.json`, `.htmlvalidate.json`, `.prettierrc`, `.github/workflows/ci.yml`, `.pre-commit-config.yaml`, `backend/requirements-dev.txt`, `Makefile`, `tasks.ps1`, `scripts/build.mjs`, `ai.html`, `driver.html`, `drivers.html`, `css/layout.css`, `css/pages/login.css`.
 **Esfuerzo:** M · **Impacto:** Alto · **Dependencias:** 2.1.
-**Riesgo:** bajo; puede requerir silenciar reglas de estilo heredadas (documentar cada excepción).
+**Riesgo:** bajo; reglas heredadas silenciadas con criterio y documentadas.
 
-**Aceptación:** CI falla ante un selector duplicado o un `<th>` sin `scope`; `npm run lint` disponible en local.
+**Aceptación:** CI falla ante un selector duplicado o un `<th>` sin `scope` ✅; `npm run lint` disponible en local ✅.
 
-**Verificación:** PR de prueba que introduzca una violación y comprobar que el job falla.
+**Verificación:** fixtures temporales (`.card` duplicado → `no-duplicate-selectors`; `<th>` sin `scope` → `wcag/h63`), `npm run verify`, `npm run lint` desde la raíz vía `--prefix`, hooks de pre-commit y YAML de CI validado.
+
+**Resultado:** stylelint y html-validate en **0 errores** sobre las 16 hojas y las 12 páginas generadas; `npm run verify` y los dos hooks de pre-commit en verde. `html-validate` confirma `<th scope>` (wcag/h63) y `no-dup-id`; CI ejecuta ahora ESLint, Prettier, Stylelint, duplicados entre archivos, escape de HTML, build y validación del HTML. Playwright ya se ejecuta a diario en `nightly.yml`; ampliar la suite sigue en 3.4.
 
 ---
 
@@ -737,5 +741,6 @@ npx lighthouse http://localhost:8050/dashboard.html \
 | 2026-11-26 | 2.5 | 12 `.html`, `partials/{head,sidebar}.html`, `pages.config.json`, `scripts/build.mjs`, `js/components/sidebar.js` | `<head>` y sidebar únicos; 9/9 páginas con 7 enlaces sin JS; build 718,6 → 702,1 KB; E2E 37 pasan (2 fallos previos del mapa, FE-037) |
 | 2026-11-26 | 1.8 | 4 `.html` + `js/pages/{dashboard,trucks}.js` | Mapas con `role="region"`; `nested-interactive` 2 → 0; a11y 16/16 y E2E 39/39; plural «camiones» corregido; FE-038 registrado |
 | 2026-11-26 | 1.9 | 4 `.html` + `css/components.css` | 5 tablas con `role="region"`, nombre y `tabindex`; `scrollable-region-focusable` 1 → 0; tabla compacta 620 px; E2E 39/39 |
+| 2026-11-26 | 3.1 | `package.json`, `.stylelintrc.json`, `.htmlvalidate.json`, CI, pre-commit, `build.mjs` | Stylelint + html-validate en CI y pre-commit; `npm run verify`; fixtures de duplicado y `<th>` sin `scope` fallan; build inmune a CRLF |
 
-**Próximo paso recomendado:** **3.1 · Linters en CI** (M) para fijar los avances. La inversión mobile-first (2.3b) sigue pendiente como sesión dedicada.
+**Próximo paso recomendado:** **3.4 · Ampliar suite a11y** (M, cierra FE-036) o **3.2 · Rendimiento de carga** (M). La inversión mobile-first (2.3b) sigue pendiente como sesión dedicada.
