@@ -320,7 +320,8 @@
 }
 
 .ai-truck-picker__select:focus-visible {
-  outline: none;
+  outline: 2px solid var(--accent-mid);
+  outline-offset: 2px;
   border-color: var(--accent-mid);
 }
 
@@ -482,7 +483,8 @@
 }
 
 .ai-composer__input:focus-visible {
-  outline: none;
+  outline: 2px solid var(--accent-mid);
+  outline-offset: 2px;
   border-color: var(--accent-mid);
 }
 

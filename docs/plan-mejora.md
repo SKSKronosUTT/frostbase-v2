@@ -27,7 +27,7 @@ Este plan solo contiene acciones derivadas de hallazgos verificados. No incluye 
 | 0.4 | Bug de cascada `.temp-card` | FE-019 | S | Medio | — | ✅ |
 | 1.1 | Semántica de tablas y landmarks | FE-006, FE-008, FE-011 | S | Medio | — | ✅ |
 | 1.2 | Encabezados, `<main>` y skip link | FE-007, FE-014 | S | Medio | — | ✅ |
-| 1.3 | Foco visible en el asistente | FE-015 | S | Medio | — | ⬜ |
+| 1.3 | Foco visible en el asistente | FE-015 | S | Medio | — | ✅ |
 | 1.4 | `prefers-reduced-motion` | FE-016 | S | Medio | — | ⬜ |
 | 1.5 | Errores de formulario y toasts | FE-012, FE-013, FE-017 | M | Medio | 0.1 | ⬜ |
 | 1.6 | Patrón de tabs accesible | FE-009 | M | Medio | — | ⬜ |
@@ -232,16 +232,11 @@ cd frontend && npx playwright test tests/e2e/accessibility.spec.js
 
 ---
 
-## 1.3 · Foco visible en el asistente — ⬜
+## 1.3 · Foco visible en el asistente — ✅ Aplicado
 
 **Hallazgos:** FE-015.
 
-**Tareas:** en `ai.css:322-325` y `484-487`, sustituir `outline: none` por:
-
-```css
-outline: 2px solid var(--accent-mid);
-outline-offset: 2px;
-```
+**Tareas realizadas:** en `ai.css` se sustituyó `outline: none` por `outline: 2px solid var(--accent-mid); outline-offset: 2px;` en `.ai-truck-picker__select:focus-visible` y `.ai-composer__input:focus-visible`, conservando el refuerzo del `border-color`.
 
 **Archivos:** `frontend/css/pages/ai.css`.
 **Esfuerzo:** S · **Impacto:** Medio · **Dependencias:** ninguna.
@@ -249,7 +244,9 @@ outline-offset: 2px;
 
 **Aceptación:** el foco del selector de camión y del textarea es perceptible con teclado y no depende solo del color del borde.
 
-**Verificación:** recorrido con Tab en `ai.html`, captura de pantalla del estado `:focus-visible`.
+**Verificación:** Chromium headless: ambos elementos coinciden con `:focus-visible` y calculan `outline: 2px solid rgb(27, 134, 214)` con `outline-offset: 2px`; captura del textarea enfocado revisada visualmente.
+
+**Resultado:** foco visible en ambos controles, sin errores de página; `npm run build`, `check:css` y `check:html` correctos.
 
 ---
 
@@ -644,5 +641,6 @@ npx lighthouse http://localhost:8050/dashboard.html \
 | 2026-11-25 | 0.4 | `pages/dashboard.css` | Media query al final; 170 px y 340 px aplican en móvil |
 | 2026-11-25 | 1.1 | 9 `.html` (`ai`, `alerts`, `dashboard`, `drivers`, `route-detail`, `routes`, `settings`, `truck-detail`, `trucks`) | 33 `<th scope="col">`, sidebar a `<div>`, tarjetas de rutas a `<section>`, `role="group"` en IA; errores reales 42 → 2 |
 | 2026-11-25 | 1.2 | 12 `.html`, `css/base.css`, `css/pages/settings.css`, `js/components/sidebar.js` | Skip link + `<main id="main">` en 12/12, `h1` en driver/index, `h3 → h2` en settings; foco verificado en Chromium |
+| 2026-11-25 | 1.3 | `css/pages/ai.css` | Outline de 2 px restaurado en el selector de camión y el textarea; `:focus-visible` verificado en Chromium |
 
-**Próximo paso recomendado:** **1.3 · Foco visible en el asistente**. Restaura el `outline` en los inputs de `ai.html`, tiene esfuerzo S y no depende de otros pasos.
+**Próximo paso recomendado:** **1.4 · `prefers-reduced-motion`**. Respeta la preferencia de movimiento reducido en las 14 animaciones del proyecto, tiene esfuerzo S y no depende de otros pasos.
