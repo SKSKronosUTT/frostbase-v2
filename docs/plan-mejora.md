@@ -28,7 +28,7 @@ Este plan solo contiene acciones derivadas de hallazgos verificados. No incluye 
 | 1.1 | Semántica de tablas y landmarks | FE-006, FE-008, FE-011 | S | Medio | — | ✅ |
 | 1.2 | Encabezados, `<main>` y skip link | FE-007, FE-014 | S | Medio | — | ✅ |
 | 1.3 | Foco visible en el asistente | FE-015 | S | Medio | — | ✅ |
-| 1.4 | `prefers-reduced-motion` | FE-016 | S | Medio | — | ⬜ |
+| 1.4 | `prefers-reduced-motion` | FE-016 | S | Medio | — | ✅ |
 | 1.5 | Errores de formulario y toasts | FE-012, FE-013, FE-017 | M | Medio | 0.1 | ⬜ |
 | 1.6 | Patrón de tabs accesible | FE-009 | M | Medio | — | ⬜ |
 | 1.7 | Mapas sin `role="application"` | FE-010 | M | Medio | — | ⬜ |
@@ -250,11 +250,11 @@ cd frontend && npx playwright test tests/e2e/accessibility.spec.js
 
 ---
 
-## 1.4 · `prefers-reduced-motion` — ⬜
+## 1.4 · `prefers-reduced-motion` — ✅ Aplicado
 
 **Hallazgos:** FE-016.
 
-**Tareas:** añadir al final de `base.css`:
+**Tareas realizadas:** bloque global al final de `base.css`:
 
 ```css
 @media (prefers-reduced-motion: reduce) {
@@ -269,11 +269,15 @@ cd frontend && npx playwright test tests/e2e/accessibility.spec.js
 
 **Archivos:** `frontend/css/base.css`.
 **Esfuerzo:** S · **Impacto:** Medio · **Dependencias:** ninguna.
-**Riesgo:** bajo; los spinners dejarán de girar con la preferencia activa (comportamiento esperado).
+**Riesgo:** bajo; los spinners dejan de girar con la preferencia activa (comportamiento esperado).
 
 **Aceptación:** con «reducir movimiento» activado en el SO, no hay animaciones de entrada ni transiciones largas; el spinner no gira pero sigue visible.
 
-**Verificación:** DevTools → Rendering → `prefers-reduced-motion: reduce`; revisar `dashboard`, modal y dropdown.
+**Verificación:** Chromium con `reducedMotion: "reduce"` y `"no-preference"` sobre `dashboard.html`; comprobación de `animation-duration`, `animation-iteration-count` y `transition-duration` calculados.
+
+**Resultado:** con `reduce`, el spinner pasa de `0.7s infinite` a `1e-05s` con una iteración y las transiciones de `body` y `.icon-button` de `0.16s/0.15s` a `1e-05s`; con `no-preference` se mantienen los valores originales. Sin errores de página. `build`, `check:css` y `check:html` correctos.
+
+> Las 4 declaraciones `!important` están acotadas a este bloque y son necesarias para vencer la especificidad de las animaciones y transiciones declaradas por componente.
 
 ---
 
@@ -597,7 +601,7 @@ Usar `prefers-color-scheme` como valor inicial cuando no haya preferencia guarda
 | axe (`wcag2a/aa`, incl. moderate) | Sin medir (≥2 probables) | **0 violaciones** en 12 páginas × 2 temas |
 | Lighthouse accesibilidad (login, dashboard, trucks) | Sin medir | **≥ 95** |
 | Contraste | 4 fallos AA | **100 %** textos ≥ 4.5:1 y UI ≥ 3:1 |
-| `!important` | 3 | **≤ 1** (solo `.hidden`) |
+| `!important` | 3 | **3 en utilidades + 4 acotados a `prefers-reduced-motion`** |
 | Tamaños de fuente distintos | 30 | **≤ 8** |
 | Breakpoints | 13 | **4** |
 | Clases CSS muertas | ≈17 | **0** |
@@ -642,5 +646,6 @@ npx lighthouse http://localhost:8050/dashboard.html \
 | 2026-11-25 | 1.1 | 9 `.html` (`ai`, `alerts`, `dashboard`, `drivers`, `route-detail`, `routes`, `settings`, `truck-detail`, `trucks`) | 33 `<th scope="col">`, sidebar a `<div>`, tarjetas de rutas a `<section>`, `role="group"` en IA; errores reales 42 → 2 |
 | 2026-11-25 | 1.2 | 12 `.html`, `css/base.css`, `css/pages/settings.css`, `js/components/sidebar.js` | Skip link + `<main id="main">` en 12/12, `h1` en driver/index, `h3 → h2` en settings; foco verificado en Chromium |
 | 2026-11-25 | 1.3 | `css/pages/ai.css` | Outline de 2 px restaurado en el selector de camión y el textarea; `:focus-visible` verificado en Chromium |
+| 2026-11-25 | 1.4 | `css/base.css` | Guard de `prefers-reduced-motion`: animaciones y transiciones a `1e-05s`; spinner estático; valores normales intactos |
 
-**Próximo paso recomendado:** **1.4 · `prefers-reduced-motion`**. Respeta la preferencia de movimiento reducido en las 14 animaciones del proyecto, tiene esfuerzo S y no depende de otros pasos.
+**Próximo paso recomendado:** **1.5 · Errores de formulario y toasts**. Asocia los errores a sus campos y mejora el anuncio y la pausa de los toasts; esfuerzo M y depende de 0.1.
