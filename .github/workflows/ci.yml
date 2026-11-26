@@ -73,6 +73,9 @@ jobs:
       - name: Prettier
         working-directory: frontend
         run: npx prettier --check js css
+      - name: Stylelint
+        working-directory: frontend
+        run: npx stylelint "css/**/*.css"
       - name: CSS sin duplicados
         working-directory: frontend
         run: npm run check:css
@@ -82,6 +85,9 @@ jobs:
       - name: Build de producción
         working-directory: frontend
         run: npm run build
+      - name: HTML validado
+        working-directory: frontend
+        run: npm run lint:html
 
   audit:
     if: github.event_name == 'schedule'

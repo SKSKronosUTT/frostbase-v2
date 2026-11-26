@@ -65,10 +65,7 @@ switch ($Task) {
         Invoke-BackendPython @("-m", "mypy", "app")
         Push-Location $Frontend
         try {
-            npx --yes eslint@8 js
-            npx --yes prettier@3 --check js css
-            npm run check:css
-            npm run check:html
+            npm run verify
         } finally { Pop-Location }
     }
     "build" {

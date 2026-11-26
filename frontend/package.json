@@ -5,6 +5,10 @@
   "type": "module",
   "scripts": {
     "build": "node scripts/build.mjs",
+    "lint": "eslint js && prettier --check js css && stylelint \"css/**/*.css\" && npm run check:css && npm run check:html",
+    "lint:html": "html-validate \"build/*.html\"",
+    "verify:html": "npm run build && npm run lint:html",
+    "verify": "npm run lint && npm run verify:html",
     "check:html": "node scripts/check-innerhtml.mjs",
     "check:css": "node scripts/check-css.mjs"
   },
@@ -13,6 +17,9 @@
     "@playwright/test": "^1.49.0",
     "esbuild": "^0.24.0",
     "eslint": "^8.57.1",
-    "prettier": "^3.3.3"
+    "html-validate": "^8.29.1",
+    "prettier": "^3.3.3",
+    "stylelint": "^16.26.1",
+    "stylelint-config-recommended": "^14.0.1"
   }
 }

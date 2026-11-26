@@ -9,13 +9,15 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const outDir = path.join(root, "build");
 const buildAssets = path.join(outDir, "assets", "build");
 
+const readSource = async (file) =>
+  (await readFile(file, "utf8")).replace(/\r\n/g, "\n");
+
 const PAGES_CONFIG = JSON.parse(
   await readFile(path.join(root, "pages.config.json"), "utf8")
 );
-const HEAD_PARTIAL = await readFile(path.join(root, "partials", "head.html"), "utf8");
-const SIDEBAR_PARTIAL = await readFile(
-  path.join(root, "partials", "sidebar.html"),
-  "utf8"
+const HEAD_PARTIAL = await readSource(path.join(root, "partials", "head.html"));
+const SIDEBAR_PARTIAL = await readSource(
+  path.join(root, "partials", "sidebar.html")
 );
 const PAGES = Object.keys(PAGES_CONFIG);
 
@@ -100,7 +102,7 @@ async function main() {
 
   for (const page of PAGES) {
     const htmlPath = path.join(root, page);
-    let html = await readFile(htmlPath, "utf8");
+    let html = await readSource(htmlPath);
     const meta = PAGES_CONFIG[page];
 
     if (!meta) throw new Error(`Falta metadata para ${page}`);
@@ -124,7 +126,11 @@ async function main() {
       const name = hashedName(`${path.basename(page, ".html")}.css`, code);
       await writeFile(path.join(buildAssets, name), code, "utf8");
       manifest[files.join("+")] = `assets/build/${name}`;
-      html = html.replace(/<link rel="stylesheet" href="css\/[^"]+"\s*\/?>/g, "");
+      // Elimina la línea completa para no dejar líneas en blanco.
+      html = html.replace(
+        /^[ \t]*<link rel="stylesheet" href="css\/[^"]+"[ \t]*\/?>\r?\n/gm,
+        ""
+      );
       html = html.replace(
         "</head>",
         `  <link rel="stylesheet" href="assets/build/${name}" />\n</head>`
