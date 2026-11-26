@@ -15,7 +15,7 @@ npm run build
 
 **Estado de git al iniciar:** rama `devolp`, con un archivo no rastreado (`plan_implementacion_modulo_conductores.md`, del equipo, excluido de esta auditoría). No se modificó ningún archivo durante la auditoría.
 
-> **Actualización posterior:** tras la auditoría se aplicaron los pasos **0.1, 0.2, 0.3, 0.4, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 2.1, 2.2, 2.3, 2.4 y 2.6** del plan (`docs/plan-mejora.md`); 2.3 queda parcial (cortes unificados, falta la inversión mobile-first). Los hallazgos afectados aparecen marcados como **Resuelto**. El resto sigue pendiente.
+> **Actualización posterior:** tras la auditoría se aplicaron los pasos **0.1, 0.2, 0.3, 0.4, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 2.1, 2.2, 2.3, 2.4, 2.5 y 2.6** del plan (`docs/plan-mejora.md`); 2.3 queda parcial (cortes unificados, falta la inversión mobile-first). Los hallazgos afectados aparecen marcados como **Resuelto**. El resto sigue pendiente, incluido **FE-037**, detectado al ejecutar la suite E2E en 2.5.
 
 ---
 
@@ -23,9 +23,9 @@ npm run build
 
 Proyecto con una base mejor que la media: sistema de tokens real con tema claro/oscuro, build con assets hasheados y caché inmutable, CSP y cabeceras de seguridad en servidor, cero estilos en línea, solo 3 `!important`, imágenes con dimensiones reservadas y una suite de accesibilidad con axe ya escrita. El diseño es coherente y el uso de Grid/Flexbox es correcto.
 
-Los riesgos iniciales se han ido cerrando: la Fase 1 resolvió las barreras de accesibilidad, 2.1 unificó la cascada (**0 selectores duplicados**, frente a 130) y 2.2 consolidó tipografía, espaciado y color en tokens (**8 tamaños**, **0 hex sueltos**). Los breakpoints ya son **4** (aún `max-width`; la inversión mobile-first queda como 2.3b). Quedan el rendimiento de carga y la deuda de parciales/metadatos.
+Los riesgos iniciales se han ido cerrando: la Fase 1 resolvió las barreras de accesibilidad, 2.1 unificó la cascada (**0 selectores duplicados**, frente a 130) y 2.2 consolidó tipografía, espaciado y color en tokens (**8 tamaños**, **0 hex sueltos**). Los breakpoints ya son **4** (aún `max-width`; la inversión mobile-first queda como 2.3b) y 2.5 dejó un único `<head>` y la navegación en el HTML. Quedan el rendimiento de carga, la guía de estilos y el ajuste de los mapas (FE-037).
 
-**Nota global: 6/10** en el momento de la auditoría; **6,5/10** tras 0.1, 0.2 y 0.4, **7/10** tras 0.3, **7,5/10** tras 1.1, **8/10** tras 1.2, **8,5/10** tras 1.5, 1.6 y 1.7, y **9/10** tras 2.1 y 2.2. La accesibilidad, la cascada y el sistema de tokens están resueltos; quedan breakpoints, rendimiento y parciales.
+**Nota global: 6/10** en el momento de la auditoría; **6,5/10** tras 0.1, 0.2 y 0.4, **7/10** tras 0.3, **7,5/10** tras 1.1, **8/10** tras 1.2, **8,5/10** tras 1.5, 1.6 y 1.7, y **9/10** tras 2.1, 2.2 y 2.5. La accesibilidad, la cascada, los tokens y la navegación estática están resueltos; quedan breakpoints, rendimiento, metadatos y el ajuste de los mapas.
 
 ---
 
@@ -55,14 +55,14 @@ frontend/
 
 **Stack real**
 
-- HTML5 estático multipágina, sin plantillas ni parciales.
+- HTML5 multipágina con parciales de build (`partials/head.html`, `partials/sidebar.html`) desde 2.5.
 - CSS propio, sin preprocesador ni framework. Metodología **BEM parcial** (`card__header`, `btn--primary`) combinada con utilidades (`.hidden`, `.sr-only`, `.muted`, `.mono`).
-- JavaScript ES modules nativo, sin framework. El sidebar y los modales se generan en cliente.
+- JavaScript ES modules nativo, sin framework. Los modales se generan en cliente; el sidebar es estático desde 2.5.
 - Build con **esbuild** (`scripts/build.mjs`): agrupa y minifica el CSS por página, bundlea el módulo JS y hashea los assets. Docker ejecuta el build en producción (`docker/Dockerfile:11-17`).
 - **Sin CDNs**: FontAwesome y Leaflet están vendorizados.
 - **Sistema de diseño**: 73 tokens (color, radios, sombras, sidebar, transición), tema oscuro vía `[data-theme="dark"]`, `focus-visible` global y utilidad `.sr-only`. No hay tokens de espaciado ni escala tipográfica.
 
-**Organización en 6 líneas:** conviven dos generaciones de CSS. La original (componentes con radios y sombras suaves) y una segunda capa "Bauhaus" añadida al final de 8 hojas bajo el comentario `/* ===== Consolidado desde bauhaus.css (T4.5) ===== */`, que reescribe colores, bordes, sombras y tipografía por orden de cascada. El marcado se repite en las 12 páginas (bloque `<head>` completo) y el sidebar se inyecta por JS. El JS está razonablemente separado en `core`, `components` y `pages`.
+**Organización en 6 líneas:** conviven dos generaciones de CSS. La original (componentes con radios y sombras suaves) y una segunda capa "Bauhaus" añadida al final de 8 hojas bajo el comentario `/* ===== Consolidado desde bauhaus.css (T4.5) ===== */`, que reescribe colores, bordes, sombras y tipografía por orden de cascada. El `<head>` y el sidebar ya no se repiten: viven en `partials/` y el build los resuelve (2.5). El JS está razonablemente separado en `core`, `components` y `pages`.
 
 ---
 
@@ -76,6 +76,8 @@ frontend/
 | `!important` | **7**: 3 en utilidades de ocultación + 4 en el guard de `prefers-reduced-motion` |
 | Atributos `style=""` | **0** |
 | Selectores duplicados (`no-duplicate-selectors`) | **130 → 0** (2.1) |
+| Bloques `<head>` duplicados | **12 → 1** (parcial de build, 2.5) |
+| Páginas internas con navegación en el HTML | **9/9** (2.5) |
 | Selectores repetidos en el mismo archivo (conteo propio) | **209** |
 | Errores reales de `html-validate` | **44** (2 tras 1.1) |
 | Avisos de estilo `html-validate` (`void-style`, `doctype-style`) | 198 |
@@ -94,6 +96,7 @@ frontend/
 | IDs duplicados por página | 0 |
 | Páginas con `<main id="main">` | **12/12** |
 | Páginas con skip link funcional | **12/12** |
+| Build de producción | 25 assets, **718,6 → 702,1 KB** (2.5) |
 
 ---
 
@@ -103,7 +106,7 @@ frontend/
 
 | ID | Categoría | Sev. | Título | Ubicación | Estado |
 |---|---|---|---|---|---|
-| FE-001 | HTML / Semántica | M | Navegación principal inyectada por JS en `<aside>` vacío | `dashboard.html:23`; `js/components/sidebar.js:40` | Pendiente |
+| FE-001 | HTML / Semántica | M | Navegación principal inyectada por JS en `<aside>` vacío | `dashboard.html:23`; `js/components/sidebar.js:40` | **Resuelto (2.5)** |
 | FE-002 | Accesibilidad | **A** | Drawer móvil sin foco, `aria-expanded` ni bloqueo de scroll | `css/layout.css:280-291`; `sidebar.js:87-108` | **Resuelto (0.3)** |
 | FE-003 | Accesibilidad | **A** | Botones solo-icono sin nombre accesible | `driver.html:58-67` | **Resuelto (0.1)** |
 | FE-004 | Accesibilidad | **A** | Buscadores sin etiqueta (solo `placeholder`) | `trucks.html:57,95`; `routes.html:56` | **Resuelto (0.1)** |
@@ -135,12 +138,13 @@ frontend/
 | FE-030 | Rendimiento | B | `theme-boot.js` bloqueante en `<head>` siendo 11 líneas | `login.html:16` (y 11 páginas más) | Pendiente |
 | FE-031 | Rendimiento | B | `logo.png` de 71 KB usado como logo y favicon | `assets/logo.png`; `login.html:8,27` | Pendiente |
 | FE-032 | Compatibilidad | B | `fonts.css` usa ruta absoluta y el preload relativa | `fonts.css:7` vs `dashboard.html:10` | Pendiente |
-| FE-033 | Mantenibilidad | M | Bloque `<head>` duplicado literalmente en 12 páginas | todas las `.html` | Pendiente |
+| FE-033 | Mantenibilidad | M | Bloque `<head>` duplicado literalmente en 12 páginas | todas las `.html` | **Resuelto (2.5)** |
 | FE-034 | Mantenibilidad | B | `check:css` no detecta duplicados intra-archivo; sin stylelint | `scripts/check-css.mjs:44`; `package.json:6-10` | Pendiente |
 | FE-035 | Mantenibilidad | B | `escapeHtml` duplicado en `modal.js` | `modal.js:119-127` vs `helpers.js` | Pendiente |
 | FE-036 | Testing | B | Suite a11y solo falla con `serious/critical` y omite `driver/index` | `tests/e2e/accessibility.spec.js:16-19,4-12` | Pendiente |
+| FE-037 | Accesibilidad | M | `role="img"` en mapas con marcadores focusables (`nested-interactive`) | `dashboard.html`, `routes.html`, `route-detail.html`, `truck-detail.html` | Pendiente |
 
-**Distribución:** 0 Críticas · **5 Altas** · **21 Medias** · **10 Bajas**.
+**Distribución:** 0 Críticas · **5 Altas** · **22 Medias** · **10 Bajas**.
 
 ---
 
@@ -148,7 +152,7 @@ frontend/
 
 ### 5.1 HTML: estructura y semántica
 
-#### FE-001 · Navegación principal inyectada por JS en un `<aside>` vacío — Media · Riesgo
+#### FE-001 · Navegación principal inyectada por JS en un `<aside>` vacío — Media · Riesgo · **Resuelto (2.5)**
 
 **Ubicación:** `frontend/dashboard.html:23` y `frontend/js/components/sidebar.js:40`.
 
@@ -169,6 +173,8 @@ sidebar.innerHTML = `
 **Descripción e impacto:** el landmark de navegación no existe en el HTML; hasta que se ejecuta el módulo, el `<aside>` está vacío y es el único `<nav>` de la página. Si el JS falla o se bloquea, no hay navegación. Además la navegación principal queda dentro de un landmark `complementary`, semánticamente incorrecto.
 
 **Recomendación:** renderizar sidebar y nav en HTML estático (parcial de build) y dejar JS solo para el estado activo y el drawer. Mientras tanto, añadir `aria-label` al `aside` y un `noscript` con enlaces.
+
+**Corrección aplicada:** el sidebar vive en `partials/sidebar.html` y el build lo inserta en las 9 páginas internas; el enlace activo se marca en el HTML (`is-active` + `aria-current="page"`). `sidebar.js` ya no genera marcado: solo rellena el usuario y cablea tema, logout y drawer. Verificado con JS deshabilitado (7 enlaces presentes) y con sesión (1 activo correcto por página, 0 errores de consola).
 
 ---
 
@@ -716,6 +722,24 @@ export function renderTableState(container, html, { onRetry } = {}) {
 
 ---
 
+#### FE-037 · `role="img"` en mapas con marcadores focusables — Media · Error · **Pendiente**
+
+**Ubicación:** `dashboard.html` (`#dashboardMap`) y los mapas de `routes.html`, `route-detail.html` y `truck-detail.html`.
+
+**Evidencia** (suite E2E, axe 4.14, regla `nested-interactive`):
+
+```
+nested-interactive: Interactive controls must not be nested
+  #dashboardMap
+  Element has focusable descendants (marcadores Leaflet con tabindex="0" y role="button")
+```
+
+**Impacto:** la corrección de FE-010 cambió `role="application"` por `role="img"`, pero Leaflet mantiene los marcadores como controles focusables dentro del contenedor. Un `role="img"` con descendientes interactivos es un error serio: el lector de pantalla trata el mapa como una imagen y oculta los botones, mientras el teclado sigue entrando en ellos. Afecta a cualquier página con marcadores.
+
+**Recomendación:** no usar `role="img"` cuando el mapa es interactivo. Mantener `aria-label` y `aria-describedby` con `role="region"` (o envolver el mapa en un `div role="region"`), o desactivar el foco de los marcadores si no aportan acción. Verificar con `tests/e2e/accessibility.spec.js`, que hoy falla en `dashboard` (light y dark) también con el build anterior a 2.5.
+
+---
+
 ### 5.5 Rendimiento
 
 #### FE-028 · CSS bloqueante y fuente de iconos pesada — Media · Deuda técnica
@@ -841,13 +865,15 @@ Sin hallazgos. No hay `target="_blank"`, no se cargan recursos externos, todo el
 
 ### 5.10 Mantenibilidad
 
-#### FE-033 · `<head>` duplicado en 12 páginas — Media · Deuda técnica
+#### FE-033 · `<head>` duplicado en 12 páginas — Media · Deuda técnica · **Resuelto (2.5)**
 
 **Ubicación:** todas las `.html` (16 líneas de metas, preload, 8 hojas, theme-boot).
 
 **Impacto:** añadir una hoja o cambiar el preload implica editar 12 archivos a mano; ya hay divergencias (unas páginas cargan `layout.css` y otras no, `index.html` no tiene `components.css`). Es la causa de que `driver.html` se quedara sin `<h1>` y los buscadores sin etiqueta.
 
 **Recomendación:** parcial de `<head>` en el build (11ty, Vite o un `include` casero en `scripts/build.mjs`).
+
+**Corrección aplicada:** `partials/head.html` es la única fuente del `<head>`; `pages.config.json` declara `title`, `description` y `styles` por página, y `build.mjs` resuelve el include y valida que ninguna página quede sin metadata. El HTML generado coincide con el anterior salvo el orden de `<meta>`/`<title>` y el `noindex` que ahora también lleva `login.html`. Build: 25 assets, 718,6 → 702,1 KB.
 
 ---
 

@@ -260,9 +260,7 @@ npm ci
 npm run build
 ```
 
-Genera `frontend/build` con CSS/JS minificados y hasheados, `manifest.json` y los
-assets vendorizados. El backend sirve ese directorio si existe; en su defecto
-sirve el código fuente. En CI y en la imagen Docker el build es obligatorio.
+Genera `frontend/build` con las páginas completas (resuelve `partials/head.html` y `partials/sidebar.html`), CSS/JS minificados y hasheados, `manifest.json` y los assets vendorizados. El backend sirve ese directorio; las páginas fuente son plantillas, así que el build es obligatorio en cualquier entorno.
 
 Verificaciones adicionales:
 

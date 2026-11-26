@@ -9,20 +9,41 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const outDir = path.join(root, "build");
 const buildAssets = path.join(outDir, "assets", "build");
 
-const PAGES = [
-  "index.html",
-  "login.html",
-  "dashboard.html",
-  "trucks.html",
-  "truck-detail.html",
-  "routes.html",
-  "route-detail.html",
-  "alerts.html",
-  "settings.html",
-  "driver.html",
-  "drivers.html",
-  "ai.html",
-];
+const PAGES_CONFIG = JSON.parse(
+  await readFile(path.join(root, "pages.config.json"), "utf8")
+);
+const HEAD_PARTIAL = await readFile(path.join(root, "partials", "head.html"), "utf8");
+const SIDEBAR_PARTIAL = await readFile(
+  path.join(root, "partials", "sidebar.html"),
+  "utf8"
+);
+const PAGES = Object.keys(PAGES_CONFIG);
+
+const SIDEBAR_ALIASES = {
+  "truck-detail.html": "trucks",
+  "route-detail.html": "routes",
+};
+
+function renderHead(meta) {
+  const description = meta.description
+    ? `  <meta name="description" content="${meta.description}" />\n`
+    : "";
+  const styles = meta.styles
+    .map((href) => `  <link rel="stylesheet" href="${href}" />`)
+    .join("\n");
+  return HEAD_PARTIAL.replace("{{title}}", meta.title)
+    .replace("{{description}}\n", description)
+    .replace("{{styles}}", styles)
+    .trim();
+}
+
+function renderSidebar(page) {
+  const active = SIDEBAR_ALIASES[page] || page.replace(/\.html$/, "");
+  return SIDEBAR_PARTIAL.replace(
+    new RegExp(`class="nav-link"([^>]*?data-nav="${active}")`),
+    'class="nav-link is-active"$1 aria-current="page"'
+  ).trim();
+}
 
 function hashedName(name, content) {
   const hash = createHash("sha256").update(content).digest("hex").slice(0, 8);
@@ -80,6 +101,19 @@ async function main() {
   for (const page of PAGES) {
     const htmlPath = path.join(root, page);
     let html = await readFile(htmlPath, "utf8");
+    const meta = PAGES_CONFIG[page];
+
+    if (!meta) throw new Error(`Falta metadata para ${page}`);
+    if (!html.includes("<!-- @include head -->")) {
+      throw new Error(`Falta el include de head en ${page}`);
+    }
+    html = html.replace("<!-- @include head -->", renderHead(meta));
+    if (html.includes("<!-- @include sidebar -->")) {
+      html = html.replace("<!-- @include sidebar -->", renderSidebar(page));
+    }
+    if (html.includes("<!-- @include ")) {
+      throw new Error(`Include sin resolver en ${page}`);
+    }
 
     const cssLinks = [
       ...html.matchAll(/<link rel="stylesheet" href="(css\/[^"]+)"\s*\/?>/g),

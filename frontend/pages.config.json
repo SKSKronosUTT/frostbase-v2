@@ -1,0 +1,157 @@
+{
+  "index.html": {
+    "title": "FrostBase",
+    "description": "",
+    "styles": [
+      "css/fonts.css",
+      "css/tokens.css",
+      "css/base.css",
+      "css/pages/index.css"
+    ]
+  },
+  "login.html": {
+    "title": "Iniciar sesión | FrostBase",
+    "description": "Acceso administrativo al sistema de monitoreo de camiones refrigerados FrostBase.",
+    "styles": [
+      "css/fonts.css",
+      "assets/vendors/fontawesome/fa-subset.css",
+      "css/tokens.css",
+      "css/base.css",
+      "css/components.css",
+      "css/pages/login.css"
+    ]
+  },
+  "dashboard.html": {
+    "title": "Panel de Control | FrostBase",
+    "description": "Panel de control de la flota refrigerada FrostBase: temperatura, ubicación y alertas.",
+    "styles": [
+      "css/fonts.css",
+      "assets/vendors/fontawesome/fa-subset.css",
+      "assets/vendors/leaflet/leaflet.css",
+      "css/tokens.css",
+      "css/base.css",
+      "css/components.css",
+      "css/layout.css",
+      "css/pages/dashboard.css"
+    ]
+  },
+  "trucks.html": {
+    "title": "Flota | FrostBase",
+    "description": "Gestión de camiones y dispositivos IoT de la flota FrostBase.",
+    "styles": [
+      "css/fonts.css",
+      "assets/vendors/fontawesome/fa-subset.css",
+      "css/tokens.css",
+      "css/base.css",
+      "css/components.css",
+      "css/layout.css",
+      "css/pages/trucks.css"
+    ]
+  },
+  "truck-detail.html": {
+    "title": "Detalle del camión | FrostBase",
+    "description": "Detalle de un camión: lecturas, dispositivo, ruta y alertas.",
+    "styles": [
+      "css/fonts.css",
+      "assets/vendors/fontawesome/fa-subset.css",
+      "assets/vendors/leaflet/leaflet.css",
+      "css/tokens.css",
+      "css/base.css",
+      "css/components.css",
+      "css/layout.css",
+      "css/pages/truck-detail.css"
+    ]
+  },
+  "routes.html": {
+    "title": "Rutas | FrostBase",
+    "description": "Gestión de rutas de reparto de FrostBase.",
+    "styles": [
+      "css/fonts.css",
+      "assets/vendors/fontawesome/fa-subset.css",
+      "assets/vendors/leaflet/leaflet.css",
+      "css/tokens.css",
+      "css/base.css",
+      "css/components.css",
+      "css/layout.css",
+      "css/pages/routes.css"
+    ]
+  },
+  "route-detail.html": {
+    "title": "Detalle de ruta | FrostBase",
+    "description": "Detalle de una ruta: puntos de entrega y geometría.",
+    "styles": [
+      "css/fonts.css",
+      "assets/vendors/fontawesome/fa-subset.css",
+      "assets/vendors/leaflet/leaflet.css",
+      "css/tokens.css",
+      "css/base.css",
+      "css/components.css",
+      "css/layout.css",
+      "css/pages/routes.css"
+    ]
+  },
+  "alerts.html": {
+    "title": "Historial de alertas | FrostBase",
+    "description": "Historial de alertas de temperatura, humedad y desconexión.",
+    "styles": [
+      "css/fonts.css",
+      "assets/vendors/fontawesome/fa-subset.css",
+      "css/tokens.css",
+      "css/base.css",
+      "css/components.css",
+      "css/layout.css",
+      "css/pages/alerts.css"
+    ]
+  },
+  "settings.html": {
+    "title": "Configuración | FrostBase",
+    "description": "Configuración de umbrales y preferencias de FrostBase.",
+    "styles": [
+      "css/fonts.css",
+      "assets/vendors/fontawesome/fa-subset.css",
+      "css/tokens.css",
+      "css/base.css",
+      "css/components.css",
+      "css/layout.css",
+      "css/pages/settings.css"
+    ]
+  },
+  "driver.html": {
+    "title": "Portal del conductor | FrostBase",
+    "description": "Portal del conductor: contenedor en vivo, ruta del día y alertas de la cadena de frío.",
+    "styles": [
+      "css/fonts.css",
+      "assets/vendors/fontawesome/fa-subset.css",
+      "css/tokens.css",
+      "css/base.css",
+      "css/components.css",
+      "css/pages/driver.css"
+    ]
+  },
+  "drivers.html": {
+    "title": "Conductores | FrostBase",
+    "description": "Gestión de conductores de la flota FrostBase: altas, camión asignado y credenciales.",
+    "styles": [
+      "css/fonts.css",
+      "assets/vendors/fontawesome/fa-subset.css",
+      "css/tokens.css",
+      "css/base.css",
+      "css/components.css",
+      "css/layout.css",
+      "css/pages/drivers.css"
+    ]
+  },
+  "ai.html": {
+    "title": "Asistente IA | FrostBase",
+    "description": "Asistente IA de FrostBase: consulta la flota, alertas y viajes en lenguaje natural.",
+    "styles": [
+      "css/fonts.css",
+      "assets/vendors/fontawesome/fa-subset.css",
+      "css/tokens.css",
+      "css/base.css",
+      "css/components.css",
+      "css/layout.css",
+      "css/pages/ai.css"
+    ]
+  }
+}
