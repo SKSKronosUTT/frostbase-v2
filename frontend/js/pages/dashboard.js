@@ -69,8 +69,8 @@ function renderSummary() {
   const summary = state.summary;
   if (!summary) return;
   qs("#kpiActive").textContent = summary.active_trucks;
-  qs("#kpiActiveMeta").textContent = `${summary.total_trucks} camión${
-    summary.total_trucks === 1 ? "" : "es"
+  qs("#kpiActiveMeta").textContent = `${summary.total_trucks} ${
+    summary.total_trucks === 1 ? "camión" : "camiones"
   } registrado${summary.total_trucks === 1 ? "" : "s"}`;
   qs("#kpiTemperature").textContent =
     summary.avg_temperature === null ? "—" : formatTemp(summary.avg_temperature);
@@ -286,8 +286,8 @@ function updateMap() {
     }
   }
 
-  qs("#mapSummary").textContent = `${visibleTrucks.length} camión${
-    visibleTrucks.length === 1 ? "" : "es"
+  qs("#mapSummary").textContent = `${visibleTrucks.length} ${
+    visibleTrucks.length === 1 ? "camión" : "camiones"
   } · ${withGps} con GPS`;
 
   if (state.needsFit) {

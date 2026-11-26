@@ -15,7 +15,7 @@ npm run build
 
 **Estado de git al iniciar:** rama `devolp`, con un archivo no rastreado (`plan_implementacion_modulo_conductores.md`, del equipo, excluido de esta auditoría). No se modificó ningún archivo durante la auditoría.
 
-> **Actualización posterior:** tras la auditoría se aplicaron los pasos **0.1, 0.2, 0.3, 0.4, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 2.1, 2.2, 2.3, 2.4, 2.5 y 2.6** del plan (`docs/plan-mejora.md`); 2.3 queda parcial (cortes unificados, falta la inversión mobile-first). Los hallazgos afectados aparecen marcados como **Resuelto**. El resto sigue pendiente, incluido **FE-037**, detectado al ejecutar la suite E2E en 2.5.
+> **Actualización posterior:** tras la auditoría se aplicaron los pasos **0.1, 0.2, 0.3, 0.4, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 2.1, 2.2, 2.3, 2.4, 2.5 y 2.6** del plan (`docs/plan-mejora.md`); 2.3 queda parcial (cortes unificados, falta la inversión mobile-first). Los hallazgos afectados aparecen marcados como **Resuelto**. El resto sigue pendiente, incluido **FE-038**, detectado al verificar FE-037.
 
 ---
 
@@ -23,7 +23,7 @@ npm run build
 
 Proyecto con una base mejor que la media: sistema de tokens real con tema claro/oscuro, build con assets hasheados y caché inmutable, CSP y cabeceras de seguridad en servidor, cero estilos en línea, solo 3 `!important`, imágenes con dimensiones reservadas y una suite de accesibilidad con axe ya escrita. El diseño es coherente y el uso de Grid/Flexbox es correcto.
 
-Los riesgos iniciales se han ido cerrando: la Fase 1 resolvió las barreras de accesibilidad, 2.1 unificó la cascada (**0 selectores duplicados**, frente a 130) y 2.2 consolidó tipografía, espaciado y color en tokens (**8 tamaños**, **0 hex sueltos**). Los breakpoints ya son **4** (aún `max-width`; la inversión mobile-first queda como 2.3b) y 2.5 dejó un único `<head>` y la navegación en el HTML. Quedan el rendimiento de carga, la guía de estilos y el ajuste de los mapas (FE-037).
+Los riesgos iniciales se han ido cerrando: la Fase 1 resolvió las barreras de accesibilidad, 2.1 unificó la cascada (**0 selectores duplicados**, frente a 130) y 2.2 consolidó tipografía, espaciado y color en tokens (**8 tamaños**, **0 hex sueltos**). Los breakpoints ya son **4** (aún `max-width`; la inversión mobile-first queda como 2.3b) y 2.5 dejó un único `<head>` y la navegación en el HTML. Quedan el rendimiento de carga, la guía de estilos y una tabla desplazable sin foco en el detalle de camión (FE-038).
 
 **Nota global: 6/10** en el momento de la auditoría; **6,5/10** tras 0.1, 0.2 y 0.4, **7/10** tras 0.3, **7,5/10** tras 1.1, **8/10** tras 1.2, **8,5/10** tras 1.5, 1.6 y 1.7, y **9/10** tras 2.1, 2.2 y 2.5. La accesibilidad, la cascada, los tokens y la navegación estática están resueltos; quedan breakpoints, rendimiento, metadatos y el ajuste de los mapas.
 
@@ -78,6 +78,7 @@ frontend/
 | Selectores duplicados (`no-duplicate-selectors`) | **130 → 0** (2.1) |
 | Bloques `<head>` duplicados | **12 → 1** (parcial de build, 2.5) |
 | Páginas internas con navegación en el HTML | **9/9** (2.5) |
+| Mapas con `role="img"` | **4 → 0** (1.8) |
 | Selectores repetidos en el mismo archivo (conteo propio) | **209** |
 | Errores reales de `html-validate` | **44** (2 tras 1.1) |
 | Avisos de estilo `html-validate` (`void-style`, `doctype-style`) | 198 |
@@ -142,9 +143,10 @@ frontend/
 | FE-034 | Mantenibilidad | B | `check:css` no detecta duplicados intra-archivo; sin stylelint | `scripts/check-css.mjs:44`; `package.json:6-10` | Pendiente |
 | FE-035 | Mantenibilidad | B | `escapeHtml` duplicado en `modal.js` | `modal.js:119-127` vs `helpers.js` | Pendiente |
 | FE-036 | Testing | B | Suite a11y solo falla con `serious/critical` y omite `driver/index` | `tests/e2e/accessibility.spec.js:16-19,4-12` | Pendiente |
-| FE-037 | Accesibilidad | M | `role="img"` en mapas con marcadores focusables (`nested-interactive`) | `dashboard.html`, `routes.html`, `route-detail.html`, `truck-detail.html` | Pendiente |
+| FE-037 | Accesibilidad | M | `role="img"` en mapas con marcadores focusables (`nested-interactive`) | `dashboard.html`, `routes.html`, `route-detail.html`, `truck-detail.html` | **Resuelto (1.8)** |
+| FE-038 | Accesibilidad | M | Tabla desplazable sin foco en el detalle de camión | `truck-detail.html` (`.table-wrap`) | Pendiente |
 
-**Distribución:** 0 Críticas · **5 Altas** · **22 Medias** · **10 Bajas**.
+**Distribución:** 0 Críticas · **5 Altas** · **23 Medias** · **10 Bajas**.
 
 ---
 
@@ -588,7 +590,7 @@ document.querySelectorAll("[data-tab]").forEach((button) => {
 
 **Recomendación:** eliminar `role="application"`, mantener `aria-label` descriptivo y añadir un resumen textual actualizado (`aria-describedby`) con número de unidades/puntos y un enlace a la tabla o lista equivalente.
 
-**Corrección aplicada:** los 4 mapas usan `role="img"` con `aria-label` y `aria-describedby`; se eliminó `role="application"`, se corrigió el label copiado de `route-detail` y se añadieron resúmenes dinámicos: `#mapSummary` (visible en dashboard), `#routeMapSummary`, `#routeDetailMapSummary` y `#truckMapSummary` (sr-only). Verificado en Chromium: 0 `role="application"`, descripciones enlazadas y textos correctos con datos simulados.
+**Corrección aplicada:** los 4 mapas usan `role="img"` con `aria-label` y `aria-describedby`; se eliminó `role="application"`, se corrigió el label copiado de `route-detail` y se añadieron resúmenes dinámicos: `#mapSummary` (visible en dashboard), `#routeMapSummary`, `#routeDetailMapSummary` y `#truckMapSummary` (sr-only). Verificado en Chromium: 0 `role="application"`, descripciones enlazadas y textos correctos con datos simulados. **Revisado en 1.8:** el `role="img"` se sustituyó por `role="region"` porque los marcadores siguen siendo focusables y `img` los oculta (FE-037).
 
 ---
 
@@ -722,7 +724,7 @@ export function renderTableState(container, html, { onRetry } = {}) {
 
 ---
 
-#### FE-037 · `role="img"` en mapas con marcadores focusables — Media · Error · **Pendiente**
+#### FE-037 · `role="img"` en mapas con marcadores focusables — Media · Error · **Resuelto (1.8)**
 
 **Ubicación:** `dashboard.html` (`#dashboardMap`) y los mapas de `routes.html`, `route-detail.html` y `truck-detail.html`.
 
@@ -736,7 +738,25 @@ nested-interactive: Interactive controls must not be nested
 
 **Impacto:** la corrección de FE-010 cambió `role="application"` por `role="img"`, pero Leaflet mantiene los marcadores como controles focusables dentro del contenedor. Un `role="img"` con descendientes interactivos es un error serio: el lector de pantalla trata el mapa como una imagen y oculta los botones, mientras el teclado sigue entrando en ellos. Afecta a cualquier página con marcadores.
 
-**Recomendación:** no usar `role="img"` cuando el mapa es interactivo. Mantener `aria-label` y `aria-describedby` con `role="region"` (o envolver el mapa en un `div role="region"`), o desactivar el foco de los marcadores si no aportan acción. Verificar con `tests/e2e/accessibility.spec.js`, que hoy falla en `dashboard` (light y dark) también con el build anterior a 2.5.
+**Recomendación:** no usar `role="img"` cuando el mapa es interactivo. Mantener `aria-label` y `aria-describedby` con `role="region"` (o envolver el mapa en un `div role="region"`), o desactivar el foco de los marcadores si no aportan acción. Verificar con `tests/e2e/accessibility.spec.js`, que falla en `dashboard` (light y dark) también con el build anterior a 2.5.
+
+**Corrección aplicada:** los 4 mapas usan `role="region"` con el mismo `aria-label` y `aria-describedby`; no se desactivó el teclado de Leaflet, así que los marcadores siguen siendo operables. Verificado con axe en las 4 páginas × 2 temas (abriendo una ruta existente en el editor): `nested-interactive` **2 → 0**, 274 marcadores focusables en dashboard, resumen anunciado («467 camiones · 274 con GPS», plural corregido) y 0 errores de consola. Suite de accesibilidad **16/16** y E2E **39/39**.
+
+---
+
+#### FE-038 · Tabla desplazable sin foco en el detalle de camión — Media · Error · **Pendiente**
+
+**Ubicación:** `truck-detail.html`, contenedor `.table-wrap` de lecturas.
+
+**Evidencia** (axe 4.14, regla `scrollable-region-focusable`, 1440 px):
+
+```
+.table-wrap   scrollWidth 680 / clientWidth 657, sin tabindex
+```
+
+**Impacto:** la tabla de lecturas desborda 23 px y se puede desplazar con ratón o trackpad, pero el contenedor no recibe foco, así que con teclado no se pueden ver las columnas ocultas (WCAG 2.1.1). En `trucks`, `drivers` y `alerts` no hay desbordamiento a 1440 px. Detectado al ampliar la verificación de FE-037; la suite actual no cubre `truck-detail` (FE-036).
+
+**Recomendación:** añadir `tabindex="0"` y `role="region"` con `aria-label` al contenedor desplazable, o eliminar el desbordamiento ajustando las columnas. Incluir la página en la suite de accesibilidad.
 
 ---
 

@@ -48,8 +48,8 @@ const truckForm = qs("#truckForm");
 const deviceForm = qs("#deviceForm");
 
 function updateFleetTotals() {
-  qs("#fleetTotals").textContent = `${state.total} camión${
-    state.total === 1 ? "" : "es"
+  qs("#fleetTotals").textContent = `${state.total} ${
+    state.total === 1 ? "camión" : "camiones"
   } · ${state.devicesTotal} dispositivo${state.devicesTotal === 1 ? "" : "s"}`;
 }
 

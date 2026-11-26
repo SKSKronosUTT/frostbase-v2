@@ -1,7 +1,7 @@
 # Plan de mejora frontend — FrostBase
 
 **Fecha:** 2026-11-25
-**Base:** `docs/auditoria-frontend.md` (37 hallazgos: 0 críticos · 5 altos · 22 medios · 10 bajos)
+**Base:** `docs/auditoria-frontend.md` (38 hallazgos: 0 críticos · 5 altos · 23 medios · 10 bajos)
 **Alcance:** `frontend/*.html`, `frontend/css/**`, `frontend/js/**` y `frontend/scripts/**`.
 
 Este plan solo contiene acciones derivadas de hallazgos verificados. No incluye rediseño visual: la estética actual se conserva.
@@ -32,6 +32,7 @@ Este plan solo contiene acciones derivadas de hallazgos verificados. No incluye 
 | 1.5 | Errores de formulario y toasts | FE-012, FE-013, FE-017 | M | Medio | 0.1 | ✅ |
 | 1.6 | Patrón de tabs accesible | FE-009 | M | Medio | — | ✅ |
 | 1.7 | Mapas sin `role="application"` | FE-010 | M | Medio | — | ✅ |
+| 1.8 | Rol de región en mapas interactivos | FE-037 | S | Medio | 1.7 | ✅ |
 | 2.1 | Fusionar la cascada «Consolidado» | FE-018, FE-034 | L | Alto | 0.4 | ✅ |
 | 2.2 | Tokens de tipografía y espaciado | FE-021, FE-022, FE-023 | L | Alto | 2.1 | ✅ |
 | 2.3 | Breakpoints unificados mobile-first | FE-020 | M | Medio | 2.1 | 🟡 parcial |
@@ -336,7 +337,7 @@ cd frontend && npx playwright test tests/e2e/accessibility.spec.js
 
 **Tareas realizadas**
 
-1. Los 4 mapas usan `role="img"` con `aria-label` descriptivo y `aria-describedby` hacia un resumen textual; se eliminó `role="application"`.
+1. Los 4 mapas usaron inicialmente `role="img"` con `aria-label` descriptivo y `aria-describedby` hacia un resumen textual; se eliminó `role="application"`. En 1.8 se sustituyó por `role="region"` al detectar `nested-interactive`.
 2. Se corrigió el label copiado de `route-detail.html` («Mapa de la ruta») y el de `truck-detail` («Mapa de ubicación del camión»).
 3. Resúmenes: `#mapSummary` visible en dashboard (ya existente), `#routeMapSummary`, `#routeDetailMapSummary` y `#truckMapSummary` (sr-only), actualizados por JS con el número de camiones/puntos o la ubicación y ruta del camión.
 4. El mapa sigue siendo enfocable y operable con Leaflet (flechas y `+`/`-`), pero ya no secuestra el modo aplicación.
@@ -351,6 +352,28 @@ cd frontend && npx playwright test tests/e2e/accessibility.spec.js
 **Verificación:** Chromium headless con API simulada en las 4 páginas; atributos estáticos y resúmenes dinámicos.
 
 **Resultado:** 0 `role="application"` en las 4 páginas; `aria-describedby` enlaza con un resumen existente; detalle de ruta «Mapa de la ruta con 2 puntos de entrega y geometría calculada», detalle de camión con placa/coordenadas/geometría y editor de rutas con «2 puntos de entrega». 0 errores de página. Build, `check:css`, `check:html`, ESLint y Prettier correctos.
+
+---
+
+## 1.8 · Rol de región en mapas interactivos — ✅ Aplicado
+
+**Hallazgos:** FE-037 (detectado al ejecutar la suite E2E en 2.5).
+
+**Tareas realizadas**
+
+1. Los 4 mapas pasan de `role="img"` a `role="region"` conservando `aria-label` y `aria-describedby`. Un `role="img"` con marcadores focusables (`tabindex="0"`, `role="button"`) es un `nested-interactive` grave: el lector trata el mapa como una imagen y oculta los controles mientras el teclado sigue entrando en ellos.
+2. No se desactiva el teclado de Leaflet: los marcadores siguen siendo operables y el resumen textual se mantiene como descripción del landmark.
+3. Se corrigió el plural del resumen de flota («camiónes» → «camiones») en `dashboard.js` y `trucks.js`.
+
+**Archivos:** `dashboard.html`, `routes.html`, `route-detail.html`, `truck-detail.html`, `js/pages/dashboard.js`, `js/pages/trucks.js`.
+**Esfuerzo:** S · **Impacto:** Medio · **Dependencias:** 1.7.
+**Riesgo:** bajo; no cambia el render ni la lógica del mapa.
+
+**Aceptación:** 0 violaciones `nested-interactive`; mapas con nombre accesible y resumen enlazado; suite a11y en verde.
+
+**Verificación:** axe 4.14 (`wcag2a`/`wcag2aa`) en las 4 páginas × 2 temas, abriendo una ruta existente en el editor; `npx playwright test` completo.
+
+**Resultado:** `nested-interactive` **2 → 0** (dashboard light/dark) y 0 en los otros 3 mapas; los 274 marcadores del dashboard siguen enfocables y el resumen se anuncia («467 camiones · 274 con GPS»). Suite de accesibilidad **16/16** y E2E **39/39**. Sin cambios visuales ni errores de consola. Al ampliar la verificación apareció FE-038 en `truck-detail` (tabla desplazable sin foco), pendiente y fuera de este cambio.
 
 ---
 
@@ -689,5 +712,6 @@ npx lighthouse http://localhost:8050/dashboard.html \
 | 2026-11-26 | 2.3 (parte 1) | 15 hojas CSS | 32 media queries remapeadas a 4 cortes (480/768/1024/1280); 70 combinaciones sin overflow; badge de alerta corregido |
 | 2026-11-26 | 2.6 | `css/fonts.css`, `tools/vendor_assets.py` | Rango `wght` 400–900 declarado; 800/900 reales; verificado con fontTools y `document.fonts` |
 | 2026-11-26 | 2.5 | 12 `.html`, `partials/{head,sidebar}.html`, `pages.config.json`, `scripts/build.mjs`, `js/components/sidebar.js` | `<head>` y sidebar únicos; 9/9 páginas con 7 enlaces sin JS; build 718,6 → 702,1 KB; E2E 37 pasan (2 fallos previos del mapa, FE-037) |
+| 2026-11-26 | 1.8 | 4 `.html` + `js/pages/{dashboard,trucks}.js` | Mapas con `role="region"`; `nested-interactive` 2 → 0; a11y 16/16 y E2E 39/39; plural «camiones» corregido; FE-038 registrado |
 
-**Próximo paso recomendado:** **FE-037 · `role="img"` en mapas con marcadores focusables** (S, deja la suite a11y en verde) y después **3.1 · Linters en CI** (M) para fijar los avances. La inversión mobile-first (2.3b) sigue pendiente como sesión dedicada.
+**Próximo paso recomendado:** **3.1 · Linters en CI** (M) para fijar los avances, o **FE-038 · tabla desplazable sin foco en `truck-detail`** (S). La inversión mobile-first (2.3b) sigue pendiente como sesión dedicada.
