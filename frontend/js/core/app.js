@@ -157,7 +157,6 @@ export async function initProtectedPage() {
   renderSidebar(admin);
   initTheme(admin.theme);
   setupConnectionBadge();
-  document.documentElement.classList.add("is-ready");
   if (admin.must_change_password) {
     openPasswordChangeModal({ mandatory: true });
   }

@@ -15,7 +15,7 @@ npm run build
 
 **Estado de git al iniciar:** rama `devolp`, con un archivo no rastreado (`plan_implementacion_modulo_conductores.md`, del equipo, excluido de esta auditoría). No se modificó ningún archivo durante la auditoría.
 
-> **Actualización posterior:** tras la auditoría se aplicaron los pasos **0.1, 0.2, 0.3, 0.4, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6 y 1.7**, y la **parte 1 de 2.1** del plan (`docs/plan-mejora.md`). Los hallazgos afectados aparecen marcados como **Resuelto**; 2.1 queda en progreso. El resto sigue pendiente.
+> **Actualización posterior:** tras la auditoría se aplicaron los pasos **0.1, 0.2, 0.3, 0.4, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7 y 2.4**, y la **parte 1 de 2.1** del plan (`docs/plan-mejora.md`). Los hallazgos afectados aparecen marcados como **Resuelto**; 2.1 queda en progreso. El resto sigue pendiente.
 
 ---
 
@@ -83,7 +83,7 @@ frontend/
 | Tamaños de `font-size` distintos en px | **30** |
 | Declaraciones `px` / `rem` | **1.047** / **22** |
 | Hex fuera de `tokens.css` | **91** (44 únicos) |
-| Clases CSS sin uso confirmado | **≈17** |
+| Clases CSS sin uso confirmado | **≈17 → 0** (2.4) |
 | Tokens definidos / sin uso | 73 / 3 (`--color-cream`, `--bg-soft`, `--shadow-lg`) |
 | CSS por página (crudo) | 51–63 KB + 4,1 KB FontAwesome |
 | Fuentes | Outfit 31,5 KB; FA solid 153,5 KB; FA regular 24,9 KB |
@@ -126,9 +126,9 @@ frontend/
 | FE-022 | CSS / Calidad | M | Sin tokens de espaciado; valores ad hoc | `tokens.css`; toda la CSS | Pendiente |
 | FE-023 | CSS / Calidad | M | 91 hex fuera de tokens | `components.css:92,101,120`; `trucks.css`; `login.css` | Pendiente |
 | FE-024 | UI/UX | M | `font-weight: 800/900` con fuente declarada 400–700 | `fonts.css:5`; `base.css:46`; `components.css:1667` | Pendiente |
-| FE-025 | CSS / Calidad | B | ≈17 clases/componentes muertos | `components.css:43-50,95-102`; `layout.css:263-267` | Pendiente |
-| FE-026 | CSS / Calidad | B | Selector imposible `.brand-name accent` | `layout.css:61-63` | Pendiente |
-| FE-027 | CSS / Calidad | B | Clase `is-ready` añadida sin CSS que la use | `app.js:160` | Pendiente |
+| FE-025 | CSS / Calidad | B | ≈17 clases/componentes muertos | `components.css:43-50,95-102`; `layout.css:263-267` | **Resuelto (2.4)** |
+| FE-026 | CSS / Calidad | B | Selector imposible `.brand-name accent` | `layout.css:61-63` | **Resuelto (2.4)** |
+| FE-027 | CSS / Calidad | B | Clase `is-ready` añadida sin CSS que la use | `app.js:160` | **Resuelto (2.4)** |
 | FE-028 | Rendimiento | M | 6 CSS render-blocking + fuente FA de 153 KB | `dashboard.html:11-18`; `assets/vendors/fontawesome/` | Pendiente |
 | FE-029 | Compatibilidad | M | `100vh` en 9 sitios (salto en Safari iOS) | `base.css:18`; `components.css:1277`; `layout.css:2`; `login.css:2`; `ai.css:6,235`; `driver.css:4`; `index.css:6` | Pendiente |
 | FE-030 | Rendimiento | B | `theme-boot.js` bloqueante en `<head>` siendo 11 líneas | `login.html:16` (y 11 páginas más) | Pendiente |
@@ -335,7 +335,7 @@ sidebar.innerHTML = `
 
 ---
 
-#### FE-025 · Clases y componentes muertos — Baja · Deuda técnica
+#### FE-025 · Clases y componentes muertos — Baja · Deuda técnica · **Resuelto (2.4)**
 
 **Ubicación:** `components.css:43-50` (`.card__footer`, `.card__section`), `components.css:95-102` (`.btn--secondary`), `components.css:123-130` (`.btn--danger-soft`), `layout.css:263-267` (`.two-column`), `base.css:119-133` (`.text-danger`/`.text-success`/`.text-warning`/`.mono`), `.fade-in`, `.spinner--light`, `.divider`, `.kpi-card--clickable`, `.info-tile`, `.toggle-switch`, `.map-supply`, `.detail-actions`, `.truck-status-select`.
 
@@ -343,9 +343,11 @@ sidebar.innerHTML = `
 
 **Recomendación:** eliminar en el paso 2.4 después de confirmar con una búsqueda global y una revisión visual.
 
+**Corrección aplicada:** búsqueda global en HTML/JS y eliminación de todas las clases confirmadas sin uso: `.text-success`, `.text-warning`, `.mono`, `.fade-in` (se conserva `@keyframes fadeIn`), `.spinner--light`, `.btn--secondary`, `.btn--danger-soft`, `.card__footer`, `.card__section`, `.two-column`, `.divider`, `.kpi-card--clickable`, `.info-grid`/`.info-tile*`, `.toggle-row*`/`.toggle-switch*`, `.map-supply`, `.input-group*`, `.cell-strong`, `.notice--danger`, `.filter-bar*`, `.detail-actions` y `.truck-status-select`. El CSS de producción baja de 756,1 a **722,3 KB**.
+
 ---
 
-#### FE-026 · Selector imposible `.brand-name accent` — Baja · Error
+#### FE-026 · Selector imposible `.brand-name accent` — Baja · Error · **Resuelto (2.4)**
 
 **Ubicación:** `frontend/css/layout.css:61-63`.
 
@@ -357,9 +359,11 @@ sidebar.innerHTML = `
 
 **Impacto:** `accent` no es un elemento HTML; el selector nunca coincide. Probablemente se pretendía `<span class="brand-name__accent">`. Es código muerto que sugiere una intención de diseño no implementada.
 
+**Corrección aplicada:** eliminado el selector de `layout.css`. No se implementó el acento del nombre porque el diseño actual no lo usa.
+
 ---
 
-#### FE-027 · Clase `is-ready` sin estilos — Baja · Deuda técnica
+#### FE-027 · Clase `is-ready` sin estilos — Baja · Deuda técnica · **Resuelto (2.4)**
 
 **Ubicación:** `frontend/js/core/app.js:160`.
 
@@ -372,6 +376,8 @@ document.documentElement.classList.add("is-ready");
 **Impacto:** se añade una clase que ninguna hoja usa. O bien falta el CSS que debía revelar la interfaz tras autenticar (riesgo de parpadeo), o es un resto. En el estado actual, la interfaz es visible antes de resolver la sesión.
 
 **Recomendación:** eliminar la clase o implementar el estado de carga asociado.
+
+**Corrección aplicada:** eliminada la línea `document.documentElement.classList.add("is-ready")` de `app.js`; ninguna hoja ni test la usaba.
 
 ---
 

@@ -92,10 +92,6 @@
   margin-top: 3px;
 }
 
-.truck-status-select {
-  min-width: 160px;
-}
-
 @media (max-width: 640px) {
   .fleet-tabs {
     padding: 14px;

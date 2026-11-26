@@ -58,10 +58,6 @@
   letter-spacing: -0.02em;
 }
 
-.brand-name accent {
-  color: var(--color-electric);
-}
-
 .sidebar__nav {
   display: flex;
   flex-direction: column;
@@ -254,12 +250,6 @@
   font-size: 12px;
 }
 
-.two-column {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: 20px;
-}
-
 @media (max-width: 1120px) {
   .main {
     padding: 24px 22px 36px;
@@ -325,10 +315,6 @@
   .main {
     padding-left: 14px;
     padding-right: 14px;
-  }
-
-  .two-column {
-    grid-template-columns: 1fr;
   }
 
   .header-actions,
