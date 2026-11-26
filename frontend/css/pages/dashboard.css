@@ -55,14 +55,15 @@
 .temp-card {
   flex: 0 0 188px;
   scroll-snap-align: start;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
   padding: 13px 14px;
-  background: var(--surface-soft);
   cursor: pointer;
   transition:
     border-color var(--transition),
     background var(--transition);
+  border: 2px solid var(--border-ink);
+  border-radius: 0;
+  background: var(--surface);
+  box-shadow: 3px 3px 0 var(--ink);
 }
 
 .temp-card__top {
@@ -117,14 +118,6 @@
 
 .map--dashboard {
   height: 430px;
-}
-
-/* ===== Consolidado desde bauhaus.css (T4.5) ===== */
-.temp-card {
-  border: 2px solid var(--border-ink);
-  border-radius: 0;
-  background: var(--surface);
-  box-shadow: 3px 3px 0 var(--ink);
 }
 
 .temp-card:hover {
