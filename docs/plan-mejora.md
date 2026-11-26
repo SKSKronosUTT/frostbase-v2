@@ -26,7 +26,7 @@ Este plan solo contiene acciones derivadas de hallazgos verificados. No incluye 
 | 0.3 | Drawer móvil accesible | FE-002 | M | Alto | — | ✅ |
 | 0.4 | Bug de cascada `.temp-card` | FE-019 | S | Medio | — | ✅ |
 | 1.1 | Semántica de tablas y landmarks | FE-006, FE-008, FE-011 | S | Medio | — | ✅ |
-| 1.2 | Encabezados, `<main>` y skip link | FE-007, FE-014 | S | Medio | — | ⬜ |
+| 1.2 | Encabezados, `<main>` y skip link | FE-007, FE-014 | S | Medio | — | ✅ |
 | 1.3 | Foco visible en el asistente | FE-015 | S | Medio | — | ⬜ |
 | 1.4 | `prefers-reduced-motion` | FE-016 | S | Medio | — | ⬜ |
 | 1.5 | Errores de formulario y toasts | FE-012, FE-013, FE-017 | M | Medio | 0.1 | ⬜ |
@@ -141,7 +141,7 @@ cd frontend && npx playwright test tests/e2e/accessibility.spec.js
 
 **Criterios de aceptación**
 
-- El toggle es el primer elemento tabulable.
+- El toggle es el primer control tabulable tras el skip link.
 - `aria-expanded` refleja el estado real.
 - Con el menú cerrado no se puede tabular a ningún enlace del sidebar.
 - El fondo no hace scroll con el menú abierto; `Escape` cierra y devuelve el foco.
@@ -205,45 +205,30 @@ cd frontend && npx playwright test tests/e2e/accessibility.spec.js
 
 ---
 
-## 1.2 · Encabezados, `<main>` y skip link — ⬜
+## 1.2 · Encabezados, `<main>` y skip link — ✅ Aplicado
 
 **Hallazgos:** FE-007, FE-014.
 
-**Tareas**
+**Tareas realizadas**
 
-1. Añadir un `h1` a `driver.html` (puede ser `.sr-only`: «Portal del conductor») y a `index.html` (`.sr-only`: «FrostBase»).
-2. Subir los `<h3>` de `settings.html` (líneas 38, 64, 90, 106) a `<h2>`.
-3. Envolver el contenido de `login.html` e `index.html` en `<main>`.
-4. Insertar en las 12 páginas un skip link como primer elemento del `<body>`:
+1. `h1` `.sr-only` en `driver.html` («Portal del conductor») e `index.html` («FrostBase»).
+2. Los cuatro `<h3>` de `settings.html` pasaron a `<h2>`; se actualizó `.settings-section__head h2` en `settings.css` (mantiene 14 px, sin cambio visual).
+3. `login.html`: el `.login-shell` es ahora `<main class="login-shell" id="main" tabindex="-1">`; `index.html`: `.splash` es ahora `<main class="splash" …>`. No hizo falta CSS nuevo y se conserva el centrado de ambos layouts.
+4. Skip link `<a class="skip-link" href="#main">` como primer elemento del `<body>` en las 12 páginas.
+5. `id="main" tabindex="-1"` en los `<main>` de las 12 páginas.
+6. Estilos `.skip-link` en `base.css`: `position: fixed`, oculto con `transform: translateY(-200%)` y visible en `:focus`, con borde y sombra del sistema.
+7. `sidebar.js` inserta el toggle del drawer **después del skip link** para conservar el orden de tabulación.
 
-```html
-<a class="skip-link" href="#main">Saltar al contenido</a>
-```
+**Archivos:** las 12 `.html`, `css/base.css`, `css/pages/settings.css`, `js/components/sidebar.js`.
 
-5. Añadir `id="main"` al `<main>` de cada página y estilos:
+**Esfuerzo:** S · **Impacto:** Medio · **Dependencias:** 0.3 (orden del drawer).
+**Riesgo de regresión visual:** bajo; el skip link solo aparece al enfocar y los nuevos `<main>` reutilizan las mismas clases.
 
-```css
-.skip-link {
-  position: absolute;
-  left: 8px;
-  top: -60px;
-  z-index: 2000;
-  padding: 10px 14px;
-  background: var(--surface);
-  border: 2px solid var(--border-ink);
-  color: var(--text);
-}
-.skip-link:focus { top: 8px; }
-```
+**Aceptación:** un solo `h1` por página y sin saltos de nivel; las 12 páginas tienen `<main id="main">`; el skip link es el primer tabulable, se ve al enfocarse y lleva el foco al contenido.
 
-**Archivos:** las 12 `.html` y `frontend/css/base.css` (o `components.css`).
+**Verificación:** Chromium headless a 1280×800 y 375×812 + `html-validate` + recorrido manual con Tab.
 
-**Esfuerzo:** S · **Impacto:** Medio · **Dependencias:** ninguna.
-**Riesgo de regresión visual:** bajo; el skip link solo aparece al enfocar. Verificar que no tapa el logo en login.
-
-**Aceptación:** un solo `h1` por página, sin saltos de nivel; todas las páginas tienen `<main>`; el skip link aparece con Tab y lleva el foco al contenido.
-
-**Verificación:** axe (`heading-order`, `landmark-one-main`, `region`) + recorrido manual con Tab.
+**Resultado:** 12/12 páginas con skip link y `main`; login e index centrados igual que antes (2 columnas en escritorio, 1 en móvil); el skip link recibe el foco y `Enter` lo mueve a `main`; el drawer sigue funcionando (abre, atrapa el foco, `Escape` cierra y devuelve el foco). `html-validate` se mantiene en 200 problemas (2 reales).
 
 ---
 
@@ -658,5 +643,6 @@ npx lighthouse http://localhost:8050/dashboard.html \
 | 2026-11-25 | 0.3 | `js/components/sidebar.js`, `css/layout.css` | Drawer accesible: `aria-expanded`, foco atrapado, `inert`, scroll bloqueado; 25/25 comprobaciones |
 | 2026-11-25 | 0.4 | `pages/dashboard.css` | Media query al final; 170 px y 340 px aplican en móvil |
 | 2026-11-25 | 1.1 | 9 `.html` (`ai`, `alerts`, `dashboard`, `drivers`, `route-detail`, `routes`, `settings`, `truck-detail`, `trucks`) | 33 `<th scope="col">`, sidebar a `<div>`, tarjetas de rutas a `<section>`, `role="group"` en IA; errores reales 42 → 2 |
+| 2026-11-25 | 1.2 | 12 `.html`, `css/base.css`, `css/pages/settings.css`, `js/components/sidebar.js` | Skip link + `<main id="main">` en 12/12, `h1` en driver/index, `h3 → h2` en settings; foco verificado en Chromium |
 
-**Próximo paso recomendado:** **1.2 · Encabezados, `<main>` y skip link**. Cierra el `h1` ausente en `driver.html`/`index.html`, el salto `h1 → h3` de `settings.html` y la falta de landmark principal y de skip link; esfuerzo S.
+**Próximo paso recomendado:** **1.3 · Foco visible en el asistente**. Restaura el `outline` en los inputs de `ai.html`, tiene esfuerzo S y no depende de otros pasos.

@@ -105,8 +105,10 @@ function setupMobileDrawer(sidebar) {
   toggle.setAttribute("aria-controls", "sidebar");
   toggle.setAttribute("aria-expanded", "false");
   toggle.innerHTML = '<i class="fa-solid fa-bars" aria-hidden="true"></i>';
-  // Primer elemento tabulable de la página: el foco no recorre el contenido antes.
-  document.body.prepend(toggle);
+  // Primer control tabulable después del skip link (si existe).
+  const skipLink = document.querySelector(".skip-link");
+  if (skipLink) skipLink.insertAdjacentElement("afterend", toggle);
+  else document.body.prepend(toggle);
 
   const overlay = document.createElement("div");
   overlay.className = "sidebar-overlay";
