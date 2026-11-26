@@ -33,6 +33,7 @@ Este plan solo contiene acciones derivadas de hallazgos verificados. No incluye 
 | 1.6 | Patrón de tabs accesible | FE-009 | M | Medio | — | ✅ |
 | 1.7 | Mapas sin `role="application"` | FE-010 | M | Medio | — | ✅ |
 | 1.8 | Rol de región en mapas interactivos | FE-037 | S | Medio | 1.7 | ✅ |
+| 1.9 | Tablas desplazables accesibles | FE-038 | S | Medio | 1.8 | ✅ |
 | 2.1 | Fusionar la cascada «Consolidado» | FE-018, FE-034 | L | Alto | 0.4 | ✅ |
 | 2.2 | Tokens de tipografía y espaciado | FE-021, FE-022, FE-023 | L | Alto | 2.1 | ✅ |
 | 2.3 | Breakpoints unificados mobile-first | FE-020 | M | Medio | 2.1 | 🟡 parcial |
@@ -373,7 +374,29 @@ cd frontend && npx playwright test tests/e2e/accessibility.spec.js
 
 **Verificación:** axe 4.14 (`wcag2a`/`wcag2aa`) en las 4 páginas × 2 temas, abriendo una ruta existente en el editor; `npx playwright test` completo.
 
-**Resultado:** `nested-interactive` **2 → 0** (dashboard light/dark) y 0 en los otros 3 mapas; los 274 marcadores del dashboard siguen enfocables y el resumen se anuncia («467 camiones · 274 con GPS»). Suite de accesibilidad **16/16** y E2E **39/39**. Sin cambios visuales ni errores de consola. Al ampliar la verificación apareció FE-038 en `truck-detail` (tabla desplazable sin foco), pendiente y fuera de este cambio.
+**Resultado:** `nested-interactive` **2 → 0** (dashboard light/dark) y 0 en los otros 3 mapas; los 274 marcadores del dashboard siguen enfocables y el resumen se anuncia («467 camiones · 274 con GPS»). Suite de accesibilidad **16/16** y E2E **39/39**. Sin cambios visuales ni errores de consola. Al ampliar la verificación apareció FE-038 en `truck-detail`, que se resolvió en 1.9.
+
+---
+
+## 1.9 · Tablas desplazables accesibles — ✅ Aplicado
+
+**Hallazgos:** FE-038.
+
+**Tareas realizadas**
+
+1. Los 5 contenedores `.table-wrap` (camiones, dispositivos, conductores, alertas e historial de lecturas) pasan a `role="region"` con `aria-label` propio y `tabindex="0"`. Si la tabla desborda, el contenedor recibe foco y las flechas la desplazan horizontalmente.
+2. En el detalle del camión se ajustó la tabla compacta a `min-width: 620px`: a 1440 px ya no desborda (657/657) y en móvil sigue desplazándose (620 vs 356).
+3. Se mantiene el scroll horizontal como comportamiento responsive; no se oculta ninguna columna ni se cambia el marcado de las tablas.
+
+**Archivos:** `alerts.html`, `drivers.html`, `trucks.html`, `truck-detail.html`, `css/components.css`.
+**Esfuerzo:** S · **Impacto:** Medio · **Dependencias:** 1.8.
+**Riesgo:** bajo; añade un tab stop por tabla y reduce 23 px el ancho mínimo de la tabla de lecturas.
+
+**Aceptación:** 0 `scrollable-region-focusable`; regiones con nombre; scroll por teclado operativo; suite en verde.
+
+**Verificación:** axe 4.14 en las 4 páginas × 2 anchos (1440/390) y las 2 pestañas de flota; foco + `ArrowRight` sobre `.table-wrap`; suite E2E completa.
+
+**Resultado:** `scrollable-region-focusable` **1 → 0** en `truck-detail` y 0 en el resto (a 390 px todas las tablas desbordan y quedan accesibles). A 1440 px la tabla de lecturas ya cabe entera; a 390 px las flechas desplazan 120 px y el foco se anuncia como «Historial de lecturas». E2E **39/39**, 0 errores de consola. Build 702,1 → 702,5 KB.
 
 ---
 
@@ -713,5 +736,6 @@ npx lighthouse http://localhost:8050/dashboard.html \
 | 2026-11-26 | 2.6 | `css/fonts.css`, `tools/vendor_assets.py` | Rango `wght` 400–900 declarado; 800/900 reales; verificado con fontTools y `document.fonts` |
 | 2026-11-26 | 2.5 | 12 `.html`, `partials/{head,sidebar}.html`, `pages.config.json`, `scripts/build.mjs`, `js/components/sidebar.js` | `<head>` y sidebar únicos; 9/9 páginas con 7 enlaces sin JS; build 718,6 → 702,1 KB; E2E 37 pasan (2 fallos previos del mapa, FE-037) |
 | 2026-11-26 | 1.8 | 4 `.html` + `js/pages/{dashboard,trucks}.js` | Mapas con `role="region"`; `nested-interactive` 2 → 0; a11y 16/16 y E2E 39/39; plural «camiones» corregido; FE-038 registrado |
+| 2026-11-26 | 1.9 | 4 `.html` + `css/components.css` | 5 tablas con `role="region"`, nombre y `tabindex`; `scrollable-region-focusable` 1 → 0; tabla compacta 620 px; E2E 39/39 |
 
-**Próximo paso recomendado:** **3.1 · Linters en CI** (M) para fijar los avances, o **FE-038 · tabla desplazable sin foco en `truck-detail`** (S). La inversión mobile-first (2.3b) sigue pendiente como sesión dedicada.
+**Próximo paso recomendado:** **3.1 · Linters en CI** (M) para fijar los avances. La inversión mobile-first (2.3b) sigue pendiente como sesión dedicada.
