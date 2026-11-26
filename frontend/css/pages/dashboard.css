@@ -14,24 +14,24 @@
 }
 
 .map-card .card__body {
-  padding-top: 14px;
+  padding-top: var(--space-7);
 }
 
 .carousel-card .card__body {
-  padding-top: 12px;
+  padding-top: var(--space-6);
 }
 
 .status-card .card__body {
-  padding-top: 14px;
+  padding-top: var(--space-7);
 }
 
 .weather-card .card__body {
-  padding-top: 14px;
+  padding-top: var(--space-7);
 }
 
 .status-card .status-panel__counts {
   border-top: 1px solid var(--border);
-  margin-top: 14px;
+  margin-top: var(--space-7);
 }
 
 @media (max-width: 1180px) {
@@ -55,7 +55,7 @@
 .temp-card {
   flex: 0 0 188px;
   scroll-snap-align: start;
-  padding: 13px 14px;
+  padding: 13px var(--space-7);
   cursor: pointer;
   transition:
     border-color var(--transition),
@@ -70,35 +70,35 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap: var(--space-4);
 }
 
 .temp-card__plate {
   font-weight: 600;
-  font-size: 13px;
+  font-size: var(--text-md);
 }
 
 .temp-card__status {
-  font-size: 10px;
-  padding: 2px 7px;
+  font-size: var(--text-xs);
+  padding: var(--space-1) 7px;
 }
 
 .temp-card__value {
   display: flex;
   align-items: baseline;
   gap: 5px;
-  margin: 8px 0 4px;
+  margin: var(--space-4) 0 var(--space-2);
 }
 
 .temp-card__value strong {
-  font-size: 21px;
+  font-size: var(--text-xl);
   font-weight: 700;
   letter-spacing: -0.02em;
   font-variant-numeric: tabular-nums;
 }
 
 .temp-card__unit {
-  font-size: 11px;
+  font-size: var(--text-xs);
   color: var(--text-muted);
 }
 
@@ -106,13 +106,13 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 6px;
-  font-size: 11.5px;
+  gap: var(--space-3);
+  font-size: var(--text-sm);
   color: var(--text-muted);
 }
 
 .temp-card__meta i {
-  font-size: 10px;
+  font-size: var(--text-xs);
   margin-right: 3px;
 }
 

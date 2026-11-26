@@ -9,7 +9,7 @@
 .fleet-table .plate {
   font-weight: 600;
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: 12.5px;
+  font-size: var(--text-md);
   letter-spacing: 0.01em;
 }
 
@@ -20,21 +20,21 @@
 }
 
 .fleet-table .vehicle strong {
-  font-size: 12.8px;
+  font-size: var(--text-md);
 }
 
 .fleet-table .vehicle span {
-  font-size: 11.5px;
+  font-size: var(--text-sm);
   color: var(--text-muted);
 }
 
 .fleet-table .last-comms {
-  font-size: 11.8px;
+  font-size: var(--text-sm);
   color: var(--text-muted);
 }
 
 .fleet-table .last-comms.is-online {
-  color: #0a6f60;
+  color: var(--success-text);
 }
 
 [data-theme="dark"] .fleet-table .last-comms.is-online {
@@ -44,7 +44,7 @@
 .fleet-table .route-name {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--space-3);
   max-width: 190px;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -53,15 +53,15 @@
 
 .fleet-table .route-name i {
   color: var(--text-soft);
-  font-size: 10px;
+  font-size: var(--text-xs);
 }
 
 .fleet-tabs {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 14px;
-  padding: 16px 20px;
+  gap: var(--space-7);
+  padding: var(--space-8) var(--space-9);
   border-bottom: 1px solid var(--border);
   flex-wrap: wrap;
 }
@@ -74,27 +74,27 @@
 
 .device-identifier {
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: 12px;
+  font-size: var(--text-sm);
   font-weight: 600;
 }
 
 .device-key-warning {
-  margin-top: 14px;
+  margin-top: var(--space-7);
 }
 
 .truck-form .form-grid {
-  margin-bottom: 2px;
+  margin-bottom: var(--space-1);
 }
 
 .modal-subtitle {
-  font-size: 12px;
+  font-size: var(--text-sm);
   color: var(--text-muted);
   margin-top: 3px;
 }
 
 @media (max-width: 640px) {
   .fleet-tabs {
-    padding: 14px;
+    padding: var(--space-7);
   }
 
   .fleet-tabs__right {
