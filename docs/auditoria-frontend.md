@@ -15,7 +15,7 @@ npm run build
 
 **Estado de git al iniciar:** rama `devolp`, con un archivo no rastreado (`plan_implementacion_modulo_conductores.md`, del equipo, excluido de esta auditoría). No se modificó ningún archivo durante la auditoría.
 
-> **Actualización posterior:** tras la auditoría se aplicaron los pasos **0.1, 0.2, 0.3, 0.4, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2.1, 2.2, 2.3, 2.4, 2.5, 2.6 y 3.1** del plan (`docs/plan-mejora.md`); 2.3 queda parcial (cortes unificados, falta la inversión mobile-first). Los hallazgos afectados aparecen marcados como **Resuelto**; el resto sigue pendiente.
+> **Actualización posterior:** tras la auditoría se aplicaron los pasos **0.1, 0.2, 0.3, 0.4, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 3.1 y 3.4** del plan (`docs/plan-mejora.md`); 2.3 queda parcial (cortes unificados, falta la inversión mobile-first). Los hallazgos afectados aparecen marcados como **Resuelto**; el resto sigue pendiente.
 
 ---
 
@@ -23,9 +23,9 @@ npm run build
 
 Proyecto con una base mejor que la media: sistema de tokens real con tema claro/oscuro, build con assets hasheados y caché inmutable, CSP y cabeceras de seguridad en servidor, cero estilos en línea, solo 3 `!important`, imágenes con dimensiones reservadas y una suite de accesibilidad con axe ya escrita. El diseño es coherente y el uso de Grid/Flexbox es correcto.
 
-Los riesgos iniciales se han ido cerrando: la Fase 1 resolvió las barreras de accesibilidad, 2.1 unificó la cascada (**0 selectores duplicados**, frente a 130) y 2.2 consolidó tipografía, espaciado y color en tokens (**8 tamaños**, **0 hex sueltos**). Los breakpoints ya son **4** (aún `max-width`; la inversión mobile-first queda como 2.3b), 2.5 dejó un único `<head>` y la navegación en el HTML, y 3.1 incorporó Stylelint y html-validate a CI y pre-commit. Quedan el rendimiento de carga, la guía de estilos y ampliar la suite a11y (FE-036).
+Los riesgos iniciales se han ido cerrando: la Fase 1 resolvió las barreras de accesibilidad, 2.1 unificó la cascada (**0 selectores duplicados**, frente a 130) y 2.2 consolidó tipografía, espaciado y color en tokens (**8 tamaños**, **0 hex sueltos**). Los breakpoints ya son **4** (aún `max-width`; la inversión mobile-first queda como 2.3b), 2.5 dejó un único `<head>` y la navegación en el HTML, 3.1 incorporó Stylelint y html-validate a CI y pre-commit, y 3.4 amplió la suite a las 12 páginas con umbral `moderate`. Quedan el rendimiento de carga y la guía de estilos.
 
-**Nota global: 6/10** en el momento de la auditoría; **6,5/10** tras 0.1, 0.2 y 0.4, **7/10** tras 0.3, **7,5/10** tras 1.1, **8/10** tras 1.2, **8,5/10** tras 1.5, 1.6 y 1.7, y **9/10** tras 2.1, 2.2 y 2.5. La accesibilidad, la cascada, los tokens y la navegación estática están resueltos; quedan breakpoints, rendimiento, metadatos y el ajuste de los mapas.
+**Nota global: 6/10** en el momento de la auditoría; **6,5/10** tras 0.1, 0.2 y 0.4, **7/10** tras 0.3, **7,5/10** tras 1.1, **8/10** tras 1.2, **8,5/10** tras 1.5, 1.6 y 1.7, **9/10** tras 2.1, 2.2 y 2.5, y **9,5/10** tras 3.1 y 3.4. La accesibilidad, la cascada, los tokens, la navegación estática y la validación automatizada están resueltos; quedan breakpoints, rendimiento y metadatos.
 
 ---
 
@@ -81,6 +81,8 @@ frontend/
 | Mapas con `role="img"` | **4 → 0** (1.8) |
 | Tablas desplazables sin foco | **1 → 0** (1.9) |
 | Linters en CI | ESLint, Prettier, Stylelint y html-validate (3.1) |
+| Cobertura a11y | **12/12 páginas × 2 temas**, `moderate+` (3.4) |
+| Pruebas E2E | **53** (30 de accesibilidad, 3.4) |
 | Selectores repetidos en el mismo archivo (conteo propio) | **209** |
 | Errores reales de `html-validate` | **44** (2 tras 1.1) |
 | Avisos de estilo `html-validate` (`void-style`, `doctype-style`) | 198 |
@@ -144,7 +146,7 @@ frontend/
 | FE-033 | Mantenibilidad | M | Bloque `<head>` duplicado literalmente en 12 páginas | todas las `.html` | **Resuelto (2.5)** |
 | FE-034 | Mantenibilidad | B | `check:css` no detecta duplicados intra-archivo; sin stylelint | `scripts/check-css.mjs:44`; `package.json:6-10` | **Resuelto (3.1)** |
 | FE-035 | Mantenibilidad | B | `escapeHtml` duplicado en `modal.js` | `modal.js:119-127` vs `helpers.js` | Pendiente |
-| FE-036 | Testing | B | Suite a11y solo falla con `serious/critical` y omite `driver/index` | `tests/e2e/accessibility.spec.js:16-19,4-12` | Pendiente |
+| FE-036 | Testing | B | Suite a11y solo falla con `serious/critical` y omite `driver/index` | `tests/e2e/accessibility.spec.js:16-19,4-12` | **Resuelto (3.4)** |
 | FE-037 | Accesibilidad | M | `role="img"` en mapas con marcadores focusables (`nested-interactive`) | `dashboard.html`, `routes.html`, `route-detail.html`, `truck-detail.html` | **Resuelto (1.8)** |
 | FE-038 | Accesibilidad | M | Tabla desplazable sin foco en el detalle de camión | `truck-detail.html` (`.table-wrap`) | **Resuelto (1.9)** |
 
@@ -929,7 +931,7 @@ const duplicates = [...owners.entries()].filter(([, list]) => list.length > 1);
 
 ---
 
-#### FE-036 · Cobertura y umbral de la suite a11y — Baja · Riesgo
+#### FE-036 · Cobertura y umbral de la suite a11y — Baja · Riesgo · **Resuelto (3.4)**
 
 **Ubicación:** `tests/e2e/accessibility.spec.js:4-12,16-19`.
 
@@ -944,6 +946,8 @@ const PAGES = ["dashboard.html","trucks.html","drivers.html","routes.html","aler
 **Impacto:** no se prueban `login`, `driver`, `index`, `truck-detail` ni `route-detail`, y los impactos `moderate` (p. ej. `region`, `heading-order`) no hacen fallar el test. Con FE-004 sin corregir, es probable que la suite estuviera en rojo (regla `label`, impacto *critical*); **no verificado** por requerir el stack levantado.
 
 **Recomendación:** cubrir las 12 páginas y ambos temas, y bajar el umbral a `moderate`.
+
+**Corrección aplicada:** la suite audita las 12 páginas en ambos temas (26 análisis axe) con umbral `moderate` o superior, más 4 pruebas de foco y teclado (skip link, drawer, pestañas y errores de login). Las páginas de detalle obtienen su id de la API; `index` se audita bloqueando solo su módulo para que no redirija y `login` sin sesión. Estabilizada con `prefers-reduced-motion`, `document.fonts.ready` y espera de red. Resultado: **30/30** en dos pasadas y **53/53** en la suite completa, sin violaciones nuevas.
 
 ---
 

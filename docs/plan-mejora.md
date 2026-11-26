@@ -43,7 +43,7 @@ Este plan solo contiene acciones derivadas de hallazgos verificados. No incluye 
 | 3.1 | Linters y validación en CI | FE-034 | M | Alto | 2.1 | ✅ |
 | 3.2 | Rendimiento de carga | FE-028, FE-030, FE-031, FE-032 | M | Medio | 2.5 | ⬜ |
 | 3.3 | `100dvh` y Safari | FE-029 | S | Bajo | — | ⬜ |
-| 3.4 | Ampliar suite a11y | FE-036 | M | Medio | 1.x | ⬜ |
+| 3.4 | Ampliar suite a11y | FE-036 | M | Medio | 1.x | ✅ |
 | 3.5 | Guía de estilos y README frontend | — | M | Medio | 2.x | ⬜ |
 | 4.1 | Container queries y detalles UI | — | M | Bajo | 2.3 | ⬜ |
 | 4.2 | Tema automático del sistema | — | S | Bajo | 0.2 | ⬜ |
@@ -613,19 +613,28 @@ La verificación A/B de estilos computados se ejecutó en la app real (login, da
 
 ---
 
-## 3.4 · Ampliar la suite de accesibilidad — ⬜
+## 3.4 · Ampliar la suite de accesibilidad — ✅ Aplicado
 
 **Hallazgos:** FE-036.
 
-**Tareas:** incluir las 12 páginas y ambos temas; bajar el umbral a `moderate`; añadir comprobaciones específicas de foco (skip link, drawer, tabs) y de errores de formulario.
+**Tareas realizadas**
 
-**Archivos:** `frontend/tests/e2e/accessibility.spec.js`.
+1. axe sobre **todas las páginas** y ambos temas: dashboard, flota (camiones y dispositivos), conductores, rutas (con el editor abierto), detalle de ruta, detalle de camión, alertas, configuración, asistente, portal del conductor, login e index. Las páginas de detalle obtienen el id de la API y se omiten solo si no hay datos.
+2. Umbral bajado a **moderate** o superior (antes solo `serious`/`critical`).
+3. `index.html` se audita bloqueando únicamente su módulo (`index.js`) para que no redirija; el resto de la página y el tema siguen funcionando.
+4. Pruebas de foco: skip link → `#main`; drawer móvil (`aria-expanded`, `inert`, foco al enlace activo, Escape y retorno del foco); pestañas de flota (flechas, Home/End, `aria-selected` y panel visible); errores de login (`aria-invalid`, `aria-describedby`, `role="alert"`, foco y limpieza al corregir).
+5. Estabilización: `prefers-reduced-motion`, espera de `document.fonts.ready` y de la red. Sin esto, el contraste podía fallar de forma intermitente durante la animación de entrada.
+6. Prettier revisa también `tests/` en `npm run lint` y en CI.
+
+**Archivos:** `frontend/tests/e2e/accessibility.spec.js`, `frontend/package.json`, `.github/workflows/ci.yml`.
 **Esfuerzo:** M · **Impacto:** Medio · **Dependencias:** 1.x.
-**Riesgo:** bajo; puede revelar violaciones nuevas (esperado).
+**Riesgo:** bajo; podía revelar violaciones nuevas. No apareció ninguna: el trabajo de la Fase 1 dejó las páginas limpias.
 
-**Aceptación:** la suite cubre todas las páginas y falla con violaciones `moderate` o superiores.
+**Aceptación:** la suite cubre todas las páginas y falla con violaciones `moderate` o superiores ✅.
 
-**Verificación:** `npx playwright test tests/e2e/accessibility.spec.js`.
+**Verificación:** `npx playwright test tests/e2e/accessibility.spec.js` dos veces seguidas (30/30) y suite completa (53/53).
+
+**Resultado:** **30 pruebas** (26 de axe + 4 de foco), **12 páginas × 2 temas**, 0 violaciones `moderate` o superiores. Las pruebas de skip link, drawer, pestañas y errores de formulario pasan. La suite completa sube de 39 a **53 pruebas** (~1,9 min). No hizo falta tocar CSS ni HTML.
 
 ---
 
@@ -742,5 +751,6 @@ npx lighthouse http://localhost:8050/dashboard.html \
 | 2026-11-26 | 1.8 | 4 `.html` + `js/pages/{dashboard,trucks}.js` | Mapas con `role="region"`; `nested-interactive` 2 → 0; a11y 16/16 y E2E 39/39; plural «camiones» corregido; FE-038 registrado |
 | 2026-11-26 | 1.9 | 4 `.html` + `css/components.css` | 5 tablas con `role="region"`, nombre y `tabindex`; `scrollable-region-focusable` 1 → 0; tabla compacta 620 px; E2E 39/39 |
 | 2026-11-26 | 3.1 | `package.json`, `.stylelintrc.json`, `.htmlvalidate.json`, CI, pre-commit, `build.mjs` | Stylelint + html-validate en CI y pre-commit; `npm run verify`; fixtures de duplicado y `<th>` sin `scope` fallan; build inmune a CRLF |
+| 2026-11-26 | 3.4 | `tests/e2e/accessibility.spec.js`, `package.json`, CI | 30 pruebas (12 páginas × 2 temas, `moderate+`) y 4 de foco; E2E 39 → **53**; 30/30 estable en dos pasadas |
 
-**Próximo paso recomendado:** **3.4 · Ampliar suite a11y** (M, cierra FE-036) o **3.2 · Rendimiento de carga** (M). La inversión mobile-first (2.3b) sigue pendiente como sesión dedicada.
+**Próximo paso recomendado:** **3.2 · Rendimiento de carga** (M) o **3.5 · Guía de estilos y README frontend** (M). La inversión mobile-first (2.3b) sigue pendiente como sesión dedicada.
