@@ -8,6 +8,7 @@ const PAGES = [
   "routes.html",
   "alerts.html",
   "settings.html",
+  "ai.html",
 ];
 
 const THEMES = ["light", "dark"];

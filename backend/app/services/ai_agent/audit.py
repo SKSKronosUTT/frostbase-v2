@@ -51,41 +51,58 @@ def record_event(
 
 
 def metrics(db: Session, *, days: int = 7) -> dict:
+    """Agrega en PostgreSQL para no cargar toda la auditoría en memoria."""
     since = utcnow() - timedelta(days=days)
-    rows = list(
-        db.scalars(
-            select(AiAudit)
-            .where(AiAudit.created_at >= since)
-            .order_by(AiAudit.created_at)
+    grouped = db.execute(
+        select(
+            AiAudit.action,
+            AiAudit.status,
+            AiAudit.http_status,
+            func.count(AiAudit.id),
         )
-    )
-    latencies = sorted(row.latency_ms for row in rows if row.latency_ms is not None)
+        .where(AiAudit.created_at >= since)
+        .group_by(AiAudit.action, AiAudit.status, AiAudit.http_status)
+    ).all()
+
+    requests = 0
+    errors = 0
     by_action: dict[str, int] = {}
     errors_by_status: dict[str, int] = {}
-    for row in rows:
-        by_action[row.action] = by_action.get(row.action, 0) + 1
-        if row.status != "ok":
-            key = str(row.http_status or "error")
-            errors_by_status[key] = errors_by_status.get(key, 0) + 1
+    for action, status, http_status, count in grouped:
+        requests += count
+        by_action[action] = by_action.get(action, 0) + count
+        if status != "ok":
+            errors += count
+            key = str(http_status or "error")
+            errors_by_status[key] = errors_by_status.get(key, 0) + count
 
-    def percentile(values: list[int], fraction: float) -> int | None:
-        if not values:
-            return None
-        index = min(len(values) - 1, int(round(fraction * (len(values) - 1))))
-        return values[index]
+    latency = db.execute(
+        select(
+            func.count(AiAudit.latency_ms),
+            func.avg(AiAudit.latency_ms),
+            func.percentile_cont(0.50).within_group(AiAudit.latency_ms.asc()),
+            func.percentile_cont(0.95).within_group(AiAudit.latency_ms.asc()),
+        ).where(
+            AiAudit.created_at >= since,
+            AiAudit.latency_ms.is_not(None),
+        )
+    ).one()
+
+    def _rounded(value) -> int | None:
+        return int(round(float(value))) if value is not None else None
 
     return {
         "days": days,
         "generated_at": utcnow(),
-        "requests": len(rows),
-        "errors": sum(1 for row in rows if row.status != "ok"),
+        "requests": requests,
+        "errors": errors,
         "by_action": by_action,
         "errors_by_http_status": errors_by_status,
         "latency_avg_ms": (
-            round(sum(latencies) / len(latencies), 1) if latencies else None
+            round(float(latency[1]), 1) if latency[1] is not None else None
         ),
-        "latency_p50_ms": percentile(latencies, 0.50),
-        "latency_p95_ms": percentile(latencies, 0.95),
+        "latency_p50_ms": _rounded(latency[2]),
+        "latency_p95_ms": _rounded(latency[3]),
     }
 
 

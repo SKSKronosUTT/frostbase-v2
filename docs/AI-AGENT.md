@@ -1,7 +1,12 @@
 # Asistente IA (ESP-Claw / ESP32-S3) — documentación base
 
-> **Estado:** borrador de la Fase **A0 (descubrimiento)**. Las secciones marcadas
-> `[PENDIENTE A0]` se completan con la evidencia del sondeo real.
+> **Estado:** **MVP cerrado** (2026-11-25), sin streaming token a token.
+> El WebSocket del ESP32 solo notifica cambios; B6.2 queda para una versión
+> posterior.
+>
+> Cierre y alcance: [`ai/MVP-CIERRE.md`](ai/MVP-CIERRE.md) ·
+> checklist: [`ai/CHECKLIST-MVP.md`](ai/CHECKLIST-MVP.md) ·
+> release: [`ai/RELEASE-NOTES-MVP.md`](ai/RELEASE-NOTES-MVP.md).
 >
 > Plan de trabajo: `C:\Users\dell\.opencode\plan\PLAN-ASISTENTE-IA.md`
 > (decisiones: AP `192.168.4.1`, lock/cuota en PostgreSQL, alias de conductores).
@@ -502,13 +507,33 @@ Header obligatorio: Authorization: Bearer <AI_AGENT_READ_TOKEN>
 - El temporizador se limpia al terminar o cancelar; el indicador no se anuncia
   cada segundo a lectores de pantalla (`aria-live="off"`).
 
+**B7 · Pruebas de carga y seguridad del asistente (2026-11-25)**
+
+- `scripts/loadtest_ai.py` (`.\tasks.ps1 ai-loadtest`) lanza N consultas
+  simultáneas contra `/ai/chat` y comprueba el lock: **1×200 y (N−1)×429**.
+  Imprime estados, p50/p95 y el delta de cuota; consume una consulta diaria.
+- `/ai/metrics` ahora agrega en PostgreSQL (`count`, `avg`,
+  `percentile_cont`) en lugar de cargar toda la auditoría en memoria. Una
+  prueba con 100 filas valida p50/p95, errores por estado y por acción.
+- La página `ai.html` entra en la batería axe (temas claro/oscuro) y se añadió
+  una prueba E2E de XSS: una respuesta con `<img onerror>` se muestra como
+  texto y no se ejecuta.
+- Siguen cubiertos por pruebas existentes: timeout, ESP32 caído, sesión
+  borrada, rotación por `boot_id`, cuota, lock, token RO sin escritura y
+  saneado de motivos de fallo.
+
 ## 12. Siguientes pasos
 
 1. ~~Sondeo, contrato, backend, UI, pull y respuestas rápidas~~ ✅.
-2. Pegar el prompt generado (`scripts.agent_prompt`) en el ESP-Claw con el token
-   rotado y validar el pull desde el agente.
-3. Definir el modelo/proveedor de respaldo en el dispositivo (ver runbook).
-4. Opcional: streaming por WebSocket si se descubre el mensaje de suscripción.
+2. ~~Prompt/skill, rotación de token, seguridad, historial, quick answers,
+   espera y pruebas~~ ✅.
+3. **MVP cerrado**: entregar con el checklist
+   [`ai/CHECKLIST-MVP.md`](ai/CHECKLIST-MVP.md) y las notas
+   [`ai/RELEASE-NOTES-MVP.md`](ai/RELEASE-NOTES-MVP.md).
+4. **B6.2 diferida**: streaming real cuando el firmware exponga texto parcial o
+   progreso utilizable. No implementar sin una fase de descubrimiento.
+5. **Backlog**: MCP estable, cancelación real del run y pruebas de 100k
+   auditorías.
 
 ## 13. Referencias
 

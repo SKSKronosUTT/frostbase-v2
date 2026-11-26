@@ -283,6 +283,12 @@ Las consultas libres pasan por el modelo externo configurado en el ESP32
 para que el agente consulte datos frescos). El uso se audita sin guardar el
 texto del chat y se resume en `GET /api/v1/ai/metrics`.
 
+> **MVP cerrado sin streaming.** La UI muestra tiempo, fase y cancelación
+> local; el WebSocket del ESP32 no emite deltas de texto. Alcance, checklist y
+> notas: [`docs/ai/MVP-CIERRE.md`](docs/ai/MVP-CIERRE.md),
+> [`docs/ai/CHECKLIST-MVP.md`](docs/ai/CHECKLIST-MVP.md) y
+> [`docs/ai/RELEASE-NOTES-MVP.md`](docs/ai/RELEASE-NOTES-MVP.md).
+
 ---
 
 ## Usar el simulador IoT (opcional)
@@ -390,7 +396,7 @@ pytest -q
 pytest --cov=app --cov-report=term-missing
 ```
 
-Resultado esperado: **224 passed** y cobertura **≥ 70 %** (actual: 85 %). Para limpiar la base de pruebas:
+Resultado esperado: **225 passed** y cobertura **≥ 70 %** (actual: 85 %). Para limpiar la base de pruebas:
 
 ```bash
 docker compose -f compose.test.yml down
@@ -571,7 +577,7 @@ El volumen de PostgreSQL conserva la contraseña con la que se creó. Si actuali
 | `iot-simulator/` | Simulador del dispositivo ESP32-S3. |
 | `esp-claw/skills/frostbase/` | Skill Lua de solo lectura para sacar el token del prompt (B5 fase 2). |
 | `deploy/nginx.conf` | Proxy inverso de referencia con TLS, gzip y rate limit. |
-| `tasks.ps1` / `Makefile` | Tareas `dev`, `test`, `lint`, `build`, `seed`, `e2e`, `ai-prompt`, `ai-skill`, `net-check` y `clean-alerts`. |
+| `tasks.ps1` / `Makefile` | Tareas `dev`, `test`, `lint`, `build`, `seed`, `e2e`, `ai-prompt`, `ai-skill`, `ai-loadtest`, `net-check` y `clean-alerts`. |
 | `docs/` | Instalación, API, base de datos, integración IoT, runbook y respaldos. |
 | `PLAN-MEJORA.md` | Auditoría técnica y plan de mejora por fases. |
 
@@ -597,6 +603,7 @@ Navegador  →  FastAPI (backend)  →  PostgreSQL
 .\tasks.ps1 ai-prompt   # prompt del agente (contiene el token)
 .\tasks.ps1 ai-prompt -Skill   # prompt sin token (skill Lua)
 .\tasks.ps1 ai-skill    # genera dist/frostbase-skill.zip (contiene token)
+.\tasks.ps1 ai-loadtest # concurrencia/lock del asistente (consume 1 cuota)
 .\tasks.ps1 net-check   # diagnóstico de red tras mudanza + prompt
 .\tasks.ps1 clean-alerts   # simula/apply limpieza de alertas LOAD-/E2E-
 ```

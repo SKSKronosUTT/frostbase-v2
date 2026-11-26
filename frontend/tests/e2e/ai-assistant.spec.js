@@ -415,3 +415,15 @@ test("espera: cancelar pide confirmación y avisa del consumo", async ({ page })
   await expect(page.locator("#aiTyping")).toBeHidden();
   await expect(page.locator("#aiSend")).toBeEnabled();
 });
+
+test("seguridad: una respuesta HTML se muestra como texto", async ({ page }) => {
+  const payload = '<img src=x onerror="window.__xss=1">';
+  await mockAgent(page, { chat: { reply: payload } });
+  await page.goto("/ai.html");
+
+  await page.locator("#aiMessage").fill("Prueba XSS");
+  await page.locator("#aiSend").click();
+
+  await expect(page.getByText(payload)).toBeVisible();
+  expect(await page.evaluate(() => window.__xss)).toBeUndefined();
+});

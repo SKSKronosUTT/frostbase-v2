@@ -473,6 +473,33 @@ def test_quick_and_metrics_are_audited(client, login, csrf_headers, ai_settings)
         assert db.query(AiAudit).count() == 2
 
 
+def test_metrics_aggregates_latency_percentiles(client, login, ai_settings):
+    assert login().status_code == 200
+    with SessionLocal() as db:
+        for index in range(1, 101):
+            db.add(
+                AiAudit(
+                    action="chat",
+                    status="ok" if index <= 90 else "error",
+                    http_status=200 if index <= 90 else 500,
+                    latency_ms=index,
+                    created_at=utcnow(),
+                )
+            )
+        db.commit()
+
+    response = client.get("/api/v1/ai/metrics", params={"days": 1})
+    assert response.status_code == 200
+    body = response.json()
+    assert body["requests"] == 100
+    assert body["errors"] == 10
+    assert body["by_action"] == {"chat": 100}
+    assert body["errors_by_http_status"] == {"500": 10}
+    assert body["latency_avg_ms"] == 50.5
+    assert body["latency_p50_ms"] == 50
+    assert body["latency_p95_ms"] == 95
+
+
 def test_metrics_requires_admin(client, create_driver, csrf_headers):
     _, email, password = create_driver(email="metrics.driver@frostbase.local")
     assert (
