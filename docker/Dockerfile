@@ -32,7 +32,9 @@ WORKDIR /app/backend
 COPY --from=builder /install /usr/local
 COPY --chown=app:app backend/ /app/backend/
 COPY --from=frontend-builder --chown=app:app /app/frontend/build/ /app/frontend/build/
-COPY --chown=app:app frontend/assets/logo.png /app/frontend/assets/logo.png
+COPY --chown=app:app frontend/assets/logo-160.png /app/frontend/assets/logo-160.png
+COPY --chown=app:app frontend/assets/favicon-32.png /app/frontend/assets/favicon-32.png
+COPY --chown=app:app frontend/assets/apple-touch-icon.png /app/frontend/assets/apple-touch-icon.png
 COPY --chown=app:app docker/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN sed -i 's/\r$//' /usr/local/bin/entrypoint.sh \
     && chmod +x /usr/local/bin/entrypoint.sh

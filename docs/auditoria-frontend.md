@@ -15,7 +15,7 @@ npm run build
 
 **Estado de git al iniciar:** rama `devolp`, con un archivo no rastreado (`plan_implementacion_modulo_conductores.md`, del equipo, excluido de esta auditoría). No se modificó ningún archivo durante la auditoría.
 
-> **Actualización posterior:** tras la auditoría se aplicaron los pasos **0.1, 0.2, 0.3, 0.4, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 3.1 y 3.4** del plan (`docs/plan-mejora.md`); 2.3 queda parcial (cortes unificados, falta la inversión mobile-first). Los hallazgos afectados aparecen marcados como **Resuelto**; el resto sigue pendiente.
+> **Actualización posterior:** tras la auditoría se aplicaron los pasos **0.1, 0.2, 0.3, 0.4, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 3.1, 3.2 y 3.4** del plan (`docs/plan-mejora.md`); 2.3 queda parcial (cortes unificados, falta la inversión mobile-first). Los hallazgos afectados aparecen marcados como **Resuelto**; el resto sigue pendiente.
 
 ---
 
@@ -23,9 +23,9 @@ npm run build
 
 Proyecto con una base mejor que la media: sistema de tokens real con tema claro/oscuro, build con assets hasheados y caché inmutable, CSP y cabeceras de seguridad en servidor, cero estilos en línea, solo 3 `!important`, imágenes con dimensiones reservadas y una suite de accesibilidad con axe ya escrita. El diseño es coherente y el uso de Grid/Flexbox es correcto.
 
-Los riesgos iniciales se han ido cerrando: la Fase 1 resolvió las barreras de accesibilidad, 2.1 unificó la cascada (**0 selectores duplicados**, frente a 130) y 2.2 consolidó tipografía, espaciado y color en tokens (**8 tamaños**, **0 hex sueltos**). Los breakpoints ya son **4** (aún `max-width`; la inversión mobile-first queda como 2.3b), 2.5 dejó un único `<head>` y la navegación en el HTML, 3.1 incorporó Stylelint y html-validate a CI y pre-commit, y 3.4 amplió la suite a las 12 páginas con umbral `moderate`. Quedan el rendimiento de carga y la guía de estilos.
+Los riesgos iniciales se han ido cerrando: la Fase 1 resolvió las barreras de accesibilidad, 2.1 unificó la cascada (**0 selectores duplicados**, frente a 130) y 2.2 consolidó tipografía, espaciado y color en tokens (**8 tamaños**, **0 hex sueltos**). Los breakpoints ya son **4** (aún `max-width`; la inversión mobile-first queda como 2.3b), 2.5 dejó un único `<head>` y la navegación en el HTML, 3.1 incorporó Stylelint y html-validate a CI y pre-commit, 3.4 amplió la suite a las 12 páginas con umbral `moderate` y 3.2 redujo la carga a una hoja CSS, tema inline con hash y LCP < 2,5 s. Quedan la guía de estilos, Safari (`100dvh`) y la inversión mobile-first.
 
-**Nota global: 6/10** en el momento de la auditoría; **6,5/10** tras 0.1, 0.2 y 0.4, **7/10** tras 0.3, **7,5/10** tras 1.1, **8/10** tras 1.2, **8,5/10** tras 1.5, 1.6 y 1.7, **9/10** tras 2.1, 2.2 y 2.5, y **9,5/10** tras 3.1 y 3.4. La accesibilidad, la cascada, los tokens, la navegación estática y la validación automatizada están resueltos; quedan breakpoints, rendimiento y metadatos.
+**Nota global: 6/10** en el momento de la auditoría; **6,5/10** tras 0.1, 0.2 y 0.4, **7/10** tras 0.3, **7,5/10** tras 1.1, **8/10** tras 1.2, **8,5/10** tras 1.5, 1.6 y 1.7, **9/10** tras 2.1, 2.2 y 2.5, y **9,5/10** tras 3.1, 3.2 y 3.4. La accesibilidad, la cascada, los tokens, la navegación estática, la validación automatizada y la carga inicial están resueltos; quedan breakpoints, Safari, guía y metadatos.
 
 ---
 
@@ -83,6 +83,10 @@ frontend/
 | Linters en CI | ESLint, Prettier, Stylelint y html-validate (3.1) |
 | Cobertura a11y | **12/12 páginas × 2 temas**, `moderate+` (3.4) |
 | Pruebas E2E | **53** (30 de accesibilidad, 3.4) |
+| Hojas CSS bloqueantes por página | **2–3 → 1** (3.2) |
+| Transferencia con 4G simulado (login/dashboard) | **68 / 132 KB** (3.2; antes 123/188) |
+| LCP móvil (Lighthouse) | **1,48 s** login · **2,17 s** dashboard (3.2) |
+| CLS | **0** móvil · **0,034** escritorio (3.2) |
 | Selectores repetidos en el mismo archivo (conteo propio) | **209** |
 | Errores reales de `html-validate` | **44** (2 tras 1.1) |
 | Avisos de estilo `html-validate` (`void-style`, `doctype-style`) | 198 |
@@ -138,11 +142,11 @@ frontend/
 | FE-025 | CSS / Calidad | B | ≈17 clases/componentes muertos | `components.css:43-50,95-102`; `layout.css:263-267` | **Resuelto (2.4)** |
 | FE-026 | CSS / Calidad | B | Selector imposible `.brand-name accent` | `layout.css:61-63` | **Resuelto (2.4)** |
 | FE-027 | CSS / Calidad | B | Clase `is-ready` añadida sin CSS que la use | `app.js:160` | **Resuelto (2.4)** |
-| FE-028 | Rendimiento | M | 6 CSS render-blocking + fuente FA de 153 KB | `dashboard.html:11-18`; `assets/vendors/fontawesome/` | Pendiente |
+| FE-028 | Rendimiento | M | 6 CSS render-blocking + fuente FA de 153 KB | `dashboard.html:11-18`; `assets/vendors/fontawesome/` | 🟡 Parcial (3.2) |
 | FE-029 | Compatibilidad | M | `100vh` en 9 sitios (salto en Safari iOS) | `base.css:18`; `components.css:1277`; `layout.css:2`; `login.css:2`; `ai.css:6,235`; `driver.css:4`; `index.css:6` | Pendiente |
-| FE-030 | Rendimiento | B | `theme-boot.js` bloqueante en `<head>` siendo 11 líneas | `login.html:16` (y 11 páginas más) | Pendiente |
-| FE-031 | Rendimiento | B | `logo.png` de 71 KB usado como logo y favicon | `assets/logo.png`; `login.html:8,27` | Pendiente |
-| FE-032 | Compatibilidad | B | `fonts.css` usa ruta absoluta y el preload relativa | `fonts.css:7` vs `dashboard.html:10` | Pendiente |
+| FE-030 | Rendimiento | B | `theme-boot.js` bloqueante en `<head>` siendo 11 líneas | `login.html:16` (y 11 páginas más) | **Resuelto (3.2)** |
+| FE-031 | Rendimiento | B | `logo.png` de 71 KB usado como logo y favicon | `assets/logo.png`; `login.html:8,27` | **Resuelto (3.2)** |
+| FE-032 | Compatibilidad | B | `fonts.css` usa ruta absoluta y el preload relativa | `fonts.css:7` vs `dashboard.html:10` | **Resuelto (3.2)** |
 | FE-033 | Mantenibilidad | M | Bloque `<head>` duplicado literalmente en 12 páginas | todas las `.html` | **Resuelto (2.5)** |
 | FE-034 | Mantenibilidad | B | `check:css` no detecta duplicados intra-archivo; sin stylelint | `scripts/check-css.mjs:44`; `package.json:6-10` | **Resuelto (3.1)** |
 | FE-035 | Mantenibilidad | B | `escapeHtml` duplicado en `modal.js` | `modal.js:119-127` vs `helpers.js` | Pendiente |
@@ -768,7 +772,7 @@ nested-interactive: Interactive controls must not be nested
 
 ### 5.5 Rendimiento
 
-#### FE-028 · CSS bloqueante y fuente de iconos pesada — Media · Deuda técnica
+#### FE-028 · CSS bloqueante y fuente de iconos pesada — Media · Deuda técnica · 🟡 Parcial (3.2)
 
 **Ubicación:** `dashboard.html:11-18` (6 `<link rel="stylesheet">`), `assets/vendors/fontawesome/fa-solid-900.woff2` (153,5 KB).
 
@@ -789,9 +793,11 @@ nested-interactive: Interactive controls must not be nested
 
 **Recomendación:** CSS crítico inline para login/dashboard, `preload` del CSS de página, y valorar subset real de FontAwesome (la hoja ya es un subset, pero la fuente no) o iconos SVG inline en la navegación.
 
+**Corrección aplicada (parcial):** el build fusiona ahora **todo el CSS de la página** (vendor + app) en una sola hoja y reescribe las URL de fuentes e imágenes; cada página tiene **una** hoja bloqueante (antes 2–3). No se duplicó CSS crítico inline porque el único bundle ya es la hoja crítica (8–13 KB comprimidos) y el LCP queda por debajo de 2,5 s. FontAwesome ya estaba subseteado por iconos usados; se mantiene (153 KB sin comprimir, ~6 KB de transferencia). **Pendiente:** valorar iconos SVG o un subset aún más agresivo si se quiere reducir el peso sin comprimir.
+
 ---
 
-#### FE-030 · `theme-boot.js` bloqueante — Baja · Mejora
+#### FE-030 · `theme-boot.js` bloqueante — Baja · Mejora · **Resuelto (3.2)**
 
 **Ubicación:** `login.html:16` y las otras 11 páginas.
 
@@ -805,15 +811,19 @@ nested-interactive: Interactive controls must not be nested
 
 **Recomendación:** inline del script con hash en la CSP, o un `<script>` mínimo inline permitido por `script-src 'sha256-…'`.
 
+**Corrección aplicada:** el build minifica `theme-boot.js`, lo inlinea en cada página y escribe su SHA-256 en `build/csp.json`; el backend lee ese archivo y añade el hash a `script-src`. Ya no hay petición bloqueante, el tema se aplica antes de pintar y `csp.spec.js` no registra violaciones.
+
 ---
 
-#### FE-031 · Logo PNG de 71 KB como logo y favicon — Baja · Mejora
+#### FE-031 · Logo PNG de 71 KB como logo y favicon — Baja · Mejora · **Resuelto (3.2)**
 
 **Ubicación:** `assets/logo.png`; `login.html:8,27`; `sidebar.js:43`.
 
 **Impacto:** se descarga el mismo PNG grande para el favicon, el logo del login (72×72) y el logo del sidebar (40×40). No hay formato vectorial ni `srcset`.
 
 **Recomendación:** SVG para el logo, `favicon-32.png` + `apple-touch-icon` para el icono, y mantener el PNG solo como fallback.
+
+**Corrección aplicada:** se generaron desde el PNG maestro `logo-160.png` (17,8 KB), `favicon-32.png` (2,1 KB) y `apple-touch-icon.png` (21 KB); sidebar y login usan el logo de 160 px y el favicon ya no descarga 71 KB. El build y el Dockerfile copian los nuevos assets. No se usó SVG porque no existe una fuente vectorial del logo; el PNG maestro queda en el repositorio sin servirse.
 
 ---
 
@@ -860,7 +870,7 @@ h1, h2, h3, h4 { font-weight: 900; }
 
 ---
 
-#### FE-032 · Ruta de fuente absoluta vs. preload relativa — Baja · Riesgo
+#### FE-032 · Ruta de fuente absoluta vs. preload relativa — Baja · Riesgo · **Resuelto (3.2)**
 
 **Ubicación:** `fonts.css:7` vs `login.html:9` (y todas las páginas).
 
@@ -878,6 +888,8 @@ src: url("/assets/fonts/outfit-latin.woff2") format("woff2");
 **Impacto:** hoy ambas resuelven a la misma URL porque la app se sirve en la raíz. Si se despliega bajo un subpath, el CSS pedirá `/assets/...` (fuera de la app) y el preload `assets/...` (correcto): doble descarga o fuente rota.
 
 **Recomendación:** unificar a ruta relativa (`../fonts/outfit-latin.woff2` o reescribirla en el build).
+
+**Corrección aplicada:** `fonts.css` declara `../assets/fonts/outfit-latin.woff2` (válida también en fuente) y el build la reescribe a `../fonts/...` dentro de `assets/build`. El preload y la hoja resuelven a la misma URL, también bajo subpath. `vendor_assets.py` genera la misma ruta.
 
 ---
 

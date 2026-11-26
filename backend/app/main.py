@@ -1,6 +1,7 @@
 import asyncio
 import contextlib
 import hmac
+import json
 import logging
 import time
 import uuid
@@ -29,16 +30,41 @@ from app.services.bootstrap import bootstrap_database, ensure_schema
 setup_logging(settings.log_level)
 logger = logging.getLogger("frostbase")
 
-CSP_POLICY = (
-    "default-src 'self'; "
-    "img-src 'self' data: https://*.tile.openstreetmap.org; "
-    "style-src 'self'; "
-    "script-src 'self'; "
-    "font-src 'self'; "
-    "connect-src 'self'; "
-    "frame-ancestors 'none'; "
-    "base-uri 'none'"
-)
+
+@lru_cache
+def _script_hashes() -> tuple[str, ...]:
+    """Hashes de los scripts inline generados por el build (CSP).
+
+    El build escribe `csp.json` junto al HTML; si no existe (código fuente sin
+    compilar) la política queda como antes, sin `unsafe-inline`.
+    """
+    try:
+        data = json.loads(
+            (settings.frontend_path / "csp.json").read_text(encoding="utf-8")
+        )
+    except (OSError, ValueError):
+        return ()
+    hashes = data.get("script_hashes", [])
+    return tuple(
+        str(item)
+        for item in hashes
+        if isinstance(item, str) and item.startswith("'sha256-")
+    )
+
+
+@lru_cache
+def csp_policy() -> str:
+    script_src = " ".join(("'self'", *_script_hashes()))
+    return (
+        "default-src 'self'; "
+        "img-src 'self' data: https://*.tile.openstreetmap.org; "
+        "style-src 'self'; "
+        f"script-src {script_src}; "
+        "font-src 'self'; "
+        "connect-src 'self'; "
+        "frame-ancestors 'none'; "
+        "base-uri 'none'"
+    )
 
 
 @lru_cache
@@ -137,7 +163,7 @@ async def observability_middleware(request: Request, call_next):
     response.headers["Permissions-Policy"] = (
         "geolocation=(self), camera=(), microphone=()"
     )
-    response.headers["Content-Security-Policy"] = CSP_POLICY
+    response.headers["Content-Security-Policy"] = csp_policy()
     if path.startswith("/assets/build/"):
         response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
     elif path.endswith(".html") or path == "/":

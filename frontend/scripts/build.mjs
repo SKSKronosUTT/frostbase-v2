@@ -16,9 +16,16 @@ const PAGES_CONFIG = JSON.parse(
   await readFile(path.join(root, "pages.config.json"), "utf8")
 );
 const HEAD_PARTIAL = await readSource(path.join(root, "partials", "head.html"));
-const SIDEBAR_PARTIAL = await readSource(
-  path.join(root, "partials", "sidebar.html")
-);
+const SIDEBAR_PARTIAL = await readSource(path.join(root, "partials", "sidebar.html"));
+const THEME_BOOT = (
+  await transform(await readSource(path.join(root, "js", "core", "theme-boot.js")), {
+    loader: "js",
+    minify: true,
+  })
+).code.trim();
+const scriptHashes = new Set([
+  `'sha256-${createHash("sha256").update(THEME_BOOT).digest("base64")}'`,
+]);
 const PAGES = Object.keys(PAGES_CONFIG);
 
 const SIDEBAR_ALIASES = {
@@ -54,10 +61,23 @@ function hashedName(name, content) {
   return `${base}.${hash}${extension}`;
 }
 
+function rewriteCssUrls(file, css) {
+  return css.replace(/url\((['"]?)([^)'"]+)\1\)/g, (match, quote, url) => {
+    if (/^(?:[a-z][a-z0-9+.-]*:|\/|#)/i.test(url)) return match;
+    const [pathname, suffix = ""] = url.split(/(?=[?#])/);
+    const target = path.posix.normalize(
+      path.posix.join(path.posix.dirname(file.replace(/\\/g, "/")), pathname)
+    );
+    const relative = path.posix.relative("assets/build", target);
+    return `url(${quote}${relative}${suffix}${quote})`;
+  });
+}
+
 async function minifyCss(files) {
   const chunks = [];
   for (const file of files) {
-    chunks.push(await readFile(path.join(root, file), "utf8"));
+    const css = await readFile(path.join(root, file), "utf8");
+    chunks.push(rewriteCssUrls(file, css));
   }
   const result = await transform(chunks.join("\n"), {
     loader: "css",
@@ -94,8 +114,16 @@ async function main() {
     { recursive: true }
   );
   await cp(
-    path.join(root, "assets", "logo.png"),
-    path.join(outDir, "assets", "logo.png")
+    path.join(root, "assets", "logo-160.png"),
+    path.join(outDir, "assets", "logo-160.png")
+  );
+  await cp(
+    path.join(root, "assets", "favicon-32.png"),
+    path.join(outDir, "assets", "favicon-32.png")
+  );
+  await cp(
+    path.join(root, "assets", "apple-touch-icon.png"),
+    path.join(outDir, "assets", "apple-touch-icon.png")
   );
 
   const manifest = {};
@@ -118,7 +146,9 @@ async function main() {
     }
 
     const cssLinks = [
-      ...html.matchAll(/<link rel="stylesheet" href="(css\/[^"]+)"\s*\/?>/g),
+      ...html.matchAll(
+        /<link rel="stylesheet" href="((?:css|assets\/vendors)\/[^"]+\.css)"\s*\/?>/g
+      ),
     ];
     if (cssLinks.length) {
       const files = cssLinks.map((match) => match[1]);
@@ -128,7 +158,7 @@ async function main() {
       manifest[files.join("+")] = `assets/build/${name}`;
       // Elimina la línea completa para no dejar líneas en blanco.
       html = html.replace(
-        /^[ \t]*<link rel="stylesheet" href="css\/[^"]+"[ \t]*\/?>\r?\n/gm,
+        /^[ \t]*<link rel="stylesheet" href="(?:css|assets\/vendors)\/[^"]+\.css"[ \t]*\/?>\r?\n/gm,
         ""
       );
       html = html.replace(
@@ -139,18 +169,7 @@ async function main() {
 
     const themeScript = html.match(/<script src="js\/core\/theme-boot\.js"><\/script>/);
     if (themeScript) {
-      const source = await readFile(
-        path.join(root, "js", "core", "theme-boot.js"),
-        "utf8"
-      );
-      const result = await transform(source, { loader: "js", minify: true });
-      const name = hashedName("theme-boot.js", result.code);
-      await writeFile(path.join(buildAssets, name), result.code, "utf8");
-      manifest["js/core/theme-boot.js"] = `assets/build/${name}`;
-      html = html.replace(
-        themeScript[0],
-        `<script src="assets/build/${name}"></script>`
-      );
+      html = html.replace(themeScript[0], () => `<script>${THEME_BOOT}</script>`);
     }
 
     const moduleScript = html.match(
@@ -173,6 +192,11 @@ async function main() {
   await writeFile(
     path.join(outDir, "manifest.json"),
     JSON.stringify(manifest, null, 2),
+    "utf8"
+  );
+  await writeFile(
+    path.join(outDir, "csp.json"),
+    `${JSON.stringify({ script_hashes: [...scriptHashes] }, null, 2)}\n`,
     "utf8"
   );
 
