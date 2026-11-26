@@ -6,7 +6,7 @@
   gap: 12px;
   align-items: end;
   padding: 18px 20px;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 3px solid var(--border-ink);
 }
 
 .alerts-filters .form-field {
@@ -64,10 +64,10 @@
   align-items: center;
   gap: 12px;
   padding: 12px 14px;
-  border-radius: var(--radius-md);
   background: var(--danger-soft);
-  border: 1px solid rgba(240, 91, 101, 0.24);
   margin-bottom: 16px;
+  border: 2px solid var(--danger);
+  border-radius: 0;
 }
 
 .alert-detail-hero i {
@@ -117,16 +117,6 @@
   .alert-detail-grid {
     grid-template-columns: 1fr;
   }
-}
-
-/* ===== Consolidado desde bauhaus.css (T4.5) ===== */
-.alert-detail-hero {
-  border: 2px solid var(--danger);
-  border-radius: 0;
-}
-
-.alerts-filters {
-  border-bottom: 3px solid var(--border-ink);
 }
 
 .alert-detail-hero--active {

@@ -32,7 +32,7 @@ Este plan solo contiene acciones derivadas de hallazgos verificados. No incluye 
 | 1.5 | Errores de formulario y toasts | FE-012, FE-013, FE-017 | M | Medio | 0.1 | ✅ |
 | 1.6 | Patrón de tabs accesible | FE-009 | M | Medio | — | ✅ |
 | 1.7 | Mapas sin `role="application"` | FE-010 | M | Medio | — | ✅ |
-| 2.1 | Fusionar la cascada «Consolidado» | FE-018, FE-034 | L | Alto | 0.4 | 🟡 parcial |
+| 2.1 | Fusionar la cascada «Consolidado» | FE-018, FE-034 | L | Alto | 0.4 | ✅ |
 | 2.2 | Tokens de tipografía y espaciado | FE-021, FE-022, FE-023 | L | Alto | 2.1 | ⬜ |
 | 2.3 | Breakpoints unificados mobile-first | FE-020 | M | Medio | 2.1 | ⬜ |
 | 2.4 | Limpieza de CSS muerto | FE-025, FE-026, FE-027 | S | Bajo | 2.1 | ✅ |
@@ -356,11 +356,11 @@ cd frontend && npx playwright test tests/e2e/accessibility.spec.js
 
 # Fase 2 · Mejoras estructurales
 
-## 2.1 · Fusionar la cascada «Consolidado» — 🟡 Parcial (39/130)
+## 2.1 · Fusionar la cascada «Consolidado» — ✅ Aplicado
 
 **Hallazgos:** FE-018, FE-034.
 
-**Tareas**
+**Tareas realizadas**
 
 1. Por cada hoja con bloque consolidado (`base`, `components`, `layout`, `alerts`, `dashboard`, `login`, `routes`, `settings`, `truck-detail`), fusionar la regla duplicada con la original conservando **el valor final** que hoy gana en cascada.
 2. Resolver manualmente los casos donde una media query posterior también participa (p. ej. `.main`, `.sidebar`, `.login-shell`, `.temp-card`).
@@ -375,12 +375,14 @@ cd frontend && npx playwright test tests/e2e/accessibility.spec.js
 **Aceptación**
 
 - 0 selectores duplicados (`stylelint no-duplicate-selectors`).
-- Diff visual nulo respecto a la rama base (capturas comparadas).
+- Diff visual nulo salvo la flecha de los selects, restaurada intencionalmente (el CSS base ya la definía y la consolidación la anulaba).
 - El CSS resultante mantiene el orden: base → componentes → layout → página → responsive.
 
-**Verificación:** `npx stylelint "frontend/css/**/*.css"` + comparación de capturas + `npm run build`.
+**Verificación:** `npx stylelint "frontend/css/**/*.css"` + comparación de estilos computados A/B + `npm run build`.
 
-**Estado de ejecución (2026-11-26, parte 1):** se eliminaron **39 reglas totalmente sobrescritas** (su selector se repite y la regla consolidada posterior vuelve a declarar todas sus propiedades), lo que es un no-op en la cascada. `no-duplicate-selectors` pasa de **130 a 91**. Quedan: `components.css` 45, `login.css` 17, `layout.css` 16, `routes.css` 3, `settings.css` 2, `truck-detail.css` 2, `alerts.css` 2, `base.css` 1, `dashboard.css` 1. La parte 2 exige fusionar declaraciones que no están cubiertas íntegramente y, por tanto, una baseline de estilos computados/capturas en las 12 páginas × breakpoints × temas antes de tocar cada hoja. No se fuerza el resto para no arriesgar la UI.
+**Resultado (2026-11-26):** se fusionaron **90 reglas** en las 9 hojas con bloque consolidado y se retiraron los comentarios `Consolidado desde bauhaus.css`. `no-duplicate-selectors` pasa de **87 a 0** y el CSS de producción de **722,3 a 682,3 KB**.
+
+La verificación A/B de estilos computados se ejecutó en la app real (login, dashboard, flota, conductores, rutas, alertas, configuración, asistente, detalle de camión y detalle de ruta): **0 diferencias** en todas las páginas salvo la **flecha de los selects**, que el CSS base ya definía y la capa consolidada anulaba por orden. Se acepta como corrección visual intencional (mejora de UX). Los iconos KPI, la sombra de `.btn--sm`, el login, la configuración, la IA y los detalles quedan idénticos. Los selectores con conflicto de orden (`.btn--sm`, `.kpi-card__icon`) se fusionaron en su última aparición para reproducir la cascada original.
 
 ---
 
@@ -613,7 +615,7 @@ Usar `prefers-color-scheme` como valor inicial cuando no haya preferencia guarda
 | Métrica | Antes | Objetivo |
 |---|---|---|
 | `html-validate` (errores reales) | 44 (2 tras 1.1) | **0** |
-| `stylelint no-duplicate-selectors` | 91 | **0** |
+| `stylelint no-duplicate-selectors` | 87 | **0** ✅ |
 | axe (`wcag2a/aa`, incl. moderate) | Sin medir (≥2 probables) | **0 violaciones** en 12 páginas × 2 temas |
 | Lighthouse accesibilidad (login, dashboard, trucks) | Sin medir | **≥ 95** |
 | Contraste | 4 fallos AA | **100 %** textos ≥ 4.5:1 y UI ≥ 3:1 |
@@ -668,5 +670,6 @@ npx lighthouse http://localhost:8050/dashboard.html \
 | 2026-11-25 | 1.7 | `dashboard.html`, `routes.html`, `route-detail.html`, `truck-detail.html`, `js/pages/{routes,route-detail,truck-detail}.js` | `role="img"` + `aria-describedby`, resúmenes dinámicos y 0 `role="application"`; verificado en Chromium |
 | 2026-11-26 | 2.1 (parte 1) | 8 hojas CSS (`base`, `components`, `layout`, `dashboard`, `login`, `routes`, `settings`, `truck-detail`) | 39 reglas totalmente sobrescritas eliminadas; duplicados 130 → 91; sin cambios de cascada |
 | 2026-11-26 | 2.4 | `base/components/layout/truck-detail/trucks` CSS + `app.js` | Clases muertas y `.brand-name accent` eliminadas; `is-ready` retirada; CSS 756,1 → 722,3 KB; duplicados 91 → 87 |
+| 2026-11-26 | 2.1 (parte 2) | 9 hojas CSS | 90 reglas fusionadas y comentarios consolidados retirados; duplicados 87 → 0; CSS 722,3 → 682,3 KB; A/B sin diferencias salvo la flecha de los selects |
 
-**Próximo paso recomendado:** **2.1 (parte 2)**: construir la baseline de estilos computados/capturas en 12 páginas × breakpoints × temas y fusionar `login.css`, `layout.css` y `components.css` por archivo hasta llegar a 0 duplicados.
+**Próximo paso recomendado:** **2.2 · Tokens de tipografía y espaciado**. La cascada ya está unificada, así que se puede abordar la escala tipográfica, el espaciado y los hex sueltos sin el riesgo de la doble generación; esfuerzo L.

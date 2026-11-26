@@ -164,9 +164,9 @@
 }
 
 .points-section {
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
   overflow: hidden;
+  border: 2px solid var(--border-ink);
+  border-radius: 0;
 }
 
 .points-section__head {
@@ -175,8 +175,10 @@
   justify-content: space-between;
   gap: 10px;
   padding: 12px 14px;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 2px solid var(--border-ink);
   background: var(--surface-soft);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .points-section__head strong {
@@ -243,8 +245,8 @@
   align-items: flex-end;
   gap: 10px;
   padding-top: 14px;
-  border-top: 1px solid var(--border);
   flex-wrap: wrap;
+  border-top: 2px solid var(--border-ink);
 }
 
 .route-assign .form-field {
@@ -364,19 +366,6 @@
   }
 }
 
-/* ===== Consolidado desde bauhaus.css (T4.5) ===== */
-.points-section {
-  border: 2px solid var(--border-ink);
-  border-radius: 0;
-}
-
-.points-section__head {
-  border-bottom: 2px solid var(--border-ink);
-  background: var(--surface-soft);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
 .point-row__order,
 .route-point__num {
   border: 2px solid var(--border-ink);
@@ -388,10 +377,6 @@
 .route-list-item.is-active {
   background: var(--accent-glow);
   box-shadow: inset 5px 0 0 var(--accent-mid);
-}
-
-.route-assign {
-  border-top: 2px solid var(--border-ink);
 }
 
 .routes-search .input {

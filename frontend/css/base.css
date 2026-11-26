@@ -18,13 +18,16 @@ body {
   min-height: 100vh;
   background: var(--bg);
   color: var(--text);
-  font-family: var(--font-sans);
-  font-size: 14px;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   transition:
     background-color var(--transition),
     color var(--transition);
+  font-family: var(--font-sans);
+  font-size: 14.5px;
+  background-color: var(--bg);
+  background-image: radial-gradient(rgba(10, 27, 43, 0.07) 1.4px, transparent 1.4px);
+  background-size: 22px 22px;
 }
 
 body.modal-open {
@@ -197,15 +200,6 @@ svg {
   padding: 34px 16px;
   color: var(--text-muted);
   font-size: 13px;
-}
-
-/* ===== Consolidado desde bauhaus.css (T4.5) ===== */
-body {
-  font-family: var(--font-sans);
-  font-size: 14.5px;
-  background-color: var(--bg);
-  background-image: radial-gradient(rgba(10, 27, 43, 0.07) 1.4px, transparent 1.4px);
-  background-size: 22px 22px;
 }
 
 [data-theme="dark"] body {
