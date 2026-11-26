@@ -109,12 +109,6 @@
   color: var(--danger);
 }
 
-.detail-actions {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
 .history-card .table-wrap {
   border-top: 1px solid var(--border);
 }
@@ -151,14 +145,6 @@
 @media (max-width: 640px) {
   .detail-hero {
     align-items: flex-start;
-  }
-
-  .detail-actions {
-    width: 100%;
-  }
-
-  .detail-actions .btn {
-    flex: 1;
   }
 
   .current-reading {

@@ -35,7 +35,7 @@ Este plan solo contiene acciones derivadas de hallazgos verificados. No incluye 
 | 2.1 | Fusionar la cascada «Consolidado» | FE-018, FE-034 | L | Alto | 0.4 | 🟡 parcial |
 | 2.2 | Tokens de tipografía y espaciado | FE-021, FE-022, FE-023 | L | Alto | 2.1 | ⬜ |
 | 2.3 | Breakpoints unificados mobile-first | FE-020 | M | Medio | 2.1 | ⬜ |
-| 2.4 | Limpieza de CSS muerto | FE-025, FE-026, FE-027 | S | Bajo | 2.1 | ⬜ |
+| 2.4 | Limpieza de CSS muerto | FE-025, FE-026, FE-027 | S | Bajo | 2.1 | ✅ |
 | 2.5 | Parciales de `<head>` y sidebar estática | FE-001, FE-033 | L | Medio | 2.1 | ⬜ |
 | 2.6 | Pesos tipográficos coherentes | FE-024 | S | Bajo | 2.2 | ⬜ |
 | 3.1 | Linters y validación en CI | FE-034, FE-036 | M | Alto | 2.1 | ⬜ |
@@ -425,24 +425,28 @@ cd frontend && npx playwright test tests/e2e/accessibility.spec.js
 
 ---
 
-## 2.4 · Limpieza de CSS muerto — ⬜
+## 2.4 · Limpieza de CSS muerto — ✅ Aplicado
 
 **Hallazgos:** FE-025, FE-026, FE-027.
 
-**Tareas**
+**Tareas realizadas**
 
-1. Eliminar `.btn--secondary`, `.btn--danger-soft`, `.card__footer`, `.card__section`, `.two-column`, `.text-success`, `.text-warning`, `.mono`, `.fade-in`, `.spinner--light`, `.divider`, `.kpi-card--clickable`, `.info-tile*`, `.toggle-*`, `.map-supply`, `.detail-actions`, `.truck-status-select`.
-2. Eliminar `.brand-name accent`.
-3. Decidir sobre `is-ready`: eliminarlo o implementar el estado de carga.
-4. Repetir la búsqueda global antes de borrar (las plantillas JS pueden construir clases por concatenación).
+1. Búsqueda global en HTML/JS de todas las clases candidatas (incluidas las dinámicas) y confirmación de que no se usan.
+2. Eliminadas de `base.css`: `.text-success`, `.text-warning`, `.mono`, `.fade-in` (se conserva `@keyframes fadeIn`, usado por modales) y `.spinner--light`.
+3. Eliminadas de `components.css`: `.btn--secondary`, `.btn--danger-soft`, `.card__footer`, `.card__section`, `.two-column`, `.divider`, `.kpi-card--clickable`, `.info-grid`/`.info-tile*`, `.toggle-row*`/`.toggle-switch*`, `.map-supply` (solo el selector), `.input-group*`, `.cell-strong`, `.notice--danger` y `.filter-bar*`.
+4. Eliminadas de `layout.css`: `.two-column` (base y media) y `.brand-name accent`.
+5. Eliminadas de `truck-detail.css`: `.detail-actions` (base y media); de `trucks.css`: `.truck-status-select`.
+6. `app.js`: eliminada la clase `is-ready`, que no tenía CSS asociado.
 
-**Archivos:** `base.css`, `components.css`, `layout.css`, hojas de página; `app.js`.
-**Esfuerzo:** S · **Impacto:** Bajo · **Dependencias:** 2.1.
-**Riesgo:** bajo; verificar con búsqueda literal y prueba de las 12 páginas.
+**Archivos:** `base.css`, `components.css`, `layout.css`, `truck-detail.css`, `trucks.css`, `app.js`.
+**Esfuerzo:** S · **Impacto:** Bajo · **Dependencias:** 2.1 (parcial).
+**Riesgo:** bajo; solo se eliminaron selectores sin coincidencias en HTML/JS.
 
-**Aceptación:** 0 coincidencias de las clases eliminadas en HTML/JS; build y tests verdes.
+**Aceptación:** 0 coincidencias de las clases eliminadas en HTML/JS; build y checks verdes.
 
-**Verificación:** `grep` global + Playwright smoke.
+**Verificación:** búsqueda global + `npm run build` + `check:css`/`check:html` + ESLint + Prettier.
+
+**Resultado:** 0 coincidencias restantes; CSS de producción 756,1 → **722,3 KB**; duplicados de stylelint 91 → 87 (algunos selectores muertos también estaban duplicados). Build y checks correctos.
 
 ---
 
@@ -663,5 +667,6 @@ npx lighthouse http://localhost:8050/dashboard.html \
 | 2026-11-25 | 1.6 | `trucks.html`, `js/pages/trucks.js` | Tabs con `aria-controls`/`tabpanel`, roving tabindex y navegación con flechas/Home/End; verificado en Chromium |
 | 2026-11-25 | 1.7 | `dashboard.html`, `routes.html`, `route-detail.html`, `truck-detail.html`, `js/pages/{routes,route-detail,truck-detail}.js` | `role="img"` + `aria-describedby`, resúmenes dinámicos y 0 `role="application"`; verificado en Chromium |
 | 2026-11-26 | 2.1 (parte 1) | 8 hojas CSS (`base`, `components`, `layout`, `dashboard`, `login`, `routes`, `settings`, `truck-detail`) | 39 reglas totalmente sobrescritas eliminadas; duplicados 130 → 91; sin cambios de cascada |
+| 2026-11-26 | 2.4 | `base/components/layout/truck-detail/trucks` CSS + `app.js` | Clases muertas y `.brand-name accent` eliminadas; `is-ready` retirada; CSS 756,1 → 722,3 KB; duplicados 91 → 87 |
 
-**Próximo paso recomendado:** **2.1 (parte 2)**: construir la baseline de estilos computados/capturas en 12 páginas × breakpoints × temas y fusionar `login.css`, `layout.css` y `components.css` por archivo. Si se prefiere cerrar antes un paso completo y seguro, **2.4 · Limpieza de CSS muerto**.
+**Próximo paso recomendado:** **2.1 (parte 2)**: construir la baseline de estilos computados/capturas en 12 páginas × breakpoints × temas y fusionar `login.css`, `layout.css` y `components.css` por archivo hasta llegar a 0 duplicados.

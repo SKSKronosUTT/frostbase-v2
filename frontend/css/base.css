@@ -111,18 +111,6 @@ svg {
   color: var(--danger);
 }
 
-.text-success {
-  color: var(--success);
-}
-
-.text-warning {
-  color: var(--warning);
-}
-
-.mono {
-  font-variant-numeric: tabular-nums;
-}
-
 .sr-only {
   position: absolute;
   width: 1px;
@@ -167,10 +155,6 @@ svg {
   background: transparent;
 }
 
-.fade-in {
-  animation: fadeIn 240ms ease both;
-}
-
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -197,11 +181,6 @@ svg {
   height: 14px;
   border-width: 2px;
   vertical-align: -2px;
-}
-
-.spinner--light {
-  border-color: rgba(255, 255, 255, 0.35);
-  border-top-color: #fff;
 }
 
 @keyframes spin {
