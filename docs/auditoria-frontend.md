@@ -15,7 +15,7 @@ npm run build
 
 **Estado de git al iniciar:** rama `devolp`, con un archivo no rastreado (`plan_implementacion_modulo_conductores.md`, del equipo, excluido de esta auditoría). No se modificó ningún archivo durante la auditoría.
 
-> **Actualización posterior:** tras la auditoría se aplicaron los pasos **0.1, 0.2, 0.3, 0.4, 1.1, 1.2 y 1.3** del plan (`docs/plan-mejora.md`). Los hallazgos afectados aparecen marcados como **Resuelto**. El resto sigue pendiente.
+> **Actualización posterior:** tras la auditoría se aplicaron los pasos **0.1, 0.2, 0.3, 0.4, 1.1, 1.2, 1.3 y 1.4** del plan (`docs/plan-mejora.md`). Los hallazgos afectados aparecen marcados como **Resuelto**. El resto sigue pendiente.
 
 ---
 
@@ -73,7 +73,7 @@ frontend/
 | Páginas HTML | 12 |
 | Hojas CSS propias | 16 (± 6.050 líneas, ± 104 KB en crudo) |
 | Módulos JS | 24 (± 6.116 líneas) |
-| `!important` | **3** (`.hidden`, `[hidden]`, `.fleet-panel[hidden]`) |
+| `!important` | **7**: 3 en utilidades de ocultación + 4 en el guard de `prefers-reduced-motion` |
 | Atributos `style=""` | **0** |
 | Selectores duplicados (`no-duplicate-selectors`) | **130** |
 | Selectores repetidos en el mismo archivo (conteo propio) | **209** |
@@ -117,7 +117,7 @@ frontend/
 | FE-013 | Accesibilidad | M | Toasts de error con `role="status"` y autodescarte sin pausa por teclado | `notifications.js:30,52` | Pendiente |
 | FE-014 | Accesibilidad | M | `login` e `index` sin `<main>`; no hay skip link | `login.html:23`; `index.html:17` | **Resuelto (1.2)** |
 | FE-015 | Accesibilidad | M | Foco visible eliminado en inputs del asistente | `ai.css:322-325,484-487` | **Resuelto (1.3)** |
-| FE-016 | Accesibilidad | M | Sin `prefers-reduced-motion` pese a 14 animaciones | `base.css:161-202`; `components.css:1229-1301` | Pendiente |
+| FE-016 | Accesibilidad | M | Sin `prefers-reduced-motion` pese a 14 animaciones | `base.css:161-202`; `components.css:1229-1301` | **Resuelto (1.4)** |
 | FE-017 | Accesibilidad | B | Tablas dinámicas sin `aria-live`/`aria-busy` | `feedback.js:68-73` | Pendiente |
 | FE-018 | CSS / Arquitectura | **A** | Cascada de dos generaciones: 130 selectores duplicados | `base.css:214`; `components.css:1639`; `layout.css:326`; `login.css:225` (+5) | Pendiente |
 | FE-019 | CSS / Arquitectura | M | Bug de cascada: media query de `.temp-card` anulada | `css/pages/dashboard.css:55-67,69` | **Resuelto (0.4)** |
@@ -646,7 +646,7 @@ toast.addEventListener("mouseenter", () => clearTimeout(timeout), { once: true }
 
 ---
 
-#### FE-016 · Sin `prefers-reduced-motion` — Media · Mejora
+#### FE-016 · Sin `prefers-reduced-motion` — Media · Mejora · **Resuelto (1.4)**
 
 **Ubicación:** `base.css:161-202` (`fadeIn`, `spinner`), `components.css:1229-1301` (`toastIn/Out/Progress`, `modalIn`, `fadeOut`), transiciones en `body` y sidebar.
 
@@ -665,6 +665,8 @@ toast.addEventListener("mouseenter", () => clearTimeout(timeout), { once: true }
   }
 }
 ```
+
+**Corrección aplicada:** el bloque vive al final de `base.css` e incluye además `scroll-behavior: auto !important`. Verificado en Chromium: con `reduce`, el spinner pasa de `0.7s infinite` a `1e-05s` y una iteración, y las transiciones de `body`/`.icon-button` de `0.16s`/`0.15s` a `1e-05s`; con `no-preference` se conservan los valores originales. Las 4 declaraciones `!important` están acotadas a este bloque.
 
 ---
 
@@ -865,7 +867,7 @@ const PAGES = ["dashboard.html","trucks.html","drivers.html","routes.html","aler
 ## 6. Puntos fuertes (conservar)
 
 1. **Sistema de tokens real**: 73 custom properties, tema oscuro completo, solo 3 sin uso.
-2. **Cero estilos en línea** y solo **3 `!important`**, todos en utilidades de ocultación.
+2. **Cero estilos en línea** y solo **3 `!important`** en utilidades de ocultación, más 4 acotados al bloque de movimiento reducido.
 3. **Build sólido**: CSS agrupado y minificado por página, JS bundleado, hashes y caché `immutable`; Docker lo ejecuta en producción.
 4. **Seguridad de cliente bien encaminada**: CSP y cabeceras en servidor, sin CDNs, sin `target="_blank"`, `escapeHtml` en las interpolaciones.
 5. **Accesibilidad de base**: `focus-visible` global, `.sr-only`, `aria-current`, `role="dialog"` + `aria-modal` + focus trap funcional (`modal.js:16-63`), imágenes con `width`/`height`.
