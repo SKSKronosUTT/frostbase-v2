@@ -36,6 +36,13 @@ def agent_data(create_truck, create_device, create_driver):
     device_pk, _, _ = create_device(truck_id, device_id="ESP32-AR-001")
     driver_id, _, _ = create_driver(email="ar.driver@frostbase.local")
     now = utcnow()
+    now_local = now.astimezone(settings.tz)
+    start_local = datetime.combine(now_local.date(), time.min, tzinfo=settings.tz)
+    elapsed_today = now - start_local.astimezone(UTC)
+    # Mantiene las alertas dentro del día local aunque el test se ejecute
+    # justo después de medianoche (evita el falso negativo de CI).
+    recent_start = now - min(timedelta(hours=1), elapsed_today / 2)
+    recent_resolved = now - min(timedelta(minutes=30), elapsed_today / 4)
     with SessionLocal() as db:
         db.add(
             Reading(
@@ -74,8 +81,8 @@ def agent_data(create_truck, create_device, create_driver):
                 device_id=device_pk,
                 alert_type="humedad",
                 status="resuelta",
-                started_at=now - timedelta(hours=1),
-                resolved_at=now - timedelta(minutes=30),
+                started_at=recent_start,
+                resolved_at=recent_resolved,
             )
         )
         db.add(
