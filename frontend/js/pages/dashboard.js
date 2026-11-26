@@ -562,7 +562,7 @@ function wireEvents() {
 
 async function init() {
   await initProtectedPage();
-  map = createMap("dashboardMap", { zoom: 12 });
+  map = createMap("dashboardMap", { zoom: 12, lazy: true });
   wireEvents();
   loadWeather();
   state.weatherTimer = window.setInterval(loadWeather, 10 * 60 * 1000);

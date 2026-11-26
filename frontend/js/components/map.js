@@ -2,7 +2,10 @@ export const DEFAULT_CENTER = [32.5149, -117.0382];
 export const OSM_ATTRIBUTION =
   '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors';
 
-export function createMap(elementId, { center = DEFAULT_CENTER, zoom = 12 } = {}) {
+export function createMap(
+  elementId,
+  { center = DEFAULT_CENTER, zoom = 12, lazy = false } = {}
+) {
   const element = document.getElementById(elementId);
   if (!element || typeof L === "undefined") {
     throw new Error("Leaflet no está disponible para inicializar el mapa");
@@ -14,10 +17,28 @@ export function createMap(elementId, { center = DEFAULT_CENTER, zoom = 12 } = {}
     scrollWheelZoom: true,
     attributionControl: true,
   });
-  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+  const tiles = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
     maxZoom: 19,
     attribution: OSM_ATTRIBUTION,
-  }).addTo(map);
+  });
+  if (lazy && "IntersectionObserver" in window) {
+    // No descarga teselas hasta que el mapa sea protagonista en pantalla
+    // (LCP del dashboard en móvil).
+    let observer = null;
+    const load = () => {
+      tiles.addTo(map);
+      observer?.disconnect();
+    };
+    observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) load();
+      },
+      { threshold: 0.5 }
+    );
+    observer.observe(element);
+  } else {
+    tiles.addTo(map);
+  }
   setTimeout(() => map.invalidateSize(), 150);
   return map;
 }

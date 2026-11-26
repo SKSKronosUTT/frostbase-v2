@@ -516,8 +516,10 @@
 }
 
 .kpi-card__meta {
+  display: block;
   font-size: var(--text-sm);
   color: var(--text-soft);
+  min-height: 2lh;
 }
 
 .carousel {

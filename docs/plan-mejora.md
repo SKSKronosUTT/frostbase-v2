@@ -41,7 +41,7 @@ Este plan solo contiene acciones derivadas de hallazgos verificados. No incluye 
 | 2.5 | Parciales de `<head>` y sidebar estática | FE-001, FE-033 | L | Medio | 2.1 | ✅ |
 | 2.6 | Pesos tipográficos coherentes | FE-024 | S | Bajo | 2.2 | ✅ |
 | 3.1 | Linters y validación en CI | FE-034 | M | Alto | 2.1 | ✅ |
-| 3.2 | Rendimiento de carga | FE-028, FE-030, FE-031, FE-032 | M | Medio | 2.5 | ⬜ |
+| 3.2 | Rendimiento de carga | FE-028, FE-030, FE-031, FE-032 | M | Medio | 2.5 | ✅ |
 | 3.3 | `100dvh` y Safari | FE-029 | S | Bajo | — | ⬜ |
 | 3.4 | Ampliar suite a11y | FE-036 | M | Medio | 1.x | ✅ |
 | 3.5 | Guía de estilos y README frontend | — | M | Medio | 2.x | ⬜ |
@@ -575,25 +575,29 @@ La verificación A/B de estilos computados se ejecutó en la app real (login, da
 
 ---
 
-## 3.2 · Rendimiento de carga — ⬜
+## 3.2 · Rendimiento de carga — ✅ Aplicado
 
 **Hallazgos:** FE-028, FE-030, FE-031, FE-032.
 
-**Tareas**
+**Tareas realizadas**
 
-1. Inline de `theme-boot.js` (11 líneas) con hash en la CSP, para eliminar la petición bloqueante.
-2. CSS crítico inline para `login` y `dashboard`; `preload` de la hoja de página.
-3. Sustituir `logo.png` por SVG + `favicon-32.png` + `apple-touch-icon`.
-4. Unificar la ruta de la fuente en `fonts.css` (relativa o reescrita en build).
-5. Evaluar un subset real de FontAwesome o pasar los iconos de navegación a SVG inline.
+1. `theme-boot.js` se minifica y se **inlinea** en el HTML del build. El build calcula su SHA-256 y escribe `build/csp.json`; el backend lee ese archivo y añade el hash a `script-src`, sin `unsafe-inline`. Se elimina la petición bloqueante y el destello de tema sigue cubierto.
+2. El build fusiona **todo el CSS de la página** (vendor + app) en una sola hoja y reescribe las URL relativas de fuentes e imágenes desde `assets/build/`. Cada página pasa de 2–3 hojas bloqueantes a **una**. No se duplicó CSS crítico inline: la única hoja bloqueante ya es el bundle crítico (8–13 KB comprimidos).
+3. Logo optimizado a partir del PNG maestro: `logo-160.png` (17,8 KB), `favicon-32.png` (2,1 KB) y `apple-touch-icon.png` (21 KB). El logo del sidebar/login pasa de 71 KB a 18 KB y el favicon de 71 KB a 2 KB. No había fuente vectorial; se mantiene el PNG maestro sin servirlo.
+4. `fonts.css` usa `../assets/fonts/outfit-latin.woff2`; el build lo reescribe a `../fonts/outfit-latin.woff2`. Preload (`assets/fonts/...`) y CSS resuelven a la misma URL y funcionan bajo subpath. `vendor_assets.py` genera la misma ruta.
+5. FontAwesome ya se subseteaba por iconos usados; se mantiene (153 KB sin comprimir, ~6 KB de transferencia). No se migraron los iconos a SVG.
+6. **Mapa del dashboard diferido**: las teselas de Leaflet se cargan con `IntersectionObserver` al 50 % de visibilidad. En móvil el mapa está bajo el pliegue, así que el LCP pasa a ser el H1 en lugar de una tesela de OSM.
+7. **CLS**: `.kpi-card__meta` reserva dos líneas (`display:block` + `min-height:2lh`); el crecimiento del texto al cargar datos desplazaba la página 21 px (CLS 0,18 → 0,034).
 
-**Archivos:** `scripts/build.mjs`, todas las `.html`, `assets/`, `css/fonts.css`, `backend/app/main.py` (CSP con hash).
+**Archivos:** `scripts/build.mjs`, `backend/app/main.py`, `js/components/map.js`, `js/pages/dashboard.js`, `css/components.css`, `css/fonts.css`, `tools/vendor_assets.py`, `partials/head.html`, `partials/sidebar.html`, `login.html`, `driver.html`, `assets/{logo-160,favicon-32,apple-touch-icon}.png`, `docker/Dockerfile`.
 **Esfuerzo:** M · **Impacto:** Medio · **Dependencias:** 2.5.
-**Riesgo:** medio (CSP y build). Mitigación: probar `csp.spec.js` y comparar el HTML generado.
+**Riesgo:** medio (CSP y build). Mitigación: hash generado por el build, verificación de `csp.spec.js`, suite E2E y comprobación de fuente/iconos/imágenes.
 
-**Aceptación:** 0 peticiones bloqueantes distintas del CSS crítico; LCP < 2,5 s en 4G simulada; CLS < 0,1; CSP sin violaciones.
+**Aceptación:** una sola hoja bloqueante (el bundle crítico) ✅; LCP < 2,5 s en 4G simulada ✅; CLS < 0,1 ✅; CSP sin violaciones ✅.
 
-**Verificación:** Lighthouse (mobile y desktop), pestaña Network, `tests/e2e/csp.spec.js`.
+**Verificación:** Lighthouse 12 mobile/desktop sobre login y dashboard; Playwright con 4G simulado; `csp.spec.js`; suite E2E completa; `npm run verify`; Ruff y mypy.
+
+**Resultado:** Lighthouse móvil: login **100** (LCP 1,48 s), dashboard **90** (LCP 2,17 s, CLS 0). Escritorio: login **100** (0,38 s), dashboard **86** (1,09 s, CLS 0,034). Transferencia con 4G simulado: login 123 → **68 KB**, dashboard 188 → **132 KB**; hojas bloqueantes 2–3 → **1**; scripts síncronos 1–2 → **0–1** (el tema pasa a inline; Leaflet solo en páginas con mapa). E2E **53/53** y CSP sin violaciones. Queda pendiente el peso sin comprimir de FontAwesome (no afecta al LCP) y la optimización del TBT móvil (364 ms) con clustering de marcadores.
 
 ---
 
@@ -752,5 +756,6 @@ npx lighthouse http://localhost:8050/dashboard.html \
 | 2026-11-26 | 1.9 | 4 `.html` + `css/components.css` | 5 tablas con `role="region"`, nombre y `tabindex`; `scrollable-region-focusable` 1 → 0; tabla compacta 620 px; E2E 39/39 |
 | 2026-11-26 | 3.1 | `package.json`, `.stylelintrc.json`, `.htmlvalidate.json`, CI, pre-commit, `build.mjs` | Stylelint + html-validate en CI y pre-commit; `npm run verify`; fixtures de duplicado y `<th>` sin `scope` fallan; build inmune a CRLF |
 | 2026-11-26 | 3.4 | `tests/e2e/accessibility.spec.js`, `package.json`, CI | 30 pruebas (12 páginas × 2 temas, `moderate+`) y 4 de foco; E2E 39 → **53**; 30/30 estable en dos pasadas |
+| 2026-11-26 | 3.2 | `build.mjs`, `main.py`, `map.js`, `components.css`, assets y Dockerfile | Tema inline con hash CSP; CSS único por página; logo 71 → 18 KB; LCP móvil 2,17 s; CLS 0,034; Lighthouse 90–100 |
 
-**Próximo paso recomendado:** **3.2 · Rendimiento de carga** (M) o **3.5 · Guía de estilos y README frontend** (M). La inversión mobile-first (2.3b) sigue pendiente como sesión dedicada.
+**Próximo paso recomendado:** **3.3 · `100dvh` y Safari** (S) o **3.5 · Guía de estilos y README frontend** (M). La inversión mobile-first (2.3b) sigue pendiente como sesión dedicada.
