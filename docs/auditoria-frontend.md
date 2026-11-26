@@ -15,7 +15,7 @@ npm run build
 
 **Estado de git al iniciar:** rama `devolp`, con un archivo no rastreado (`plan_implementacion_modulo_conductores.md`, del equipo, excluido de esta auditoría). No se modificó ningún archivo durante la auditoría.
 
-> **Actualización posterior:** tras la auditoría se aplicaron los pasos **0.1, 0.2, 0.3, 0.4, 1.1, 1.2, 1.3, 1.4 y 1.5** del plan (`docs/plan-mejora.md`). Los hallazgos afectados aparecen marcados como **Resuelto**. El resto sigue pendiente.
+> **Actualización posterior:** tras la auditoría se aplicaron los pasos **0.1, 0.2, 0.3, 0.4, 1.1, 1.2, 1.3, 1.4, 1.5 y 1.6** del plan (`docs/plan-mejora.md`). Los hallazgos afectados aparecen marcados como **Resuelto**. El resto sigue pendiente.
 
 ---
 
@@ -25,7 +25,7 @@ Proyecto con una base mejor que la media: sistema de tokens real con tema claro/
 
 Los riesgos se concentran en tres frentes: (1) la cascada está construida en dos generaciones superpuestas (130 selectores duplicados), lo que ya produjo un bug real y hace impredecible cada cambio; (2) existen barreras de accesibilidad concretas (botones sin nombre, buscadores sin etiqueta, contraste AA insuficiente, drawer móvil sin gestión de foco); (3) la escala tipográfica y los breakpoints son ad hoc (30 tamaños de fuente, 13 breakpoints).
 
-**Nota global: 6/10** en el momento de la auditoría; **6,5/10** tras 0.1, 0.2 y 0.4, **7/10** tras 0.3, **7,5/10** tras 1.1, **8/10** tras 1.2 y **8,5/10** tras 1.5. Aprueba en intención e infraestructura; la deuda de cascada y los fallos de rendimiento impiden una nota mayor. Todo es corregible sin rediseño.
+**Nota global: 6/10** en el momento de la auditoría; **6,5/10** tras 0.1, 0.2 y 0.4, **7/10** tras 0.3, **7,5/10** tras 1.1, **8/10** tras 1.2, **8,5/10** tras 1.5 y se mantiene en **8,5/10** tras 1.6. Aprueba en intención e infraestructura; la deuda de cascada y los fallos de rendimiento impiden una nota mayor. Todo es corregible sin rediseño.
 
 ---
 
@@ -110,7 +110,7 @@ frontend/
 | FE-006 | HTML / Semántica | M | `<th>` sin `scope` en 5 tablas | `alerts.html:80-86`; `drivers.html:89-95`; `trucks.html:72-79,109-114`; `truck-detail.html:92-96` | **Resuelto (1.1)** |
 | FE-007 | HTML / Semántica | M | Sin `h1` o saltos de nivel | `driver.html:38-113`; `settings.html:38,64,90,106`; `index.html:17` | **Resuelto (1.2)** |
 | FE-008 | Accesibilidad | M | Landmarks `aside` sin nombre único | `dashboard.html:113`; `routes.html:40,48` | **Resuelto (1.1)** |
-| FE-009 | Accesibilidad | M | Patrón `tablist` incompleto (sin `aria-controls`, `tabpanel`, flechas) | `trucks.html:39-46`; `trucks.js:498-518` | Pendiente |
+| FE-009 | Accesibilidad | M | Patrón `tablist` incompleto (sin `aria-controls`, `tabpanel`, flechas) | `trucks.html:39-46`; `trucks.js:498-518` | **Resuelto (1.6)** |
 | FE-010 | Accesibilidad | M | `role="application"` en 4 mapas | `dashboard.html:79`; `routes.html:129`; `route-detail.html:52`; `truck-detail.html:60` | Pendiente |
 | FE-011 | HTML / Semántica | M | `aria-label` en elemento no interactivo | `ai.html:146-149` | **Resuelto (1.1)** |
 | FE-012 | Accesibilidad | M | Errores de formulario no asociados al campo | `login.html:48`; `login.js:54-66`; `settings.html:32` | **Resuelto (1.5)** |
@@ -522,7 +522,7 @@ y en CSS, para el sidebar cerrado en móvil, `visibility: hidden` / `inert` adem
 
 ---
 
-#### FE-009 · Patrón `tablist` incompleto — Media · Error
+#### FE-009 · Patrón `tablist` incompleto — Media · Error · **Resuelto (1.6)**
 
 **Ubicación:** `trucks.html:39-46` y `trucks.js:498-518`.
 
@@ -544,6 +544,8 @@ document.querySelectorAll("[data-tab]").forEach((button) => {
 **Impacto:** faltan `aria-controls`, paneles con `role="tabpanel"` y navegación con flechas/Home/End. El patrón ARIA de tabs está declarado pero no implementado; un usuario de lector de pantalla espera esas teclas y no funcionan.
 
 **Recomendación:** completar el patrón o, si se prefiere simplicidad, sustituirlo por dos enlaces/botones con `aria-pressed` y paneles mostrados/ocultos.
+
+**Corrección aplicada:** los tabs tienen `id`, `aria-controls` y `tabindex` móvil; los paneles son `role="tabpanel"` con `aria-labelledby`. `switchTab` sincroniza `aria-selected`, `tabindex` y `hidden`, y se añadió navegación con `ArrowLeft`, `ArrowRight`, `Home` y `End` que mueve el foco al tab destino. Verificado en Chromium con API simulada: estado inicial, flechas, Home/End, clic y carga diferida de dispositivos.
 
 ---
 

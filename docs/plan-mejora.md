@@ -30,7 +30,7 @@ Este plan solo contiene acciones derivadas de hallazgos verificados. No incluye 
 | 1.3 | Foco visible en el asistente | FE-015 | S | Medio | — | ✅ |
 | 1.4 | `prefers-reduced-motion` | FE-016 | S | Medio | — | ✅ |
 | 1.5 | Errores de formulario y toasts | FE-012, FE-013, FE-017 | M | Medio | 0.1 | ✅ |
-| 1.6 | Patrón de tabs accesible | FE-009 | M | Medio | — | ⬜ |
+| 1.6 | Patrón de tabs accesible | FE-009 | M | Medio | — | ✅ |
 | 1.7 | Mapas sin `role="application"` | FE-010 | M | Medio | — | ⬜ |
 | 2.1 | Fusionar la cascada «Consolidado» | FE-018, FE-034 | L | Alto | 0.4 | ⬜ |
 | 2.2 | Tokens de tipografía y espaciado | FE-021, FE-022, FE-023 | L | Alto | 2.1 | ⬜ |
@@ -308,23 +308,25 @@ cd frontend && npx playwright test tests/e2e/accessibility.spec.js
 
 ---
 
-## 1.6 · Patrón de tabs accesible — ⬜
+## 1.6 · Patrón de tabs accesible — ✅ Aplicado
 
 **Hallazgos:** FE-009.
 
-**Tareas**
+**Tareas realizadas**
 
-1. En `trucks.html`: añadir `id` a los botones (`tab-trucks`, `tab-devices`), `aria-controls` hacia los paneles, `role="tabpanel"` y `aria-labelledby` en `#trucksPanel` y `#devicesPanel`, y `tabindex="-1"` en el panel inactivo.
-2. En `trucks.js`: manejar `ArrowLeft`, `ArrowRight`, `Home` y `End` moviendo foco y activando el tab; mantener `aria-selected` sincronizado.
-3. Alternativa más simple si no se quiere mantener el patrón: dos botones con `aria-pressed` y paneles con `hidden`.
+1. `trucks.html`: `id` en los tabs (`tab-trucks`, `tab-devices`), `aria-controls` hacia sus paneles, `tabindex` móvil (`0` en el activo, `-1` en el inactivo) y paneles con `role="tabpanel"` y `aria-labelledby`.
+2. `trucks.js`: `switchTab` sincroniza `aria-selected`, `tabindex` y los paneles; se añadió navegación con `ArrowLeft`, `ArrowRight`, `Home` y `End`, moviendo el foco al tab destino.
+3. Se conserva el clic y la carga diferida de dispositivos (`devicesLoaded`).
 
 **Archivos:** `frontend/trucks.html`, `frontend/js/pages/trucks.js`.
 **Esfuerzo:** M · **Impacto:** Medio · **Dependencias:** ninguna.
-**Riesgo:** bajo, pero toca lógica de carga diferida de dispositivos (`switchTab`). Mitigación: probar que `devicesLoaded` sigue funcionando.
+**Riesgo:** bajo; solo cambia la interacción de las pestañas.
 
 **Aceptación:** con foco en un tab, las flechas cambian de pestaña y de panel; el lector anuncia «pestaña 2 de 2, seleccionada».
 
-**Verificación:** manual con teclado + axe (`aria-required-children`, `aria-required-parent`).
+**Verificación:** Chromium headless con API simulada: estado inicial, `ArrowRight`/`ArrowLeft`, `Home`/`End`, clic y visibilidad de paneles.
+
+**Resultado:** ambos tabs con `aria-controls`, `aria-selected` y `tabindex` correctos; paneles `tabpanel` vinculados; flechas y Home/End cambian foco, selección y panel; la carga diferida de dispositivos sigue funcionando. 0 errores de página. Build, `check:css`, `check:html` y ESLint correctos.
 
 ---
 
@@ -653,5 +655,6 @@ npx lighthouse http://localhost:8050/dashboard.html \
 | 2026-11-25 | 1.3 | `css/pages/ai.css` | Outline de 2 px restaurado en el selector de camión y el textarea; `:focus-visible` verificado en Chromium |
 | 2026-11-25 | 1.4 | `css/base.css` | Guard de `prefers-reduced-motion`: animaciones y transiciones a `1e-05s`; spinner estático; valores normales intactos |
 | 2026-11-25 | 1.5 | `js/components/form-errors.js` (nuevo), `js/pages/{login,settings,drivers}.js`, `js/core/notifications.js`, `css/components.css`, 10 `.html` | Errores inline con `aria-invalid`/`aria-describedby` y foco; toasts `alert` persistentes y pausables; contadores `role="status"` |
+| 2026-11-25 | 1.6 | `trucks.html`, `js/pages/trucks.js` | Tabs con `aria-controls`/`tabpanel`, roving tabindex y navegación con flechas/Home/End; verificado en Chromium |
 
-**Próximo paso recomendado:** **1.6 · Patrón de tabs accesible**. Completa `aria-controls`/`tabpanel` y la navegación con flechas en `trucks.html`; esfuerzo M.
+**Próximo paso recomendado:** **1.7 · Mapas sin `role="application"`**. Evita el modo aplicación en los 4 mapas y añade un resumen textual equivalente; esfuerzo M.

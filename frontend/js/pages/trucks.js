@@ -495,12 +495,14 @@ async function rotateDeviceKey(deviceId, deviceName) {
   }
 }
 
-function switchTab(tab) {
+function switchTab(tab, { focus = false } = {}) {
   state.tab = tab;
   document.querySelectorAll("[data-tab]").forEach((button) => {
     const active = button.dataset.tab === tab;
     button.classList.toggle("is-active", active);
     button.setAttribute("aria-selected", String(active));
+    button.tabIndex = active ? 0 : -1;
+    if (active && focus) button.focus();
   });
   qs("#trucksPanel").hidden = tab !== "trucks";
   qs("#devicesPanel").hidden = tab !== "devices";
@@ -515,6 +517,21 @@ function wireEvents() {
 
   document.querySelectorAll("[data-tab]").forEach((button) => {
     button.addEventListener("click", () => switchTab(button.dataset.tab));
+  });
+
+  const tabs = [...document.querySelectorAll('[role="tab"]')];
+  tabs.forEach((tab, index) => {
+    tab.addEventListener("keydown", (event) => {
+      let nextIndex = null;
+      if (event.key === "ArrowRight") nextIndex = (index + 1) % tabs.length;
+      else if (event.key === "ArrowLeft") {
+        nextIndex = (index - 1 + tabs.length) % tabs.length;
+      } else if (event.key === "Home") nextIndex = 0;
+      else if (event.key === "End") nextIndex = tabs.length - 1;
+      if (nextIndex === null) return;
+      event.preventDefault();
+      switchTab(tabs[nextIndex].dataset.tab, { focus: true });
+    });
   });
 
   qs("#truckSearch").addEventListener(
