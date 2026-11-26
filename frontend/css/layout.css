@@ -269,13 +269,13 @@
   font-size: var(--text-sm);
 }
 
-@media (max-width: 1120px) {
+@media (max-width: 1280px) {
   .main {
     padding: 26px 22px var(--space-12);
   }
 }
 
-@media (max-width: 900px) {
+@media (max-width: 1024px) {
   .app-shell {
     --sidebar-width: 260px;
   }
@@ -330,7 +330,7 @@
   }
 }
 
-@media (max-width: 640px) {
+@media (max-width: 480px) {
   .main {
     padding-left: var(--space-7);
     padding-right: var(--space-7);
@@ -354,17 +354,17 @@
   letter-spacing: -0.035em;
 }
 
-@media (max-width: 1120px) {
+@media (max-width: 1280px) {
 }
 
-@media (max-width: 900px) {
+@media (max-width: 1024px) {
   .sidebar {
     border-right: 4px solid var(--border-ink);
     box-shadow: 8px 0 0 rgba(0, 0, 0, 0.35);
   }
 }
 
-@media (max-width: 640px) {
+@media (max-width: 480px) {
   .page-header__title h1 {
     font-size: var(--text-3xl);
   }

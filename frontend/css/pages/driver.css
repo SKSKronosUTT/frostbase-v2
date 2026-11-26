@@ -281,7 +281,7 @@ body.driver-page {
   }
 }
 
-@media (max-width: 360px) {
+@media (max-width: 480px) {
   .driver-container-grid {
     grid-template-columns: 1fr;
   }

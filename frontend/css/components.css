@@ -657,6 +657,7 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--space-4);
+  flex-wrap: wrap;
 }
 
 .alert-carousel__truck {
@@ -1316,7 +1317,7 @@
   font-variant-numeric: tabular-nums;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 1024px) {
   .kpi-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: var(--space-6);
@@ -1338,7 +1339,7 @@
   }
 }
 
-@media (max-width: 720px) {
+@media (max-width: 768px) {
   .kpi-grid {
     grid-template-columns: 1fr;
   }
@@ -1575,7 +1576,7 @@
   font-weight: 700;
 }
 
-@media (max-width: 640px) {
+@media (max-width: 480px) {
   .card,
   .kpi-card {
     box-shadow: 4px 4px 0 var(--ink);
@@ -1586,7 +1587,7 @@
   }
 }
 
-@media (max-width: 640px) {
+@media (max-width: 480px) {
   .pagination {
     padding: var(--space-6) var(--space-7) var(--space-8);
   }

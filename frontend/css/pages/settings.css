@@ -121,13 +121,13 @@
   padding-top: var(--space-2);
 }
 
-@media (max-width: 980px) {
+@media (max-width: 1024px) {
   .settings-layout {
     grid-template-columns: 1fr;
   }
 }
 
-@media (max-width: 640px) {
+@media (max-width: 480px) {
   .settings-actions .btn {
     flex: 1;
   }
