@@ -15,7 +15,7 @@ npm run build
 
 **Estado de git al iniciar:** rama `devolp`, con un archivo no rastreado (`plan_implementacion_modulo_conductores.md`, del equipo, excluido de esta auditoría). No se modificó ningún archivo durante la auditoría.
 
-> **Actualización posterior:** tras la auditoría se aplicaron los pasos **0.1, 0.2, 0.3, 0.4, 1.1, 1.2, 1.3 y 1.4** del plan (`docs/plan-mejora.md`). Los hallazgos afectados aparecen marcados como **Resuelto**. El resto sigue pendiente.
+> **Actualización posterior:** tras la auditoría se aplicaron los pasos **0.1, 0.2, 0.3, 0.4, 1.1, 1.2, 1.3, 1.4 y 1.5** del plan (`docs/plan-mejora.md`). Los hallazgos afectados aparecen marcados como **Resuelto**. El resto sigue pendiente.
 
 ---
 
@@ -25,7 +25,7 @@ Proyecto con una base mejor que la media: sistema de tokens real con tema claro/
 
 Los riesgos se concentran en tres frentes: (1) la cascada está construida en dos generaciones superpuestas (130 selectores duplicados), lo que ya produjo un bug real y hace impredecible cada cambio; (2) existen barreras de accesibilidad concretas (botones sin nombre, buscadores sin etiqueta, contraste AA insuficiente, drawer móvil sin gestión de foco); (3) la escala tipográfica y los breakpoints son ad hoc (30 tamaños de fuente, 13 breakpoints).
 
-**Nota global: 6/10** en el momento de la auditoría; **6,5/10** tras 0.1, 0.2 y 0.4, **7/10** tras 0.3, **7,5/10** tras 1.1 y **8/10** tras 1.2. Aprueba en intención e infraestructura; la deuda de cascada y los fallos de rendimiento impiden una nota mayor. Todo es corregible sin rediseño.
+**Nota global: 6/10** en el momento de la auditoría; **6,5/10** tras 0.1, 0.2 y 0.4, **7/10** tras 0.3, **7,5/10** tras 1.1, **8/10** tras 1.2 y **8,5/10** tras 1.5. Aprueba en intención e infraestructura; la deuda de cascada y los fallos de rendimiento impiden una nota mayor. Todo es corregible sin rediseño.
 
 ---
 
@@ -113,12 +113,12 @@ frontend/
 | FE-009 | Accesibilidad | M | Patrón `tablist` incompleto (sin `aria-controls`, `tabpanel`, flechas) | `trucks.html:39-46`; `trucks.js:498-518` | Pendiente |
 | FE-010 | Accesibilidad | M | `role="application"` en 4 mapas | `dashboard.html:79`; `routes.html:129`; `route-detail.html:52`; `truck-detail.html:60` | Pendiente |
 | FE-011 | HTML / Semántica | M | `aria-label` en elemento no interactivo | `ai.html:146-149` | **Resuelto (1.1)** |
-| FE-012 | Accesibilidad | M | Errores de formulario no asociados al campo | `login.html:48`; `login.js:54-66`; `settings.html:32` | Pendiente |
-| FE-013 | Accesibilidad | M | Toasts de error con `role="status"` y autodescarte sin pausa por teclado | `notifications.js:30,52` | Pendiente |
+| FE-012 | Accesibilidad | M | Errores de formulario no asociados al campo | `login.html:48`; `login.js:54-66`; `settings.html:32` | **Resuelto (1.5)** |
+| FE-013 | Accesibilidad | M | Toasts de error con `role="status"` y autodescarte sin pausa por teclado | `notifications.js:30,52` | **Resuelto (1.5)** |
 | FE-014 | Accesibilidad | M | `login` e `index` sin `<main>`; no hay skip link | `login.html:23`; `index.html:17` | **Resuelto (1.2)** |
 | FE-015 | Accesibilidad | M | Foco visible eliminado en inputs del asistente | `ai.css:322-325,484-487` | **Resuelto (1.3)** |
 | FE-016 | Accesibilidad | M | Sin `prefers-reduced-motion` pese a 14 animaciones | `base.css:161-202`; `components.css:1229-1301` | **Resuelto (1.4)** |
-| FE-017 | Accesibilidad | B | Tablas dinámicas sin `aria-live`/`aria-busy` | `feedback.js:68-73` | Pendiente |
+| FE-017 | Accesibilidad | B | Tablas dinámicas sin anuncio del resultado | `feedback.js:68-73`; contadores de tablas | **Resuelto (1.5)** |
 | FE-018 | CSS / Arquitectura | **A** | Cascada de dos generaciones: 130 selectores duplicados | `base.css:214`; `components.css:1639`; `layout.css:326`; `login.css:225` (+5) | Pendiente |
 | FE-019 | CSS / Arquitectura | M | Bug de cascada: media query de `.temp-card` anulada | `css/pages/dashboard.css:55-67,69` | **Resuelto (0.4)** |
 | FE-020 | Responsive | M | 13 breakpoints, desktop-first e inconsistente | todas las hojas | Pendiente |
@@ -563,7 +563,7 @@ document.querySelectorAll("[data-tab]").forEach((button) => {
 
 ---
 
-#### FE-012 · Errores de formulario no asociados — Media · Riesgo
+#### FE-012 · Errores de formulario no asociados — Media · Riesgo · **Resuelto (1.5)**
 
 **Ubicación:** `login.html:48`, `login.js:54-66`, `settings.html:32`, `drivers.html:130`.
 
@@ -584,9 +584,11 @@ notify.error(error.message || "No se pudo iniciar sesión.");
 
 **Recomendación:** un `<p class="field-error" id="identifier-error" role="alert">` junto al campo, `aria-invalid="true"` y `aria-describedby`; enfocar el primer campo inválido.
 
+**Corrección aplicada:** módulo `js/components/form-errors.js` con `setFieldError`, `clearFieldError`, `clearFormErrors` y `focusFirstError`, que inserta `<p class="field-error" role="alert">` dentro del `.form-field`, gestiona `aria-invalid`/`aria-describedby` y limpia al corregir. Se aplicó en `login.js` (2 campos), `settings.js` (8 obligatorios + rangos asociados a su tolerancia) y `drivers.js` (5 obligatorios + formato de correo). En `settings.js` se corrigió además `numberValue`, que convertía un campo vacío en 0 y ocultaba el error. Verificado en Chromium con API simulada.
+
 ---
 
-#### FE-013 · Toasts de error y autodescarte — Media · Riesgo
+#### FE-013 · Toasts de error y autodescarte — Media · Riesgo · **Resuelto (1.5)**
 
 **Ubicación:** `frontend/js/core/notifications.js:30,52`.
 
@@ -602,6 +604,8 @@ toast.addEventListener("mouseenter", () => clearTimeout(timeout), { once: true }
 **Impacto:** los errores usan `role="status"` (cortesía) en lugar de `role="alert"`; el contenedor ya tiene `aria-live="polite"` en el HTML, lo que puede duplicar anuncios. El mensaje desaparece a los 4,5–6 s sin posibilidad de pausarlo con teclado (solo `mouseenter`), y el usuario puede perderse el error.
 
 **Recomendación:** `role="alert"` para errores; pausa en `focusin` además de `mouseenter`; ampliar duración de errores o no autodescartarlos; evitar el doble live region.
+
+**Corrección aplicada:** los errores usan `role="alert"` con `aria-atomic="true"`, no se autodescartan (se elimina su barra de progreso) y el temporizador se pausa en `mouseenter` y `focusin`. Se retiró `aria-live="polite"` de los 10 `#toastRoot` para que el anuncio dependa de cada toast y no se duplique. Verificado: el error sigue visible tras 1,3 s y un toast informativo con el foco puesto también permanece.
 
 ---
 
@@ -670,7 +674,7 @@ toast.addEventListener("mouseenter", () => clearTimeout(timeout), { once: true }
 
 ---
 
-#### FE-017 · Tablas dinámicas sin anuncio de estado — Baja · Mejora
+#### FE-017 · Tablas dinámicas sin anuncio de estado — Baja · Mejora · **Resuelto (1.5)**
 
 **Ubicación:** `frontend/js/components/feedback.js:68-73`.
 
@@ -681,9 +685,11 @@ export function renderTableState(container, html, { onRetry } = {}) {
   container.innerHTML = html;
 ```
 
-**Impacto:** la carga y los errores de tabla se sustituyen sin `aria-busy` ni live region; un usuario de lector de pantalla no sabe que el contenido cambió.
+**Impacto:** la carga y los errores de tabla se sustituyen sin anuncio del resultado; un usuario de lector de pantalla no sabe que el contenido cambió. `aria-busy` ya se aplicaba con `setAriaBusy`, por lo que el hueco real era la live region del resultado.
 
 **Recomendación:** `aria-busy="true"` durante la carga y un `<p role="status">` con el resultado («12 camiones cargados», «Error al cargar»).
+
+**Corrección aplicada:** se añadió `role="status"` a los contadores `#trucksCount`, `#devicesCount`, `#driversCount`, `#alertsCount`, `#routesCount` y `#readingsSummary`, de modo que cada actualización del resultado se anuncia. Los errores de carga se anuncian mediante el toast `role="alert"`.
 
 ---
 

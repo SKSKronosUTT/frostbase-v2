@@ -29,7 +29,7 @@ Este plan solo contiene acciones derivadas de hallazgos verificados. No incluye 
 | 1.2 | Encabezados, `<main>` y skip link | FE-007, FE-014 | S | Medio | — | ✅ |
 | 1.3 | Foco visible en el asistente | FE-015 | S | Medio | — | ✅ |
 | 1.4 | `prefers-reduced-motion` | FE-016 | S | Medio | — | ✅ |
-| 1.5 | Errores de formulario y toasts | FE-012, FE-013, FE-017 | M | Medio | 0.1 | ⬜ |
+| 1.5 | Errores de formulario y toasts | FE-012, FE-013, FE-017 | M | Medio | 0.1 | ✅ |
 | 1.6 | Patrón de tabs accesible | FE-009 | M | Medio | — | ⬜ |
 | 1.7 | Mapas sin `role="application"` | FE-010 | M | Medio | — | ⬜ |
 | 2.1 | Fusionar la cascada «Consolidado» | FE-018, FE-034 | L | Alto | 0.4 | ⬜ |
@@ -281,25 +281,30 @@ cd frontend && npx playwright test tests/e2e/accessibility.spec.js
 
 ---
 
-## 1.5 · Errores de formulario y toasts — ⬜
+## 1.5 · Errores de formulario y toasts — ✅ Aplicado
 
 **Hallazgos:** FE-012, FE-013, FE-017.
 
-**Tareas**
+**Tareas realizadas**
 
-1. En `login.js`, `settings.js` y `drivers.js`: al fallar la validación, marcar el campo con `aria-invalid="true"`, añadir `aria-describedby` a un `<p class="field-error" id="<campo>-error" role="alert">` y enfocar el primer campo inválido.
-2. Limpiar `aria-invalid` y el mensaje al corregir el valor.
-3. En `notifications.js`: usar `role="alert"` para `type === "error"`, pausar el temporizador en `focusin` (además de `mouseenter`) y no autodescartar errores o ampliar su duración a 10 s.
-4. En `feedback.js`: `aria-busy` mientras carga y un `role="status"` con el resultado (nº de filas o error).
+1. Nuevo módulo `frontend/js/components/form-errors.js` con `setFieldError`, `clearFieldError`, `clearFormErrors` y `focusFirstError`: crea un `<p class="field-error" role="alert">` dentro del `.form-field`, gestiona `aria-invalid` y `aria-describedby`, y limpia el error al escribir o cambiar el valor.
+2. `login.js`: los campos vacíos generan error inline (usuario y contraseña), foco en el primero y sin toast duplicado.
+3. `settings.js`: validación por campo; los 8 campos obligatorios se marcan individualmente y los rangos se asocian a la tolerancia correspondiente. `numberValue` ahora devuelve `null` para un campo vacío (antes `Number("")` lo convertía en 0 y ocultaba el error).
+4. `drivers.js`: validación de los 5 campos obligatorios y del formato de correo (`validity.typeMismatch`) antes de llamar a la API; se limpian al abrir el modal.
+5. `notifications.js`: `role="alert"` para errores, `aria-atomic="true"`, errores persistentes sin barra de progreso y pausa en `focusin` además de `mouseenter`. Se retiró `aria-live="polite"` de los 10 `#toastRoot` para evitar el doble live region.
+6. Tablas: `role="status"` en los contadores `#trucksCount`, `#devicesCount`, `#driversCount`, `#alertsCount`, `#routesCount` y `#readingsSummary`, que anuncian el resultado; `aria-busy` ya se aplicaba con `setAriaBusy`.
+7. CSS: `.field-error` y borde de error para `[aria-invalid="true"]`.
 
-**Archivos:** `frontend/js/pages/login.js`, `settings.js`, `drivers.js`, `trucks.js`; `frontend/js/core/notifications.js`; `frontend/js/components/feedback.js`; `frontend/css/components.css` (estilo `.field-error`).
+**Archivos:** `js/components/form-errors.js` (nuevo), `js/pages/login.js`, `js/pages/settings.js`, `js/pages/drivers.js`, `js/core/notifications.js`, `css/components.css`, 10 `.html` (toast roots) y 5 `.html` (contadores).
 
 **Esfuerzo:** M · **Impacto:** Medio · **Dependencias:** 0.1.
-**Riesgo de regresión visual:** bajo; el mensaje inline cambia la altura del formulario. Reservar espacio o usar `min-height` para evitar saltos.
+**Riesgo de regresión visual:** bajo; el mensaje inline ocupa el `gap` del `.form-field` y puede aumentar la altura del formulario.
 
-**Aceptación:** al enviar el login vacío, el foco va al campo, se anuncia el error y el campo queda marcado; el toast de error se anuncia como alerta y se puede pausar con teclado.
+**Aceptación:** al enviar los formularios con campos vacíos, cada campo queda marcado, el foco va al primero y el error se anuncia; el toast de error es `role="alert"`, no se autodescarta y se puede pausar con teclado.
 
-**Verificación:** axe en login/settings/drivers; prueba manual con NVDA; Playwright `critical-flows.spec.js`.
+**Verificación:** Chromium headless con API simulada en `login`, `settings` y `drivers`; comprobación de roles, `aria-*`, foco, limpieza al corregir, persistencia/pausa de toasts y guardado correcto.
+
+**Resultado:** login 2 errores y foco en `identifier`; settings 8 errores vacíos + 1 de rango en `temperatureTolerance` y guardado correcto sin errores; drivers 5 errores y correo inválido detectado; toast de error `alert` persistente sin progreso y toast info `status` que se mantiene al enfocar; 0 errores de página. Build, `check:css`, `check:html` y ESLint correctos.
 
 ---
 
@@ -647,5 +652,6 @@ npx lighthouse http://localhost:8050/dashboard.html \
 | 2026-11-25 | 1.2 | 12 `.html`, `css/base.css`, `css/pages/settings.css`, `js/components/sidebar.js` | Skip link + `<main id="main">` en 12/12, `h1` en driver/index, `h3 → h2` en settings; foco verificado en Chromium |
 | 2026-11-25 | 1.3 | `css/pages/ai.css` | Outline de 2 px restaurado en el selector de camión y el textarea; `:focus-visible` verificado en Chromium |
 | 2026-11-25 | 1.4 | `css/base.css` | Guard de `prefers-reduced-motion`: animaciones y transiciones a `1e-05s`; spinner estático; valores normales intactos |
+| 2026-11-25 | 1.5 | `js/components/form-errors.js` (nuevo), `js/pages/{login,settings,drivers}.js`, `js/core/notifications.js`, `css/components.css`, 10 `.html` | Errores inline con `aria-invalid`/`aria-describedby` y foco; toasts `alert` persistentes y pausables; contadores `role="status"` |
 
-**Próximo paso recomendado:** **1.5 · Errores de formulario y toasts**. Asocia los errores a sus campos y mejora el anuncio y la pausa de los toasts; esfuerzo M y depende de 0.1.
+**Próximo paso recomendado:** **1.6 · Patrón de tabs accesible**. Completa `aria-controls`/`tabpanel` y la navegación con flechas en `trucks.html`; esfuerzo M.

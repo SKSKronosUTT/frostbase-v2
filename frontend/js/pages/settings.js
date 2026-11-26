@@ -10,6 +10,11 @@ import {
   setButtonLoading,
   timeAgo,
 } from "../core/helpers.js";
+import {
+  clearFormErrors,
+  focusFirstError,
+  setFieldError,
+} from "../components/form-errors.js";
 
 const form = qs("#settingsForm");
 const saveButton = qs("#saveSettings");
@@ -29,7 +34,9 @@ const fields = {
 };
 
 function numberValue(input) {
-  const value = Number(input.value);
+  const raw = input.value.trim();
+  if (raw === "") return null;
+  const value = Number(raw);
   return Number.isFinite(value) ? value : null;
 }
 
@@ -89,49 +96,119 @@ function fillForm(settings) {
 
 function validate(payload) {
   if (payload.temperature_ideal - payload.temperature_tolerance < -80) {
-    return "El límite mínimo de temperatura no puede ser menor a -80 °C.";
+    return {
+      field: fields.temperatureTolerance,
+      message: "El límite mínimo de temperatura no puede ser menor a -80 °C.",
+    };
   }
   if (payload.temperature_ideal + payload.temperature_tolerance > 60) {
-    return "El límite máximo de temperatura no puede superar 60 °C.";
+    return {
+      field: fields.temperatureTolerance,
+      message: "El límite máximo de temperatura no puede superar 60 °C.",
+    };
   }
   if (payload.humidity_ideal - payload.humidity_tolerance < 0) {
-    return "El límite mínimo de humedad no puede ser menor a 0 %.";
+    return {
+      field: fields.humidityTolerance,
+      message: "El límite mínimo de humedad no puede ser menor a 0 %.",
+    };
   }
   if (payload.humidity_ideal + payload.humidity_tolerance > 100) {
-    return "El límite máximo de humedad no puede superar 100 %.";
+    return {
+      field: fields.humidityTolerance,
+      message: "El límite máximo de humedad no puede superar 100 %.",
+    };
   }
-  if (payload.temperature_tolerance <= 0)
-    return "La tolerancia de temperatura debe ser mayor que 0.";
-  if (payload.humidity_tolerance <= 0)
-    return "La tolerancia de humedad debe ser mayor que 0.";
-  if (payload.offline_timeout_seconds < 10 || payload.offline_timeout_seconds > 86400) {
-    return "El tiempo de desconexión debe estar entre 10 y 86400 segundos.";
+  if (payload.temperature_tolerance <= 0) {
+    return {
+      field: fields.temperatureTolerance,
+      message: "La tolerancia de temperatura debe ser mayor que 0.",
+    };
   }
-  if (!payload.weather_city) return "Indica una ciudad para el clima.";
+  if (payload.humidity_tolerance <= 0) {
+    return {
+      field: fields.humidityTolerance,
+      message: "La tolerancia de humedad debe ser mayor que 0.",
+    };
+  }
+  if (
+    payload.offline_timeout_seconds < 10 ||
+    payload.offline_timeout_seconds > 86400
+  ) {
+    return {
+      field: fields.offlineTimeout,
+      message: "El tiempo de desconexión debe estar entre 10 y 86400 segundos.",
+    };
+  }
+  if (!payload.weather_city) {
+    return {
+      field: fields.weatherCity,
+      message: "Indica una ciudad para el clima.",
+    };
+  }
   return null;
 }
 
 async function handleSubmit(event) {
   event.preventDefault();
+  const offlineTimeout = numberValue(fields.offlineTimeout);
   const payload = {
     temperature_ideal: numberValue(fields.temperatureIdeal),
     temperature_tolerance: numberValue(fields.temperatureTolerance),
     humidity_ideal: numberValue(fields.humidityIdeal),
     humidity_tolerance: numberValue(fields.humidityTolerance),
-    offline_timeout_seconds: Math.round(numberValue(fields.offlineTimeout)),
+    offline_timeout_seconds:
+      offlineTimeout === null ? null : Math.round(offlineTimeout),
     weather_city: fields.weatherCity.value.trim(),
     weather_latitude: numberValue(fields.weatherLatitude),
     weather_longitude: numberValue(fields.weatherLongitude),
   };
 
-  if (Object.values(payload).some((value) => value === null || value === "")) {
-    notify.warning("Completa todos los campos de configuración.");
+  clearFormErrors(form);
+
+  const required = [
+    [
+      fields.temperatureIdeal,
+      payload.temperature_ideal,
+      "Indica la temperatura ideal.",
+    ],
+    [
+      fields.temperatureTolerance,
+      payload.temperature_tolerance,
+      "Indica la tolerancia de temperatura.",
+    ],
+    [fields.humidityIdeal, payload.humidity_ideal, "Indica la humedad ideal."],
+    [
+      fields.humidityTolerance,
+      payload.humidity_tolerance,
+      "Indica la tolerancia de humedad.",
+    ],
+    [
+      fields.offlineTimeout,
+      payload.offline_timeout_seconds,
+      "Indica el tiempo de desconexión.",
+    ],
+    [fields.weatherCity, payload.weather_city, "Indica una ciudad para el clima."],
+    [fields.weatherLatitude, payload.weather_latitude, "Indica la latitud."],
+    [fields.weatherLongitude, payload.weather_longitude, "Indica la longitud."],
+  ];
+
+  let hasMissing = false;
+  for (const [field, value, message] of required) {
+    if (value === null || value === "") {
+      setFieldError(field, message);
+      hasMissing = true;
+    }
+  }
+  if (hasMissing) {
+    focusFirstError(form);
     return;
   }
 
   const problem = validate(payload);
   if (problem) {
-    notify.error(problem, { title: "Revisa la configuración" });
+    setFieldError(problem.field, problem.message);
+    focusFirstError(form);
     return;
   }
 
@@ -139,6 +216,7 @@ async function handleSubmit(event) {
   try {
     const settings = await api.put("/settings", payload);
     fillForm(settings);
+    clearFormErrors(form);
     notify.success("La configuración se guardó correctamente.");
   } catch (error) {
     notify.error(error.message, { title: "No se pudo guardar" });
@@ -160,6 +238,7 @@ async function init() {
 
   qs("#resetSettings").addEventListener("click", () => {
     if (!currentSettings) return;
+    clearFormErrors(form);
     fillForm(currentSettings);
     notify.info("Cambios descartados.");
   });
