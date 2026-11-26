@@ -74,6 +74,13 @@ function renderRoute(route) {
   const hasGeometry = Array.isArray(route.geometry) && route.geometry.length > 1;
   qs("#geometryWarning").classList.toggle("hidden", hasGeometry);
 
+  const pointCount = points.length;
+  qs("#routeDetailMapSummary").textContent = pointCount
+    ? `Mapa de la ruta con ${pointCount} punto${
+        pointCount === 1 ? "" : "s"
+      } de entrega${hasGeometry ? " y geometría calculada." : " y línea entre puntos."}`
+    : "Mapa de la ruta sin puntos de entrega.";
+
   points.forEach((point, index) => {
     L.marker([Number(point.latitude), Number(point.longitude)], {
       icon: numberedIcon(index + 1),

@@ -15,7 +15,7 @@ npm run build
 
 **Estado de git al iniciar:** rama `devolp`, con un archivo no rastreado (`plan_implementacion_modulo_conductores.md`, del equipo, excluido de esta auditoría). No se modificó ningún archivo durante la auditoría.
 
-> **Actualización posterior:** tras la auditoría se aplicaron los pasos **0.1, 0.2, 0.3, 0.4, 1.1, 1.2, 1.3, 1.4, 1.5 y 1.6** del plan (`docs/plan-mejora.md`). Los hallazgos afectados aparecen marcados como **Resuelto**. El resto sigue pendiente.
+> **Actualización posterior:** tras la auditoría se aplicaron los pasos **0.1, 0.2, 0.3, 0.4, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6 y 1.7** del plan (`docs/plan-mejora.md`). Los hallazgos afectados aparecen marcados como **Resuelto**. El resto sigue pendiente.
 
 ---
 
@@ -25,7 +25,7 @@ Proyecto con una base mejor que la media: sistema de tokens real con tema claro/
 
 Los riesgos se concentran en tres frentes: (1) la cascada está construida en dos generaciones superpuestas (130 selectores duplicados), lo que ya produjo un bug real y hace impredecible cada cambio; (2) existen barreras de accesibilidad concretas (botones sin nombre, buscadores sin etiqueta, contraste AA insuficiente, drawer móvil sin gestión de foco); (3) la escala tipográfica y los breakpoints son ad hoc (30 tamaños de fuente, 13 breakpoints).
 
-**Nota global: 6/10** en el momento de la auditoría; **6,5/10** tras 0.1, 0.2 y 0.4, **7/10** tras 0.3, **7,5/10** tras 1.1, **8/10** tras 1.2, **8,5/10** tras 1.5 y se mantiene en **8,5/10** tras 1.6. Aprueba en intención e infraestructura; la deuda de cascada y los fallos de rendimiento impiden una nota mayor. Todo es corregible sin rediseño.
+**Nota global: 6/10** en el momento de la auditoría; **6,5/10** tras 0.1, 0.2 y 0.4, **7/10** tras 0.3, **7,5/10** tras 1.1, **8/10** tras 1.2 y **8,5/10** tras 1.5, 1.6 y 1.7. La Fase 1 cierra la accesibilidad; la deuda de cascada (FE-018) y los fallos de rendimiento impiden una nota mayor. Todo es corregible sin rediseño.
 
 ---
 
@@ -111,7 +111,7 @@ frontend/
 | FE-007 | HTML / Semántica | M | Sin `h1` o saltos de nivel | `driver.html:38-113`; `settings.html:38,64,90,106`; `index.html:17` | **Resuelto (1.2)** |
 | FE-008 | Accesibilidad | M | Landmarks `aside` sin nombre único | `dashboard.html:113`; `routes.html:40,48` | **Resuelto (1.1)** |
 | FE-009 | Accesibilidad | M | Patrón `tablist` incompleto (sin `aria-controls`, `tabpanel`, flechas) | `trucks.html:39-46`; `trucks.js:498-518` | **Resuelto (1.6)** |
-| FE-010 | Accesibilidad | M | `role="application"` en 4 mapas | `dashboard.html:79`; `routes.html:129`; `route-detail.html:52`; `truck-detail.html:60` | Pendiente |
+| FE-010 | Accesibilidad | M | `role="application"` en 4 mapas | `dashboard.html:79`; `routes.html:129`; `route-detail.html:52`; `truck-detail.html:60` | **Resuelto (1.7)** |
 | FE-011 | HTML / Semántica | M | `aria-label` en elemento no interactivo | `ai.html:146-149` | **Resuelto (1.1)** |
 | FE-012 | Accesibilidad | M | Errores de formulario no asociados al campo | `login.html:48`; `login.js:54-66`; `settings.html:32` | **Resuelto (1.5)** |
 | FE-013 | Accesibilidad | M | Toasts de error con `role="status"` y autodescarte sin pausa por teclado | `notifications.js:30,52` | **Resuelto (1.5)** |
@@ -549,7 +549,7 @@ document.querySelectorAll("[data-tab]").forEach((button) => {
 
 ---
 
-#### FE-010 · `role="application"` en los mapas — Media · Riesgo
+#### FE-010 · `role="application"` en los mapas — Media · Riesgo · **Resuelto (1.7)**
 
 **Ubicación:** `dashboard.html:79`, `routes.html:129`, `route-detail.html:52`, `truck-detail.html:60`.
 
@@ -562,6 +562,8 @@ document.querySelectorAll("[data-tab]").forEach((button) => {
 **Impacto:** `role="application"` hace que el lector entre en modo aplicación y deje de usar sus atajos, pero el mapa Leaflet no ofrece navegación por teclado equivalente. El resultado es una zona que puede atrapar al usuario. Además el `aria-label` de `route-detail` dice «ubicación de la flota» en una página de ruta (texto copiado).
 
 **Recomendación:** eliminar `role="application"`, mantener `aria-label` descriptivo y añadir un resumen textual actualizado (`aria-describedby`) con número de unidades/puntos y un enlace a la tabla o lista equivalente.
+
+**Corrección aplicada:** los 4 mapas usan `role="img"` con `aria-label` y `aria-describedby`; se eliminó `role="application"`, se corrigió el label copiado de `route-detail` y se añadieron resúmenes dinámicos: `#mapSummary` (visible en dashboard), `#routeMapSummary`, `#routeDetailMapSummary` y `#truckMapSummary` (sr-only). Verificado en Chromium: 0 `role="application"`, descripciones enlazadas y textos correctos con datos simulados.
 
 ---
 

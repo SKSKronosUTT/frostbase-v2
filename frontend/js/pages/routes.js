@@ -223,6 +223,15 @@ function rebuildMarkers() {
   });
 }
 
+function updateMapSummary() {
+  const summary = qs("#routeMapSummary");
+  if (!summary) return;
+  const count = state.points.length;
+  summary.textContent = count
+    ? `Mapa de la ruta con ${count} punto${count === 1 ? "" : "s"} de entrega.`
+    : "Mapa de la ruta sin puntos de entrega.";
+}
+
 function renderMap({ fit = false } = {}) {
   if (!state.map) return;
   rebuildMarkers();
@@ -240,6 +249,7 @@ function renderMap({ fit = false } = {}) {
       }, 80);
     }
   }
+  updateMapSummary();
 }
 
 function showEditor() {
@@ -264,6 +274,7 @@ function showEmptyEditor() {
   state.pointMarkers = [];
   updateLine();
   if (state.map) state.line = null;
+  updateMapSummary();
   renderRoutesList();
   history.replaceState({}, "", "routes.html");
 }

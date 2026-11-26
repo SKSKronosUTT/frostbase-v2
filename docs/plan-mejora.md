@@ -31,7 +31,7 @@ Este plan solo contiene acciones derivadas de hallazgos verificados. No incluye 
 | 1.4 | `prefers-reduced-motion` | FE-016 | S | Medio | — | ✅ |
 | 1.5 | Errores de formulario y toasts | FE-012, FE-013, FE-017 | M | Medio | 0.1 | ✅ |
 | 1.6 | Patrón de tabs accesible | FE-009 | M | Medio | — | ✅ |
-| 1.7 | Mapas sin `role="application"` | FE-010 | M | Medio | — | ⬜ |
+| 1.7 | Mapas sin `role="application"` | FE-010 | M | Medio | — | ✅ |
 | 2.1 | Fusionar la cascada «Consolidado» | FE-018, FE-034 | L | Alto | 0.4 | ⬜ |
 | 2.2 | Tokens de tipografía y espaciado | FE-021, FE-022, FE-023 | L | Alto | 2.1 | ⬜ |
 | 2.3 | Breakpoints unificados mobile-first | FE-020 | M | Medio | 2.1 | ⬜ |
@@ -330,24 +330,27 @@ cd frontend && npx playwright test tests/e2e/accessibility.spec.js
 
 ---
 
-## 1.7 · Mapas sin `role="application"` — ⬜
+## 1.7 · Mapas sin `role="application"` — ✅ Aplicado
 
 **Hallazgos:** FE-010.
 
-**Tareas**
+**Tareas realizadas**
 
-1. Eliminar `role="application"` de los 4 mapas y corregir el `aria-label` copiado de `route-detail.html:52` («Mapa de la ruta»).
-2. Añadir un resumen textual (`<p class="sr-only" id="map-summary">`) actualizado por JS con nº de unidades y ruta, y enlazarlo con `aria-describedby`.
-3. Mantener el mapa como decorativo/informativo y ofrecer la información equivalente en la tabla o lista ya existente.
+1. Los 4 mapas usan `role="img"` con `aria-label` descriptivo y `aria-describedby` hacia un resumen textual; se eliminó `role="application"`.
+2. Se corrigió el label copiado de `route-detail.html` («Mapa de la ruta») y el de `truck-detail` («Mapa de ubicación del camión»).
+3. Resúmenes: `#mapSummary` visible en dashboard (ya existente), `#routeMapSummary`, `#routeDetailMapSummary` y `#truckMapSummary` (sr-only), actualizados por JS con el número de camiones/puntos o la ubicación y ruta del camión.
+4. El mapa sigue siendo enfocable y operable con Leaflet (flechas y `+`/`-`), pero ya no secuestra el modo aplicación.
 
-**Archivos:** `dashboard.html`, `routes.html`, `route-detail.html`, `truck-detail.html` y sus JS (`dashboard.js`, `routes.js`, `route-detail.js`, `truck-detail.js`).
+**Archivos:** `dashboard.html`, `routes.html`, `route-detail.html`, `truck-detail.html`, `js/pages/routes.js`, `route-detail.js`, `truck-detail.js` (`dashboard.js` no necesitó cambios: ya actualizaba `#mapSummary`).
 
 **Esfuerzo:** M · **Impacto:** Medio · **Dependencias:** ninguna.
 **Riesgo:** bajo; no cambia el render.
 
 **Aceptación:** el lector de pantalla anuncia el resumen del mapa y no queda atrapado en modo aplicación.
 
-**Verificación:** navegación con lector + inspección de accesibilidad de Chrome.
+**Verificación:** Chromium headless con API simulada en las 4 páginas; atributos estáticos y resúmenes dinámicos.
+
+**Resultado:** 0 `role="application"` en las 4 páginas; `aria-describedby` enlaza con un resumen existente; detalle de ruta «Mapa de la ruta con 2 puntos de entrega y geometría calculada», detalle de camión con placa/coordenadas/geometría y editor de rutas con «2 puntos de entrega». 0 errores de página. Build, `check:css`, `check:html`, ESLint y Prettier correctos.
 
 ---
 
@@ -656,5 +659,6 @@ npx lighthouse http://localhost:8050/dashboard.html \
 | 2026-11-25 | 1.4 | `css/base.css` | Guard de `prefers-reduced-motion`: animaciones y transiciones a `1e-05s`; spinner estático; valores normales intactos |
 | 2026-11-25 | 1.5 | `js/components/form-errors.js` (nuevo), `js/pages/{login,settings,drivers}.js`, `js/core/notifications.js`, `css/components.css`, 10 `.html` | Errores inline con `aria-invalid`/`aria-describedby` y foco; toasts `alert` persistentes y pausables; contadores `role="status"` |
 | 2026-11-25 | 1.6 | `trucks.html`, `js/pages/trucks.js` | Tabs con `aria-controls`/`tabpanel`, roving tabindex y navegación con flechas/Home/End; verificado en Chromium |
+| 2026-11-25 | 1.7 | `dashboard.html`, `routes.html`, `route-detail.html`, `truck-detail.html`, `js/pages/{routes,route-detail,truck-detail}.js` | `role="img"` + `aria-describedby`, resúmenes dinámicos y 0 `role="application"`; verificado en Chromium |
 
-**Próximo paso recomendado:** **1.7 · Mapas sin `role="application"`**. Evita el modo aplicación en los 4 mapas y añade un resumen textual equivalente; esfuerzo M.
+**Próximo paso recomendado:** **2.1 · Fusionar la cascada «Consolidado»**. Es el prerrequisito de la Fase 2: elimina 130 selectores duplicados y desbloquea la nota ≥ 9; esfuerzo L y riesgo visual alto, con capturas antes/después.
