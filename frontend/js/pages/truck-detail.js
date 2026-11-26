@@ -267,9 +267,9 @@ function updateMap() {
 
   const summary = [
     hasGps
-      ? `Ubicación del camión ${truck.plate} en ${Number(
-          reading.latitude
-        ).toFixed(5)}, ${Number(reading.longitude).toFixed(5)}.`
+      ? `Ubicación del camión ${truck.plate} en ${Number(reading.latitude).toFixed(
+          5
+        )}, ${Number(reading.longitude).toFixed(5)}.`
       : `El camión ${truck.plate} no tiene coordenadas GPS disponibles.`,
   ];
   if (Array.isArray(truck.route?.geometry) && truck.route.geometry.length > 1) {
