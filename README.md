@@ -545,9 +545,9 @@ El volumen de PostgreSQL conserva la contraseña con la que se creó. Si actuali
    uvicorn app.main:app --reload --host 0.0.0.0 --port 8050
    ```
 
-5. Abre `http://localhost:8050`. El frontend se sirve automáticamente desde `../frontend` o, si existe, desde `../frontend/build`.
+5. Abre `http://localhost:8050`. El frontend se sirve desde `../frontend/build`.
 
-> Para probar el build de producción en local:
+> Las páginas de `frontend/*.html` son plantillas: el `<head>` y el sidebar viven en `frontend/partials/` y `frontend/pages.config.json` declara título, descripción y hojas de cada página. El build resuelve los includes; en local hay que generarlo antes de abrir la app:
 >
 > ```bash
 > cd frontend
@@ -555,7 +555,7 @@ El volumen de PostgreSQL conserva la contraseña con la que se creó. Si actuali
 > npm run build
 > ```
 >
-> El backend detecta `frontend/build/index.html` y sirve los assets hasheados con caché inmutable. Sin build sirve el código fuente.
+> El backend detecta `frontend/build/index.html` y sirve los assets hasheados con caché inmutable. Sin build no hay frontend servible (las plantillas no incluyen CSS ni navegación).
 
 > El esquema lo controla Alembic. Mantén `AUTO_CREATE_TABLES=false`; `create_all` solo se usa en pruebas automatizadas.
 >
@@ -572,7 +572,7 @@ El volumen de PostgreSQL conserva la contraseña con la que se creó. Si actuali
 | `compose.yml` | Servicios de Docker: aplicación y PostgreSQL. |
 | `.env.example` | Plantilla de configuración. Copiar a `.env` y completar. |
 | `backend/` | API en FastAPI, modelos, servicios, migraciones Alembic y scripts. |
-| `frontend/` | Panel web en HTML, CSS y JavaScript. `npm run build` genera `frontend/build` con assets hasheados. |
+| `frontend/` | Panel web en HTML, CSS y JavaScript. `frontend/*.html` son plantillas; `partials/` y `pages.config.json` alimentan `npm run build`, que genera `frontend/build` con las páginas completas y assets hasheados. |
 | `frontend/tests/e2e/` | Flujos críticos con Playwright (login, flota, rutas, alertas, configuración). |
 | `iot-simulator/` | Simulador del dispositivo ESP32-S3. |
 | `esp-claw/skills/frostbase/` | Skill Lua de solo lectura para sacar el token del prompt (B5 fase 2). |

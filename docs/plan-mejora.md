@@ -1,7 +1,7 @@
 # Plan de mejora frontend — FrostBase
 
 **Fecha:** 2026-11-25
-**Base:** `docs/auditoria-frontend.md` (36 hallazgos: 0 críticos · 5 altos · 21 medios · 10 bajos)
+**Base:** `docs/auditoria-frontend.md` (37 hallazgos: 0 críticos · 5 altos · 22 medios · 10 bajos)
 **Alcance:** `frontend/*.html`, `frontend/css/**`, `frontend/js/**` y `frontend/scripts/**`.
 
 Este plan solo contiene acciones derivadas de hallazgos verificados. No incluye rediseño visual: la estética actual se conserva.
@@ -13,7 +13,7 @@ Este plan solo contiene acciones derivadas de hallazgos verificados. No incluye 
 - **Esfuerzo:** S < 2 h · M ½–1 día · L 2–3 días · XL > 3 días.
 - **Impacto:** Alto / Medio / Bajo (sobre accesibilidad, rendimiento o mantenibilidad).
 - **Riesgo de regresión visual:** probabilidad de que el diseño cambie sin querer y cómo mitigarlo.
-- **Estado:** ✅ aplicado · ⬜ pendiente.
+- **Estado:** ✅ aplicado · 🟡 parcial · ⬜ pendiente.
 
 ---
 
@@ -36,7 +36,7 @@ Este plan solo contiene acciones derivadas de hallazgos verificados. No incluye 
 | 2.2 | Tokens de tipografía y espaciado | FE-021, FE-022, FE-023 | L | Alto | 2.1 | ✅ |
 | 2.3 | Breakpoints unificados mobile-first | FE-020 | M | Medio | 2.1 | 🟡 parcial |
 | 2.4 | Limpieza de CSS muerto | FE-025, FE-026, FE-027 | S | Bajo | 2.1 | ✅ |
-| 2.5 | Parciales de `<head>` y sidebar estática | FE-001, FE-033 | L | Medio | 2.1 | ⬜ |
+| 2.5 | Parciales de `<head>` y sidebar estática | FE-001, FE-033 | L | Medio | 2.1 | ✅ |
 | 2.6 | Pesos tipográficos coherentes | FE-024 | S | Bajo | 2.2 | ✅ |
 | 3.1 | Linters y validación en CI | FE-034, FE-036 | M | Alto | 2.1 | ⬜ |
 | 3.2 | Rendimiento de carga | FE-028, FE-030, FE-031, FE-032 | M | Medio | 2.5 | ⬜ |
@@ -457,23 +457,28 @@ La verificación A/B de estilos computados se ejecutó en la app real (login, da
 
 ---
 
-## 2.5 · Parciales de `<head>` y sidebar estática — ⬜
+## 2.5 · Parciales de `<head>` y sidebar estática — ✅ Aplicado
 
 **Hallazgos:** FE-001, FE-033.
 
-**Tareas**
+**Tareas realizadas**
 
-1. Extraer el bloque `<head>` (metas, preload, hojas, theme-boot) a un parcial que consuma el build (11ty, Vite o una función `include()` en `scripts/build.mjs`).
-2. Renderizar el sidebar y el nav en el HTML de cada página (o generarlo en el build), dejando JS solo para el estado activo y el drawer.
-3. Eliminar la duplicación de 16 líneas × 12 archivos.
+1. `frontend/partials/head.html` concentra el `<head>` completo (metas, preload de la fuente, hojas por página y `theme-boot`). `frontend/pages.config.json` declara por página `title`, `description` y `styles`, sustituyendo las 12 copias.
+2. `frontend/partials/sidebar.html` contiene el sidebar y el nav completos. El build resuelve los includes, marca el enlace activo (`is-active` + `aria-current="page"`) y aplica los alias `truck-detail → trucks` y `route-detail → routes`.
+3. `scripts/build.mjs` lee la configuración y los parciales, falla si una página no declara metadata o si queda un include sin resolver, y mantiene igual el resto del pipeline (CSS/JS hasheados y `manifest.json`).
+4. `js/components/sidebar.js` elimina `NAV_ITEMS` y el `innerHTML`: solo rellena el nombre del usuario, enlaza tema/logout y monta el drawer. La navegación ya viaja en el HTML servido.
 
-**Archivos:** las 12 `.html`, `frontend/scripts/build.mjs`, `frontend/js/components/sidebar.js`.
+**Archivos:** las 12 `.html`, `scripts/build.mjs`, `js/components/sidebar.js`, `partials/head.html`, `partials/sidebar.html`, `pages.config.json`.
 **Esfuerzo:** L · **Impacto:** Medio · **Dependencias:** 2.1.
-**Riesgo:** medio (el build cambia). Mitigación: comparar HTML generado con el actual; mantener el mismo orden de hojas.
+**Riesgo:** medio (el build cambia). Mitigación: comparación del HTML generado con el anterior y suite E2E.
 
-**Aceptación:** una sola fuente para el `<head>`; el HTML servido incluye la navegación sin JS; el build produce el mismo conjunto de assets.
+**Aceptación:** una sola fuente para el `<head>` ✅; el HTML servido incluye la navegación sin JS ✅; el build produce el mismo conjunto de assets ✅ (25 assets).
 
-**Verificación:** `npm run build` + diff del HTML generado + navegación con JS deshabilitado.
+**Verificación:** `npm run build` + comparación normalizada de las 12 páginas + Playwright con y sin JS + `check:css`/`check:html`.
+
+**Resultado:** las 12 páginas comparten `<head>` y las 9 internas llevan el sidebar en el HTML (7 enlaces, 1 activo correcto). Build: 25 assets, **718,6 → 702,1 KB** (el marcado sale del bundle JS). Comparación del HTML generado: `index.html` idéntico; el resto solo difiere en el orden de `<meta>`/`<title>`, el `noindex` añadido a `login.html` (ahora igual que las demás) y el sidebar estático. 9/9 páginas con 7 enlaces, `aria-current="page"`, usuario y 0 errores de consola; drawer (apertura, foco, Escape y retorno del foco), tema persistente y logout correctos. E2E: **37 pasan**; los 2 fallos de `dashboard` son previos (FE-037) y se reproducen igual con el build anterior.
+
+**Nota de despliegue:** las páginas fuente ya no son autónomas; el frontend se sirve desde `frontend/build`. `make dev` y la imagen Docker ya ejecutan el build. README actualizado.
 
 ---
 
@@ -683,5 +688,6 @@ npx lighthouse http://localhost:8050/dashboard.html \
 | 2026-11-26 | 2.2 | `tokens.css` + 14 hojas CSS | 201 `font-size` y 368 espaciados tokenizados; 18 hex → tokens; 0 desbordamientos; CSS 682,3 → 718,4 KB |
 | 2026-11-26 | 2.3 (parte 1) | 15 hojas CSS | 32 media queries remapeadas a 4 cortes (480/768/1024/1280); 70 combinaciones sin overflow; badge de alerta corregido |
 | 2026-11-26 | 2.6 | `css/fonts.css`, `tools/vendor_assets.py` | Rango `wght` 400–900 declarado; 800/900 reales; verificado con fontTools y `document.fonts` |
+| 2026-11-26 | 2.5 | 12 `.html`, `partials/{head,sidebar}.html`, `pages.config.json`, `scripts/build.mjs`, `js/components/sidebar.js` | `<head>` y sidebar únicos; 9/9 páginas con 7 enlaces sin JS; build 718,6 → 702,1 KB; E2E 37 pasan (2 fallos previos del mapa, FE-037) |
 
-**Próximo paso recomendado:** **2.5 · Parciales de `<head>` y sidebar estática** (L, cierra FE-001 y FE-033) o **3.1 · Linters en CI** (M) para fijar los avances. La inversión mobile-first (2.3b) sigue pendiente como sesión dedicada.
+**Próximo paso recomendado:** **FE-037 · `role="img"` en mapas con marcadores focusables** (S, deja la suite a11y en verde) y después **3.1 · Linters en CI** (M) para fijar los avances. La inversión mobile-first (2.3b) sigue pendiente como sesión dedicada.
