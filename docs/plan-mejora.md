@@ -42,7 +42,7 @@ Este plan solo contiene acciones derivadas de hallazgos verificados. No incluye 
 | 2.6 | Pesos tipográficos coherentes | FE-024 | S | Bajo | 2.2 | ✅ |
 | 3.1 | Linters y validación en CI | FE-034 | M | Alto | 2.1 | ✅ |
 | 3.2 | Rendimiento de carga | FE-028, FE-030, FE-031, FE-032 | M | Medio | 2.5 | ✅ |
-| 3.3 | `100dvh` y Safari | FE-029 | S | Bajo | — | ⬜ |
+| 3.3 | `100dvh` y Safari | FE-029 | S | Bajo | — | ✅ |
 | 3.4 | Ampliar suite a11y | FE-036 | M | Medio | 1.x | ✅ |
 | 3.5 | Guía de estilos y README frontend | — | M | Medio | 2.x | ⬜ |
 | 4.1 | Container queries y detalles UI | — | M | Bajo | 2.3 | ⬜ |
@@ -601,19 +601,25 @@ La verificación A/B de estilos computados se ejecutó en la app real (login, da
 
 ---
 
-## 3.3 · `100dvh` y Safari — ⬜
+## 3.3 · `100dvh` y Safari — ✅ Aplicado
 
 **Hallazgos:** FE-029.
 
-**Tareas:** sustituir `100vh` por `100dvh` con fallback en `base.css:18`, `components.css:1277,1619`, `layout.css:2`, `ai.css:6,235`, `driver.css:4`, `index.css:6`, `login.css:2`.
+**Tareas realizadas**
 
-**Archivos:** las hojas citadas.
+1. Nuevo token `--viewport-height` en `tokens.css`: `100vh` por defecto y `100dvh` dentro de `@supports (height: 100dvh)`. Centraliza el fallback y evita declaraciones duplicadas (que stylelint rechaza).
+2. Sustituidos los 9 usos de `100vh`: `base.css`, `layout.css`, los dos modales de `components.css`, `ai.css` (contenedor y chat), `driver.css`, `index.css` y `login.css`.
+3. Los modales usan `calc(var(--viewport-height) - 40px)` y `- 24px`; el chat de IA y las páginas usan el mismo token.
+
+**Archivos:** `css/tokens.css`, `base.css`, `layout.css`, `components.css`, `pages/ai.css`, `pages/driver.css`, `pages/index.css`, `pages/login.css`.
 **Esfuerzo:** S · **Impacto:** Bajo · **Dependencias:** ninguna.
-**Riesgo:** bajo; verificar en Safari iOS o en el simulador de responsive de Chrome.
+**Riesgo:** bajo; el fallback mantiene el comportamiento en navegadores sin `dvh`.
 
-**Aceptación:** los modales caben en el viewport visible y el login no genera scroll vertical innecesario en iOS.
+**Aceptación:** los modales caben en el viewport visible y el login no genera scroll vertical innecesario en iOS ✅.
 
-**Verificación:** Safari iOS (o BrowserStack) en login, dashboard y un modal.
+**Verificación:** Chromium a 390×844 y 390×600 (token `100dvh`, login sin overflow, modal 820/576 px); WebKit 27.2 con viewport móvil (login y modal inyectado con las clases reales); suite E2E completa.
+
+**Resultado:** **0 usos de `100vh`** fuera del fallback del token; el login no genera scroll (`scrollHeight == innerHeight`) y los modales quedan dentro del viewport con 12 px de margen (24 px de reserva). WebKit resuelve `100dvh` y el `calc` igual que Chromium. E2E **53/53**; sin cambios visuales en escritorio. Nota: las páginas autenticadas no se pudieron probar en WebKit porque el contenedor emite cookies `Secure` y WebKit no las acepta sobre HTTP sin TLS; la comprobación en WebKit se hizo sobre login y el CSS real del modal.
 
 ---
 
@@ -757,5 +763,6 @@ npx lighthouse http://localhost:8050/dashboard.html \
 | 2026-11-26 | 3.1 | `package.json`, `.stylelintrc.json`, `.htmlvalidate.json`, CI, pre-commit, `build.mjs` | Stylelint + html-validate en CI y pre-commit; `npm run verify`; fixtures de duplicado y `<th>` sin `scope` fallan; build inmune a CRLF |
 | 2026-11-26 | 3.4 | `tests/e2e/accessibility.spec.js`, `package.json`, CI | 30 pruebas (12 páginas × 2 temas, `moderate+`) y 4 de foco; E2E 39 → **53**; 30/30 estable en dos pasadas |
 | 2026-11-26 | 3.2 | `build.mjs`, `main.py`, `map.js`, `components.css`, assets y Dockerfile | Tema inline con hash CSP; CSS único por página; logo 71 → 18 KB; LCP móvil 2,17 s; CLS 0,034; Lighthouse 90–100 |
+| 2026-11-26 | 3.3 | `tokens.css` + 7 hojas CSS | Token `--viewport-height` (100vh → 100dvh con `@supports`); 9 usos sustituidos; login sin scroll y modales dentro del viewport en Chromium y WebKit; E2E 53/53 |
 
-**Próximo paso recomendado:** **3.3 · `100dvh` y Safari** (S) o **3.5 · Guía de estilos y README frontend** (M). La inversión mobile-first (2.3b) sigue pendiente como sesión dedicada.
+**Próximo paso recomendado:** **3.5 · Guía de estilos y README frontend** (M) o **2.3b · Inversión mobile-first** (sesión dedicada).

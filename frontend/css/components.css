@@ -1145,7 +1145,7 @@
 
 .modal {
   width: min(640px, 100%);
-  max-height: calc(100vh - 40px);
+  max-height: calc(var(--viewport-height) - 40px);
   display: flex;
   flex-direction: column;
   background: var(--surface);
@@ -1363,7 +1363,7 @@
   }
 
   .modal {
-    max-height: calc(100vh - 24px);
+    max-height: calc(var(--viewport-height) - 24px);
   }
 
   .modal__header,

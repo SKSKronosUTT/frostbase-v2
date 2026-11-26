@@ -1,6 +1,9 @@
 :root {
   color-scheme: light;
 
+  /* Altura del viewport visible; dvh evita el salto de Safari iOS. */
+  --viewport-height: 100vh;
+
   /* Paleta Bauhaus "Frost": azules fríos en lugar de los primarios */
   --accent-deep: #0b4c9c;
   --accent-mid: #1b86d6;
@@ -129,4 +132,10 @@
   --offline-soft: rgba(107, 129, 153, 0.22);
 
   --accent-glow: rgba(143, 227, 240, 0.12);
+}
+
+@supports (height: 100dvh) {
+  :root {
+    --viewport-height: 100dvh;
+  }
 }
