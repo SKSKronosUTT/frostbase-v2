@@ -302,3 +302,26 @@ OK: una respuesta y el resto 429 (lock global correcto).
 - Para una prueba de 100k filas en un entorno de staging, inserte auditoría
   sintética con `generate_series` y mida `GET /ai/metrics?days=7`; no lo haga
   sobre producción.
+
+## 17. Cierre del MVP (sin streaming)
+
+El MVP se entrega con B6.1 (espera, fases y cancelación local). **No hay
+streaming token a token**: `/ws/webim` solo notifica cambios y no emite deltas.
+B6.2 queda para una versión posterior.
+
+Documentos de cierre:
+
+- [`MVP-CIERRE.md`](MVP-CIERRE.md): alcance, limitaciones y backlog.
+- [`CHECKLIST-MVP.md`](CHECKLIST-MVP.md): verificación antes de entregar.
+- [`RELEASE-NOTES-MVP.md`](RELEASE-NOTES-MVP.md): notas y rollback.
+
+Antes de una demo o entrega:
+
+```powershell
+.\tasks.ps1 clean-alerts          # simulación
+.\tasks.ps1 clean-alerts -Apply   # si hay alertas de prueba
+.\tasks.ps1 ai-loadtest -Concurrency 3
+```
+
+No cerrar el MVP si falla el chat básico, el lock/cuota, la autenticación del
+agente, el historial, el respaldo o el rollback.

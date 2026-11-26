@@ -283,6 +283,12 @@ Las consultas libres pasan por el modelo externo configurado en el ESP32
 para que el agente consulte datos frescos). El uso se audita sin guardar el
 texto del chat y se resume en `GET /api/v1/ai/metrics`.
 
+> **MVP cerrado sin streaming.** La UI muestra tiempo, fase y cancelación
+> local; el WebSocket del ESP32 no emite deltas de texto. Alcance, checklist y
+> notas: [`docs/ai/MVP-CIERRE.md`](docs/ai/MVP-CIERRE.md),
+> [`docs/ai/CHECKLIST-MVP.md`](docs/ai/CHECKLIST-MVP.md) y
+> [`docs/ai/RELEASE-NOTES-MVP.md`](docs/ai/RELEASE-NOTES-MVP.md).
+
 ---
 
 ## Usar el simulador IoT (opcional)
