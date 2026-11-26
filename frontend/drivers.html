@@ -28,7 +28,7 @@
   </head>
   <body data-page="drivers">
     <div class="app-shell">
-      <aside class="sidebar" id="sidebar"></aside>
+      <div class="sidebar" id="sidebar"></div>
       <main class="main">
         <header class="page-header">
           <div class="page-header__title">
@@ -86,13 +86,13 @@
             <table class="table drivers-table">
               <thead>
                 <tr>
-                  <th>Nombre</th>
-                  <th>Correo</th>
-                  <th>Teléfono</th>
-                  <th>Camión</th>
-                  <th>Estado</th>
-                  <th>Último acceso</th>
-                  <th aria-label="Acciones"></th>
+                  <th scope="col">Nombre</th>
+                  <th scope="col">Correo</th>
+                  <th scope="col">Teléfono</th>
+                  <th scope="col">Camión</th>
+                  <th scope="col">Estado</th>
+                  <th scope="col">Último acceso</th>
+                  <th scope="col"><span class="sr-only">Acciones</span></th>
                 </tr>
               </thead>
               <tbody id="driversTableBody">

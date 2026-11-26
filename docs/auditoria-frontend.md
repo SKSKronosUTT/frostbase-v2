@@ -15,7 +15,7 @@ npm run build
 
 **Estado de git al iniciar:** rama `devolp`, con un archivo no rastreado (`plan_implementacion_modulo_conductores.md`, del equipo, excluido de esta auditoría). No se modificó ningún archivo durante la auditoría.
 
-> **Actualización posterior:** tras la auditoría se aplicaron los pasos **0.1, 0.2, 0.3 y 0.4** del plan (`docs/plan-mejora.md`). Los hallazgos afectados aparecen marcados como **Resuelto**. El resto sigue pendiente.
+> **Actualización posterior:** tras la auditoría se aplicaron los pasos **0.1, 0.2, 0.3, 0.4 y 1.1** del plan (`docs/plan-mejora.md`). Los hallazgos afectados aparecen marcados como **Resuelto**. El resto sigue pendiente.
 
 ---
 
@@ -25,7 +25,7 @@ Proyecto con una base mejor que la media: sistema de tokens real con tema claro/
 
 Los riesgos se concentran en tres frentes: (1) la cascada está construida en dos generaciones superpuestas (130 selectores duplicados), lo que ya produjo un bug real y hace impredecible cada cambio; (2) existen barreras de accesibilidad concretas (botones sin nombre, buscadores sin etiqueta, contraste AA insuficiente, drawer móvil sin gestión de foco); (3) la escala tipográfica y los breakpoints son ad hoc (30 tamaños de fuente, 13 breakpoints).
 
-**Nota global: 6/10** en el momento de la auditoría; **6,5/10** tras aplicar 0.1, 0.2 y 0.4, y **7/10** tras 0.3. Aprueba en intención e infraestructura; la deuda de cascada y los fallos AA impedían una nota mayor. Todo es corregible sin rediseño.
+**Nota global: 6/10** en el momento de la auditoría; **6,5/10** tras aplicar 0.1, 0.2 y 0.4, **7/10** tras 0.3 y **7,5/10** tras 1.1. Aprueba en intención e infraestructura; la deuda de cascada y los fallos AA impedían una nota mayor. Todo es corregible sin rediseño.
 
 ---
 
@@ -77,7 +77,7 @@ frontend/
 | Atributos `style=""` | **0** |
 | Selectores duplicados (`no-duplicate-selectors`) | **130** |
 | Selectores repetidos en el mismo archivo (conteo propio) | **209** |
-| Errores reales de `html-validate` | **44** (42 tras 0.1) |
+| Errores reales de `html-validate` | **44** (2 tras 1.1) |
 | Avisos de estilo `html-validate` (`void-style`, `doctype-style`) | 198 |
 | Breakpoints distintos | **13** (360 → 1180 px) |
 | Tamaños de `font-size` distintos en px | **30** |
@@ -105,12 +105,12 @@ frontend/
 | FE-003 | Accesibilidad | **A** | Botones solo-icono sin nombre accesible | `driver.html:58-67` | **Resuelto (0.1)** |
 | FE-004 | Accesibilidad | **A** | Buscadores sin etiqueta (solo `placeholder`) | `trucks.html:57,95`; `routes.html:56` | **Resuelto (0.1)** |
 | FE-005 | Accesibilidad | **A** | Contraste AA insuficiente en tokens y badges | `tokens.css:33`; `components.css:1835`; `login.css:314` | **Resuelto (0.2)** |
-| FE-006 | HTML / Semántica | M | `<th>` sin `scope` en 5 tablas | `alerts.html:80-86`; `drivers.html:89-95`; `trucks.html:72-79,109-114`; `truck-detail.html:92-96` | Pendiente |
+| FE-006 | HTML / Semántica | M | `<th>` sin `scope` en 5 tablas | `alerts.html:80-86`; `drivers.html:89-95`; `trucks.html:72-79,109-114`; `truck-detail.html:92-96` | **Resuelto (1.1)** |
 | FE-007 | HTML / Semántica | M | Sin `h1` o saltos de nivel | `driver.html:38-113`; `settings.html:38,64,90,106`; `index.html:17` | Pendiente |
-| FE-008 | Accesibilidad | M | Landmarks `aside` sin nombre único | `dashboard.html:113`; `routes.html:40,48` | Pendiente |
+| FE-008 | Accesibilidad | M | Landmarks `aside` sin nombre único | `dashboard.html:113`; `routes.html:40,48` | **Resuelto (1.1)** |
 | FE-009 | Accesibilidad | M | Patrón `tablist` incompleto (sin `aria-controls`, `tabpanel`, flechas) | `trucks.html:39-46`; `trucks.js:498-518` | Pendiente |
 | FE-010 | Accesibilidad | M | `role="application"` en 4 mapas | `dashboard.html:79`; `routes.html:129`; `route-detail.html:52`; `truck-detail.html:60` | Pendiente |
-| FE-011 | HTML / Semántica | M | `aria-label` en elemento no interactivo | `ai.html:146-149` | Pendiente |
+| FE-011 | HTML / Semántica | M | `aria-label` en elemento no interactivo | `ai.html:146-149` | **Resuelto (1.1)** |
 | FE-012 | Accesibilidad | M | Errores de formulario no asociados al campo | `login.html:48`; `login.js:54-66`; `settings.html:32` | Pendiente |
 | FE-013 | Accesibilidad | M | Toasts de error con `role="status"` y autodescarte sin pausa por teclado | `notifications.js:30,52` | Pendiente |
 | FE-014 | Accesibilidad | M | `login` e `index` sin `<main>`; no hay skip link | `login.html:23`; `index.html:17` | Pendiente |
@@ -169,7 +169,7 @@ sidebar.innerHTML = `
 
 ---
 
-#### FE-006 · `<th>` sin `scope` — Media · Error
+#### FE-006 · `<th>` sin `scope` — Media · Error · **Resuelto (1.1)**
 
 **Ubicación:** `alerts.html:80-86`, `drivers.html:89-95`, `trucks.html:72-79` y `109-114`, `truck-detail.html:92-96`.
 
@@ -187,7 +187,7 @@ sidebar.innerHTML = `
 <th aria-label="Acciones"></th>
 ```
 
-**Impacto:** `html-validate` reporta 38 errores `wcag/h63`. Los lectores de pantalla no siempre infieren la relación columna/celda en tablas de datos, sobre todo cuando hay columnas vacías de acciones.
+**Impacto:** `html-validate` reporta 33 errores `wcag/h63`. Los lectores de pantalla no siempre infieren la relación columna/celda en tablas de datos, sobre todo cuando hay columnas vacías de acciones.
 
 **Recomendación:**
 
@@ -196,6 +196,8 @@ sidebar.innerHTML = `
 …
 <th scope="col"><span class="sr-only">Acciones</span></th>
 ```
+
+**Corrección aplicada:** `scope="col"` en los **33 `<th>`** de las 5 tablas y sustitución de `<th aria-label="Acciones">` por `<th scope="col"><span class="sr-only">Acciones</span></th>` para no depender de un nombre accesible sin texto. `html-validate` ya no reporta `wcag/h63`.
 
 ---
 
@@ -223,7 +225,7 @@ sidebar.innerHTML = `
 
 ---
 
-#### FE-011 · `aria-label` en un elemento no interactivo — Media · Error
+#### FE-011 · `aria-label` en un elemento no interactivo — Media · Error · **Resuelto (1.1)**
 
 **Ubicación:** `frontend/ai.html:146-149`.
 
@@ -236,6 +238,8 @@ sidebar.innerHTML = `
 **Impacto:** `html-validate` (`aria-label-misuse`). En un `div` sin rol, el nombre accesible se ignora o se anuncia de forma inconsistente. El grupo de botones queda sin contexto.
 
 **Recomendación:** `<div role="group" aria-label="Consultas por camión">` o convertir el contenedor en `<fieldset>` con `<legend class="sr-only">`.
+
+**Corrección aplicada:** se añadió `role="group"` al contenedor, que ahora expone el nombre «Consultas por camión» como grupo de la barra de sugerencias. `html-validate` ya no reporta `aria-label-misuse`.
 
 ---
 
@@ -492,7 +496,7 @@ y en CSS, para el sidebar cerrado en móvil, `visibility: hidden` / `inert` adem
 
 ---
 
-#### FE-008 · Landmarks `aside` sin nombre único — Media · Error
+#### FE-008 · Landmarks `aside` sin nombre único — Media · Error · **Resuelto (1.1)**
 
 **Ubicación:** `dashboard.html:113`, `routes.html:40,48` (y el sidebar de todas las páginas).
 
@@ -509,6 +513,8 @@ y en CSS, para el sidebar cerrado en móvil, `visibility: hidden` / `inert` adem
 **Impacto:** `html-validate` (`unique-landmark`): un lector de pantalla muestra varios «complementary» indistinguibles. Además, tarjetas de contenido usan `<aside>` sin ser contenido complementario.
 
 **Recomendación:** nombrar con `aria-label` los que de verdad sean complementarios y cambiar las tarjetas a `<section>`/`<div>`.
+
+**Corrección aplicada:** el envoltorio del sidebar pasó de `<aside>` a `<div>` en las 9 páginas internas (la navegación ya vive en su `<nav>`); `dashboard-side` pasó a `<div>`; y las dos tarjetas de `routes.html` pasaron a `<section>` (tienen encabezado propio). El único `aside` restante es `ai-history`, que ya está nombrado. `html-validate` ya no reporta `unique-landmark`.
 
 ---
 
