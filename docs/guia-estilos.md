@@ -123,6 +123,14 @@ Escala de 12 pasos (base 2/4 px): `--space-1` 2 px, `--space-2` 4, `--space-3` 6
 - `--transition: 160ms ease-out`. Respeta `prefers-reduced-motion`.
 - `--viewport-height`: **no uses `100vh`**. Usa este token (`100vh` con mejora a `100dvh`), también dentro de `calc()`.
 
+### 4.5 Tema
+
+- El tema se aplica con `data-theme="light|dark"` en `<html>`; no hay una tercera hoja.
+- `localStorage["frostbase-theme"]` guarda la preferencia explícita. `theme-boot.js` la aplica antes del pintado y, si no existe, usa `prefers-color-scheme`.
+- Prioridad: **local → tema guardado del admin → sistema**. El fallback del sistema no se persiste y se actualiza en vivo si cambia el sistema operativo.
+- Usa `toggleTheme()` para alternar; guarda en local y, si hay admin, en `/auth/preferences`. No escribas `data-theme` a mano.
+- No uses colores fijos: el tema oscuro funciona porque los componentes consumen tokens. Comprueba siempre ambos temas.
+
 ---
 
 ## 5. CSS: organización y convenciones

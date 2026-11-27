@@ -2,21 +2,26 @@ import { api } from "./api.js";
 
 const STORAGE_KEY = "frostbase-theme";
 const VALID_THEMES = ["light", "dark"];
+const DARK_QUERY = "(prefers-color-scheme: dark)";
 
 function normalize(theme) {
   return VALID_THEMES.includes(theme) ? theme : null;
 }
 
+function systemTheme() {
+  return window.matchMedia?.(DARK_QUERY)?.matches ? "dark" : "light";
+}
+
 export function resolveTheme(adminTheme) {
   const stored = normalize(localStorage.getItem(STORAGE_KEY));
   if (stored) return stored;
-  return normalize(adminTheme) || "light";
+  return normalize(adminTheme) || systemTheme();
 }
 
-export function applyTheme(theme) {
-  const normalized = normalize(theme) || "light";
+export function applyTheme(theme, { persist = true } = {}) {
+  const normalized = normalize(theme) || systemTheme();
   document.documentElement.dataset.theme = normalized;
-  localStorage.setItem(STORAGE_KEY, normalized);
+  if (persist) localStorage.setItem(STORAGE_KEY, normalized);
   updateToggle(normalized);
 }
 
@@ -35,7 +40,20 @@ function updateToggle(theme) {
 }
 
 export function initTheme(adminTheme) {
-  applyTheme(resolveTheme(adminTheme));
+  const stored = normalize(localStorage.getItem(STORAGE_KEY));
+  const admin = normalize(adminTheme);
+  applyTheme(stored || admin || systemTheme(), { persist: false });
+
+  // Sin preferencia explícita, sigue los cambios del sistema operativo.
+  if (!stored && !admin && window.matchMedia) {
+    const media = window.matchMedia(DARK_QUERY);
+    const onChange = (event) => {
+      if (normalize(localStorage.getItem(STORAGE_KEY))) return;
+      applyTheme(event.matches ? "dark" : "light", { persist: false });
+    };
+    if (media.addEventListener) media.addEventListener("change", onChange);
+    else media.addListener?.(onChange);
+  }
 }
 
 export function toggleTheme(admin) {
