@@ -6,7 +6,8 @@ body.driver-page {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: var(--space-8) var(--space-7) var(--space-12);
+  padding: var(--space-6) var(--space-5) var(--space-11);
+  padding-top: 58px;
 }
 
 .driver-theme-toggle {
@@ -30,14 +31,15 @@ body.driver-page {
   width: min(560px, 100%);
   display: flex;
   flex-direction: column;
-  gap: var(--space-7);
+  gap: var(--space-5);
 }
 
 /* ===== Cabecera ===== */
 
 .driver-header {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
+  flex-direction: column;
   justify-content: space-between;
   gap: var(--space-6);
   flex-wrap: wrap;
@@ -69,6 +71,8 @@ body.driver-page {
 .driver-header__meta {
   display: flex;
   align-items: center;
+  width: 100%;
+  justify-content: space-between;
   gap: var(--space-4);
 }
 
@@ -88,9 +92,13 @@ body.driver-page {
 
 .driver-container-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-columns: 1fr;
   gap: 1px;
   background: var(--border-ink);
+}
+
+.driver-metric--status {
+  grid-column: 1 / -1;
 }
 
 .driver-metric {
@@ -247,50 +255,6 @@ body.driver-page {
 
 /* ===== Responsive ===== */
 
-@media (max-width: 480px) {
-  body.driver-page {
-    padding: var(--space-6) var(--space-5) var(--space-11);
-    padding-top: 58px;
-  }
-
-  .driver-shell {
-    gap: var(--space-5);
-  }
-
-  .driver-container-grid {
-    grid-template-columns: 1fr 1fr;
-  }
-
-  .driver-metric--status {
-    grid-column: 1 / -1;
-    border-top: 1px solid var(--border-ink);
-  }
-
-  .driver-metric__value {
-    font-size: var(--text-2xl);
-  }
-
-  .driver-header {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .driver-header__meta {
-    width: 100%;
-    justify-content: space-between;
-  }
-}
-
-@media (max-width: 480px) {
-  .driver-container-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .driver-metric--status {
-    border-top: none;
-  }
-}
-
 /* ===== Viaje y entregas (G6) ===== */
 
 .driver-trip-start {
@@ -429,4 +393,32 @@ body.driver-page {
 
 .driver-alert-ack {
   margin-top: var(--space-3);
+}
+
+@media (min-width: 480px) {
+  body.driver-page {
+    padding: var(--space-8) var(--space-7) var(--space-12);
+  }
+
+  .driver-shell {
+    gap: var(--space-7);
+  }
+
+  .driver-container-grid {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+
+  .driver-metric--status {
+    grid-column: auto;
+  }
+
+  .driver-header {
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .driver-header__meta {
+    width: auto;
+    justify-content: normal;
+  }
 }

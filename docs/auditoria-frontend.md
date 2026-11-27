@@ -15,7 +15,7 @@ npm run build
 
 **Estado de git al iniciar:** rama `devolp`, con un archivo no rastreado (`plan_implementacion_modulo_conductores.md`, del equipo, excluido de esta auditoría). No se modificó ningún archivo durante la auditoría.
 
-> **Actualización posterior:** tras la auditoría se aplicaron los pasos **0.1, 0.2, 0.3, 0.4, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 3.1, 3.2, 3.3, 3.4 y 3.5** del plan (`docs/plan-mejora.md`); 2.3 queda parcial (cortes unificados, falta la inversión mobile-first). Los hallazgos afectados aparecen marcados como **Resuelto**; el resto sigue pendiente.
+> **Actualización posterior:** tras la auditoría se aplicaron los pasos **0.1, 0.2, 0.3, 0.4, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2.1, 2.2, 2.3 (2.3a y 2.3b), 2.4, 2.5, 2.6, 3.1, 3.2, 3.3, 3.4 y 3.5** del plan (`docs/plan-mejora.md`). Los hallazgos afectados aparecen marcados como **Resuelto**; solo quedan mejoras opcionales de la Fase 4.
 
 ---
 
@@ -23,9 +23,9 @@ npm run build
 
 Proyecto con una base mejor que la media: sistema de tokens real con tema claro/oscuro, build con assets hasheados y caché inmutable, CSP y cabeceras de seguridad en servidor, cero estilos en línea, solo 3 `!important`, imágenes con dimensiones reservadas y una suite de accesibilidad con axe ya escrita. El diseño es coherente y el uso de Grid/Flexbox es correcto.
 
-Los riesgos iniciales se han ido cerrando: la Fase 1 resolvió las barreras de accesibilidad, 2.1 unificó la cascada (**0 selectores duplicados**, frente a 130) y 2.2 consolidó tipografía, espaciado y color en tokens (**8 tamaños**, **0 hex sueltos**). Los breakpoints ya son **4** (aún `max-width`; la inversión mobile-first queda como 2.3b), 2.5 dejó un único `<head>` y la navegación en el HTML, 3.1 incorporó Stylelint y html-validate a CI y pre-commit, 3.2 redujo la carga a una hoja CSS y LCP < 2,5 s, 3.3 unificó la altura del viewport con `dvh`, 3.4 amplió la suite a las 12 páginas y 3.5 documentó tokens, componentes y recetas. Queda la inversión mobile-first y las mejoras opcionales de la Fase 4.
+Los riesgos iniciales se han ido cerrando: la Fase 1 resolvió las barreras de accesibilidad, 2.1 unificó la cascada (**0 selectores duplicados**, frente a 130) y 2.2 consolidó tipografía, espaciado y color en tokens (**8 tamaños**, **0 hex sueltos**). Los breakpoints son **4** y mobile-first (**0 `max-width`**, 2.3b), 2.5 dejó un único `<head>` y la navegación en el HTML, 3.1 incorporó Stylelint y html-validate a CI y pre-commit, 3.2 redujo la carga a una hoja CSS y LCP < 2,5 s, 3.3 unificó la altura del viewport con `dvh`, 3.4 amplió la suite a las 12 páginas y 3.5 documentó tokens, componentes y recetas. Solo quedan las mejoras opcionales de la Fase 4.
 
-**Nota global: 6/10** en el momento de la auditoría; **6,5/10** tras 0.1, 0.2 y 0.4, **7/10** tras 0.3, **7,5/10** tras 1.1, **8/10** tras 1.2, **8,5/10** tras 1.5, 1.6 y 1.7, **9/10** tras 2.1, 2.2 y 2.5, y **9,5/10** tras 3.1, 3.2, 3.3 y 3.4. La accesibilidad, la cascada, los tokens, la navegación estática, la validación automatizada, la carga inicial y el viewport móvil están resueltos; quedan breakpoints, guía y metadatos.
+**Nota global: 6/10** en el momento de la auditoría; **6,5/10** tras 0.1, 0.2 y 0.4, **7/10** tras 0.3, **7,5/10** tras 1.1, **8/10** tras 1.2, **8,5/10** tras 1.5, 1.6 y 1.7, **9/10** tras 2.1, 2.2 y 2.5, **9,5/10** tras 3.1, 3.2, 3.3 y 3.4, y **9,7/10** tras 2.3b y 3.5. La accesibilidad, la cascada, los tokens, la navegación estática, la validación automatizada, la carga inicial, el viewport móvil y la estrategia responsive están resueltos; solo quedan mejoras opcionales.
 
 ---
 
@@ -92,7 +92,7 @@ frontend/
 | Selectores repetidos en el mismo archivo (conteo propio) | **209** |
 | Errores reales de `html-validate` | **44** (2 tras 1.1) |
 | Avisos de estilo `html-validate` (`void-style`, `doctype-style`) | 198 |
-| Breakpoints distintos | **13 → 4** (2.3a) |
+| Breakpoints distintos | **13 → 4**, todos `min-width` (2.3b) |
 | Tamaños de `font-size` distintos en px | **30 → 8** (2.2) |
 | Declaraciones `px` / `rem` | **1.047** / **22** |
 | Usos de tokens de espaciado | **368** (2.2) |
@@ -136,7 +136,7 @@ frontend/
 | FE-017 | Accesibilidad | B | Tablas dinámicas sin anuncio del resultado | `feedback.js:68-73`; contadores de tablas | **Resuelto (1.5)** |
 | FE-018 | CSS / Arquitectura | **A** | Cascada de dos generaciones: 130 selectores duplicados | `base.css:214`; `components.css:1639`; `layout.css:326`; `login.css:225` (+5) | **Resuelto (2.1)** |
 | FE-019 | CSS / Arquitectura | M | Bug de cascada: media query de `.temp-card` anulada | `css/pages/dashboard.css:55-67,69` | **Resuelto (0.4)** |
-| FE-020 | Responsive | M | 13 breakpoints, desktop-first e inconsistente | todas las hojas | 🟡 Parcial (2.3a) |
+| FE-020 | Responsive | M | 13 breakpoints, desktop-first e inconsistente | todas las hojas | **Resuelto (2.3b)** |
 | FE-021 | CSS / Calidad | M | Sin escala tipográfica: 30 tamaños px distintos | `base.css:51-62`; `components.css` | **Resuelto (2.2)** |
 | FE-022 | CSS / Calidad | M | Sin tokens de espaciado; valores ad hoc | `tokens.css`; toda la CSS | **Resuelto (2.2)** |
 | FE-023 | CSS / Calidad | M | 91 hex fuera de tokens | `components.css:92,101,120`; `trucks.css`; `login.css` | **Resuelto (2.2)** |
@@ -410,7 +410,7 @@ document.documentElement.classList.add("is-ready");
 
 ### 5.3 Diseño responsive
 
-#### FE-020 · 13 breakpoints y estrategia desktop-first — Media · Deuda técnica · 🟡 Parcial (2.3a)
+#### FE-020 · 13 breakpoints y estrategia desktop-first — Media · Deuda técnica · **Resuelto (2.3b)**
 
 **Ubicación:** todas las hojas.
 
@@ -435,7 +435,9 @@ trucks.css      640
 
 **Recomendación:** 4 cortes mobile-first (`480`, `768`, `1024`, `1280`) definidos en un único lugar documentado.
 
-**Avance (2.3a):** 32 media queries remapeadas a **4 cortes** (`480`, `768`, `1024`, `1280`). Se mantiene `max-width`: la inversión a `min-width` implica mover los valores base de todos los componentes, no solo cambiar la consulta. Verificado en 70 combinaciones de página/ancho (320–1440) sin desbordamientos; se corrigió el badge de alerta recortado a 1100/1280. La inversión mobile-first queda pendiente como 2.3b.
+**Avance (2.3a):** 32 media queries remapeadas a **4 cortes** (`480`, `768`, `1024`, `1280`). Se mantiene `max-width`: la inversión a `min-width` implica mover los valores base de todos los componentes, no solo cambiar la consulta. Verificado en 70 combinaciones de página/ancho (320–1440) sin desbordamientos; se corrigió el badge de alerta recortado a 1100/1280.
+
+**Corrección aplicada (2.3b):** base móvil en las 16 hojas y **25 media queries `min-width`** con los 4 cortes; **0 `max-width`** (solo queda `prefers-reduced-motion`). Se invirtieron los bloques de layout (drawer/sidebar fija), KPI, formularios, modales, toasts, dashboard, rutas, settings, IA, login, portal del conductor y tablas. La comparación A/B de estilos computados en 110 snapshots (10 páginas × 11 anchos) no muestra diferencias estructurales: solo texto dinámico, subpíxeles de fuente y el desplazamiento de 1 px en los cortes exactos. Capturas a 320–1280 y drawer/sidebar en 390/1023/1024; E2E **53/53**. También se corrigió el contraste del estado offline del asistente en tema oscuro.
 
 ---
 

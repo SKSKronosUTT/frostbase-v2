@@ -1,6 +1,6 @@
 .dashboard-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 336px;
+  grid-template-columns: 1fr;
   gap: 18px;
   align-items: start;
 }
@@ -11,6 +11,12 @@
   flex-direction: column;
   gap: 18px;
   min-width: 0;
+}
+
+.dashboard-side {
+  display: grid;
+  grid-template-columns: 1fr;
+  align-items: start;
 }
 
 .map-card .card__body {
@@ -34,26 +40,8 @@
   margin-top: var(--space-7);
 }
 
-@media (max-width: 1280px) {
-  .dashboard-grid {
-    grid-template-columns: minmax(0, 1fr) 300px;
-  }
-}
-
-@media (max-width: 1024px) {
-  .dashboard-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .dashboard-side {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    align-items: start;
-  }
-}
-
 .temp-card {
-  flex: 0 0 188px;
+  flex: 0 0 170px;
   scroll-snap-align: start;
   padding: 13px var(--space-7);
   cursor: pointer;
@@ -117,7 +105,7 @@
 }
 
 .map--dashboard {
-  height: 430px;
+  height: 340px;
 }
 
 .temp-card:hover {
@@ -133,16 +121,36 @@
 }
 
 /* Responsive al final para no ser anulada por las reglas base (FE-019). */
-@media (max-width: 480px) {
+
+@media (min-width: 480px) {
   .dashboard-side {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .map--dashboard {
-    height: 340px;
+    height: 430px;
   }
 
   .temp-card {
-    flex: 0 0 170px;
+    flex: 0 0 188px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .dashboard-grid {
+    grid-template-columns: minmax(0, 1fr) 300px;
+  }
+
+  .dashboard-side {
+    display: flex;
+    flex-direction: column;
+    align-items: normal;
+    grid-template-columns: none;
+  }
+}
+
+@media (min-width: 1280px) {
+  .dashboard-grid {
+    grid-template-columns: minmax(0, 1fr) 336px;
   }
 }
