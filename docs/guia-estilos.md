@@ -180,6 +180,8 @@ Los únicos cortes permitidos son **480, 768, 1024 y 1280 px**. La estrategia es
 - Comprueba 320, 390, 480, 768, 1024, 1280 y 1440 px.
 - En móvil, el sidebar es un drawer; no dupliques su lógica.
 
+Los componentes que viven en columnas de ancho variable usan **container queries**, no el viewport: `.main` y `.carousel` son contenedores (`container-type: inline-size`). `.kpi-grid` pasa a 3 columnas con `@container (min-width: 640px)` y `.temp-card` usa `clamp(170px, 42cqi, 210px)`. Usa `cqi`/`@container` para el ancho interno de un componente; reserva las media queries para la página.
+
 ### 5.4 Interacción y foco
 
 Todo control debe tener estados claros:
@@ -293,6 +295,7 @@ focusFirstError(form);
 
 - **Todo `<th>` necesita `scope="col"` o `scope="row"`.** `html-validate` falla si falta.
 - El `.table-wrap` es una región con nombre y `tabindex="0"`: si la tabla desborda, se recorre con flechas.
+- En ≥768 px el `.table-wrap` limita su altura a `min(70vh, 640px)` y la cabecera es **sticky**; en móvil solo hay scroll horizontal.
 - Para tablas compactas usa `.table--compact`.
 - Para estados de carga/error usa `renderTableState`, `tableSkeleton`, `emptyRow`, `tableError` y `setAriaBusy` de `components/feedback.js`.
 
@@ -397,6 +400,7 @@ Los errores usan `role="alert"` y no se autodescartan; el resto usa `role="statu
 - Usa `createMap(id, { center, zoom, lazy })` de `components/map.js`.
 - El contenedor debe ser `role="region"` con `aria-label` y `aria-describedby` a un resumen textual actualizado.
 - `lazy: true` difiere las teselas hasta que el mapa es visible (dashboard); úsalo solo en mapas bajo el pliegue.
+- Los mapas mantienen **altura explícita** (340/430 px según breakpoint): Leaflet necesita un contenedor estable y `aspect-ratio` provocaba saltos al cambiar el ancho del panel. No uses `aspect-ratio` en `.map`.
 - Añade un resumen con el número de unidades/puntos o la ubicación. No dejes el mapa como única fuente de información.
 
 ---

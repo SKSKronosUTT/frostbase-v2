@@ -45,7 +45,7 @@ Este plan solo contiene acciones derivadas de hallazgos verificados. No incluye 
 | 3.3 | `100dvh` y Safari | FE-029 | S | Bajo | — | ✅ |
 | 3.4 | Ampliar suite a11y | FE-036 | M | Medio | 1.x | ✅ |
 | 3.5 | Guía de estilos y README frontend | — | M | Medio | 2.x | ✅ |
-| 4.1 | Container queries y detalles UI | — | M | Bajo | 2.3 | ⬜ |
+| 4.1 | Container queries y detalles UI | — | M | Bajo | 2.3 | ✅ |
 | 4.2 | Tema automático del sistema | — | S | Bajo | 0.2 | ✅ |
 
 **Lectura rápida:** 0.1, 0.2, 0.4 y todo el bloque 1.x son «quick wins» (S, alto/medio impacto). La Fase 2 es donde está el verdadero retorno a medio plazo, con 2.1 como prerrequisito.
@@ -672,11 +672,21 @@ La verificación A/B de estilos computados se ejecutó en la app real (login, da
 
 # Fase 4 · Mejoras opcionales
 
-## 4.1 · Container queries y detalles UI — ⬜
+## 4.1 · Container queries y detalles UI — ✅ Aplicado (con dos descartes razonados)
 
-Aplicar `container-type: inline-size` a las tarjetas y adaptar `.kpi-grid`/`.temp-card` al ancho de su contenedor en lugar del viewport; cabeceras de tabla sticky; `aspect-ratio` en mapas y medios; iconografía SVG inline.
+**Tareas realizadas**
 
+1. `container-type: inline-size` en `.main` y `.carousel`. `.kpi-grid` pasa de 1 columna a 3 cuando su contenedor mide ≥640 px, no cuando lo dice el viewport; `.temp-card` usa `flex: 0 0 clamp(170px, 42cqi, 210px)` para adaptarse al ancho real del carrusel.
+2. Cabeceras de tabla **sticky**: `th` con `position: sticky`, y en ≥768 px `.table-wrap` limita su altura a `min(70vh, 640px)` con scroll vertical, manteniendo el scroll horizontal y el foco por teclado. Verificado con scroll interno (offset 0).
+3. Se evaluó `aspect-ratio` en mapas: **descartado**. Leaflet necesita una altura estable y el diseño usa 340/430 px según el breakpoint; un ratio basado en el ancho del panel producía saltos (el mapa del dashboard mide 432 px de ancho a 1100 y 712 a 1440). Las imágenes ya llevan `width`/`height` y el logo usa variantes de tamaño.
+4. Se evaluó migrar la iconografía a SVG inline: **descartado**. FontAwesome ya está subseteado (≈6 KB de transferencia); inline duplicaría marcado en 12 páginas y complicaría el tema.
+
+**Archivos:** `css/layout.css`, `css/components.css`, `css/pages/dashboard.css`.
 **Esfuerzo:** M · **Impacto:** Bajo · **Dependencias:** 2.3.
+
+**Verificación:** KPI a 1 columna en 320/600 y 3 en 768/1024/1280; tarjetas de temperatura 170/210 px según contenedor; cabecera sticky (offset 0 tras `scrollTop=250`) con scroll horizontal intacto; capturas a 768/1024/1280; suite E2E **57/57**.
+
+**Resultado:** dos mejoras reales (container queries y cabeceras sticky) y dos descartes documentados con motivo. No hay regresiones visuales en las capturas ni en la suite.
 
 ## 4.2 · Tema automático del sistema — ✅ Aplicado
 
@@ -789,5 +799,6 @@ npx lighthouse http://localhost:8050/dashboard.html \
 | 2026-11-26 | 3.5 | `docs/guia-estilos.md`, `frontend/README.md`, `README.md` | Guía de ~300 líneas (tokens, componentes, a11y, recetas, checklist) y README de frontend; enlaces desde el raíz; solo documentación |
 | 2026-11-26 | 2.3b | 16 hojas CSS | Base móvil y 25 media queries `min-width` (480/768/1024/1280); 0 `max-width`; A/B en 110 snapshots sin diferencias estructurales; E2E 53/53 |
 | 2026-11-26 | 4.2 | `theme.js`, `theme-boot.js`, `login.js`, `theme.spec.js` | Tema del sistema sin preferencia (sin flash); prioridad local → admin → sistema; cambio en vivo; 4 pruebas; E2E 57/57 |
+| 2026-11-26 | 4.1 | `layout.css`, `components.css`, `dashboard.css` | Container queries en KPI/carrusel; cabeceras de tabla sticky con scroll acotado; `aspect-ratio` e iconos SVG descartados con motivo; E2E 57/57 |
 
-**Próximo paso recomendado:** **4.1 · Container queries y detalles UI** (M), la última mejora opcional. El plan obligatorio (fases 0–3) está cerrado.
+**Próximo paso recomendado:** no quedan pasos del plan. Mantenimiento: revisar los descartes de 4.1 (mapas con altura estable y FontAwesome subseteado) si cambia el diseño o se añaden iconos.

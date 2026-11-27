@@ -270,6 +270,7 @@
 
 .table-wrap {
   overflow-x: auto;
+  overflow-y: clip;
   border-radius: 0;
 }
 
@@ -280,6 +281,9 @@
 }
 
 .table th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
   text-align: left;
   font-size: var(--text-xs);
   text-transform: uppercase;
@@ -524,6 +528,7 @@
 }
 
 .carousel {
+  container-type: inline-size;
   position: relative;
 }
 
@@ -1660,10 +1665,6 @@
 }
 
 @media (min-width: 768px) {
-  .kpi-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
   .form-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -1712,5 +1713,18 @@
 
   .kpi-card__value {
     font-size: var(--text-2xl);
+  }
+}
+
+@container (min-width: 640px) {
+  .kpi-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 768px) {
+  .table-wrap {
+    max-height: min(70vh, 640px);
+    overflow-y: auto;
   }
 }
