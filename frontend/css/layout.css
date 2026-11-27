@@ -171,6 +171,7 @@ body.sidebar-open {
 }
 
 .main {
+  container-type: inline-size;
   margin-left: 0;
   width: 100%;
   min-width: 0;

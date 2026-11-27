@@ -41,7 +41,7 @@
 }
 
 .temp-card {
-  flex: 0 0 170px;
+  flex: 0 0 clamp(170px, 42cqi, 210px);
   scroll-snap-align: start;
   padding: 13px var(--space-7);
   cursor: pointer;
@@ -123,16 +123,12 @@
 /* Responsive al final para no ser anulada por las reglas base (FE-019). */
 
 @media (min-width: 480px) {
-  .dashboard-side {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
   .map--dashboard {
     height: 430px;
   }
 
-  .temp-card {
-    flex: 0 0 188px;
+  .dashboard-side {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
