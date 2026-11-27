@@ -46,7 +46,7 @@ Este plan solo contiene acciones derivadas de hallazgos verificados. No incluye 
 | 3.4 | Ampliar suite a11y | FE-036 | M | Medio | 1.x | ✅ |
 | 3.5 | Guía de estilos y README frontend | — | M | Medio | 2.x | ✅ |
 | 4.1 | Container queries y detalles UI | — | M | Bajo | 2.3 | ⬜ |
-| 4.2 | Tema automático del sistema | — | S | Bajo | 0.2 | ⬜ |
+| 4.2 | Tema automático del sistema | — | S | Bajo | 0.2 | ✅ |
 
 **Lectura rápida:** 0.1, 0.2, 0.4 y todo el bloque 1.x son «quick wins» (S, alto/medio impacto). La Fase 2 es donde está el verdadero retorno a medio plazo, con 2.1 como prerrequisito.
 
@@ -678,11 +678,22 @@ Aplicar `container-type: inline-size` a las tarjetas y adaptar `.kpi-grid`/`.tem
 
 **Esfuerzo:** M · **Impacto:** Bajo · **Dependencias:** 2.3.
 
-## 4.2 · Tema automático del sistema — ⬜
+## 4.2 · Tema automático del sistema — ✅ Aplicado
 
-Usar `prefers-color-scheme` como valor inicial cuando no haya preferencia guardada, manteniendo el toggle manual y la persistencia actual (`theme.js`).
+**Tareas realizadas**
 
+1. `theme-boot.js` aplica antes del pintado la preferencia guardada (`frostbase-theme`) o, si no existe, `prefers-color-scheme: dark`. Evita el destello del tema incorrecto.
+2. `theme.js` resuelve en orden **localStorage → tema guardado del admin → sistema**; el fallback del sistema no se persiste, para seguir respetándolo en la siguiente visita.
+3. Si no hay preferencia explícita (ni local ni de admin), se escucha `matchMedia("(prefers-color-scheme: dark)")` y se actualiza el tema cuando cambia el sistema operativo.
+4. El toggle manual sigue guardando en local y en `/auth/preferences`; al elegir, se crea una preferencia explícita. `applyTheme` acepta `{ persist: false }` para los usos que no deben fijar el tema (p. ej. el Escape del login).
+5. Se añadió `tests/e2e/theme.spec.js` con 4 casos: sistema oscuro inicial, preferencia guardada que manda, toggle persistente y cambio en vivo del sistema.
+
+**Archivos:** `js/core/theme.js`, `js/core/theme-boot.js`, `js/pages/login.js`, `tests/e2e/theme.spec.js`.
 **Esfuerzo:** S · **Impacto:** Bajo · **Dependencias:** 0.2.
+
+**Verificación:** `npx playwright test theme.spec.js` (4/4) y suite completa (**57/57**); el build recalcula el hash CSP de `theme-boot` en `csp.json` y `csp.spec.js` sigue sin violaciones.
+
+**Resultado:** un visitante sin preferencia recibe el tema del sistema sin flash en la carga inicial (boot inline); el toggle y la persistencia existentes no cambian. Prioridad documentada: local → admin → sistema. En páginas autenticadas el tema del admin (por defecto `light`) sigue siendo una preferencia guardada; si difiere del sistema, se aplica al inicializar (parpadeo mínimo, sin renderizado de tema en servidor).
 
 ---
 
@@ -777,5 +788,6 @@ npx lighthouse http://localhost:8050/dashboard.html \
 | 2026-11-26 | 3.3 | `tokens.css` + 7 hojas CSS | Token `--viewport-height` (100vh → 100dvh con `@supports`); 9 usos sustituidos; login sin scroll y modales dentro del viewport en Chromium y WebKit; E2E 53/53 |
 | 2026-11-26 | 3.5 | `docs/guia-estilos.md`, `frontend/README.md`, `README.md` | Guía de ~300 líneas (tokens, componentes, a11y, recetas, checklist) y README de frontend; enlaces desde el raíz; solo documentación |
 | 2026-11-26 | 2.3b | 16 hojas CSS | Base móvil y 25 media queries `min-width` (480/768/1024/1280); 0 `max-width`; A/B en 110 snapshots sin diferencias estructurales; E2E 53/53 |
+| 2026-11-26 | 4.2 | `theme.js`, `theme-boot.js`, `login.js`, `theme.spec.js` | Tema del sistema sin preferencia (sin flash); prioridad local → admin → sistema; cambio en vivo; 4 pruebas; E2E 57/57 |
 
-**Próximo paso recomendado:** **4.1 · Container queries y detalles UI** (M) o **4.2 · Tema automático del sistema** (S); son mejoras opcionales de la Fase 4. El plan obligatorio (fases 0–3) queda cerrado.
+**Próximo paso recomendado:** **4.1 · Container queries y detalles UI** (M), la última mejora opcional. El plan obligatorio (fases 0–3) está cerrado.

@@ -85,6 +85,6 @@ form.addEventListener("submit", async (event) => {
 
 document.addEventListener("keydown", (event) => {
   if (event.key === "Escape") {
-    applyTheme(document.documentElement.dataset.theme);
+    applyTheme(document.documentElement.dataset.theme, { persist: false });
   }
 });
