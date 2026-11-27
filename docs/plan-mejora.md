@@ -36,7 +36,7 @@ Este plan solo contiene acciones derivadas de hallazgos verificados. No incluye 
 | 1.9 | Tablas desplazables accesibles | FE-038 | S | Medio | 1.8 | ✅ |
 | 2.1 | Fusionar la cascada «Consolidado» | FE-018, FE-034 | L | Alto | 0.4 | ✅ |
 | 2.2 | Tokens de tipografía y espaciado | FE-021, FE-022, FE-023 | L | Alto | 2.1 | ✅ |
-| 2.3 | Breakpoints unificados mobile-first | FE-020 | M | Medio | 2.1 | 🟡 parcial |
+| 2.3 | Breakpoints unificados mobile-first | FE-020 | M | Medio | 2.1 | ✅ |
 | 2.4 | Limpieza de CSS muerto | FE-025, FE-026, FE-027 | S | Bajo | 2.1 | ✅ |
 | 2.5 | Parciales de `<head>` y sidebar estática | FE-001, FE-033 | L | Medio | 2.1 | ✅ |
 | 2.6 | Pesos tipográficos coherentes | FE-024 | S | Bajo | 2.2 | ✅ |
@@ -456,25 +456,27 @@ La verificación A/B de estilos computados se ejecutó en la app real (login, da
 
 ---
 
-## 2.3 · Breakpoints unificados mobile-first — 🟡 Parcial (4 cortes; falta inversión)
+## 2.3 · Breakpoints unificados mobile-first — ✅ Aplicado
 
 **Hallazgos:** FE-020.
 
 **Tareas realizadas**
 
-1. Se remapearon **32 media queries** a 4 cortes: `480`, `768`, `1024` y `1280` px (antes 13 valores entre 360 y 1180).
-2. Se mantiene `max-width` (desktop-first): la inversión a `min-width` exige mover los valores base de todos los componentes a reglas `min-width`, no solo cambiar la consulta; un cambio mecánico rompería los layouts.
-3. Verificación en **70 combinaciones** (7 páginas × 10 anchos) y capturas en los rangos que cambian. Se corrigió el badge «Dispositivo desconectado» que se recortaba a 1100/1280 añadiendo `flex-wrap` a `.alert-carousel__top`.
+1. **2.3a:** se remapearon las media queries a 4 cortes: `480`, `768`, `1024` y `1280` px (antes 13 valores entre 360 y 1180).
+2. **2.3b:** se invirtió la estrategia a **mobile-first**: la base de cada hoja es el layout móvil y los cortes usan `min-width`. Ahora hay **25 media queries de ancho** y **0 `max-width`**; solo queda `prefers-reduced-motion`.
+3. Se reescribieron los bloques por hoja: `layout.css` (drawer/base, sidebar fija y padding desde 1024/1280), `components.css` (KPI, formularios, modales, toasts, toolbar) y las 9 hojas de página (grids de dashboard/rutas/settings/IA, login de una a dos columnas, portal del conductor, tablas).
+4. Cuando la cascada antigua anulaba una regla por orden (p. ej. el icono KPI compacto), se mantuvo el comportamiento real para no introducir cambios visuales; el resto de intenciones se conservaron al invertir los bloques.
+5. Se corrigió el contraste del estado offline del asistente en tema oscuro (`--danger-text-dark`), que apareció al ejecutar la suite.
 
-**Resultado:** **13 → 4 breakpoints** (32 consultas), **0 desbordamientos** y 0 errores entre 320 y 1440 px. Login a 800, rutas a 1024 y dashboard a 1100/1280 revisados. La inversión completa a mobile-first queda pendiente como **2.3b**.
+**Resultado:** **4 breakpoints** (`480/768/1024/1280`), todos `min-width`; **0 `max-width`**. La comparación A/B de estilos computados (10 páginas × 11 anchos = 110 snapshots) no muestra diferencias estructurales: solo texto dinámico, subpíxeles de fuente y el desplazamiento de 1 px en los cortes exactos (≤480 pasa a ≥480, etc.), inherente a la semántica mobile-first. Capturas a 320–1280 y drawer/sidebar comprobados en 390/1023/1024. E2E **53/53**.
 
-**Archivos:** todas las hojas de `css/` y `css/pages/`; `components.css` para el badge.
-**Esfuerzo:** M · **Impacto:** Medio · **Dependencias:** 2.1.
-**Riesgo de regresión visual:** alto si se convierte a ciegas. Mitigación aplicada: una estrategia única de 4 cortes y verificación en 10 anchos.
+**Archivos:** las 16 hojas de `css/` y `css/pages/`.
+**Esfuerzo:** L · **Impacto:** Medio · **Dependencias:** 2.1.
+**Riesgo de regresión visual:** alto; mitigado con rama propia, A/B automatizado, capturas y revisión de los cortes.
 
-**Aceptación:** 4 breakpoints ✅; todos `min-width` ❌ (pendiente 2.3b); ninguna página se rompe entre 320 y 1440 ✅.
+**Aceptación:** solo 4 breakpoints ✅; todos `min-width` ✅; ninguna página se rompe entre 320 y 1440 ✅.
 
-**Verificación:** búsqueda de `@media (max-width` (4 valores), `layout-check` en 10 anchos y capturas.
+**Verificación:** búsqueda de `@media (max-width` (0), conteo de `min-width` (25, valores 480/768/1024/1280), A/B de estilos computados, capturas y suite E2E completa.
 
 ---
 
@@ -774,5 +776,6 @@ npx lighthouse http://localhost:8050/dashboard.html \
 | 2026-11-26 | 3.2 | `build.mjs`, `main.py`, `map.js`, `components.css`, assets y Dockerfile | Tema inline con hash CSP; CSS único por página; logo 71 → 18 KB; LCP móvil 2,17 s; CLS 0,034; Lighthouse 90–100 |
 | 2026-11-26 | 3.3 | `tokens.css` + 7 hojas CSS | Token `--viewport-height` (100vh → 100dvh con `@supports`); 9 usos sustituidos; login sin scroll y modales dentro del viewport en Chromium y WebKit; E2E 53/53 |
 | 2026-11-26 | 3.5 | `docs/guia-estilos.md`, `frontend/README.md`, `README.md` | Guía de ~300 líneas (tokens, componentes, a11y, recetas, checklist) y README de frontend; enlaces desde el raíz; solo documentación |
+| 2026-11-26 | 2.3b | 16 hojas CSS | Base móvil y 25 media queries `min-width` (480/768/1024/1280); 0 `max-width`; A/B en 110 snapshots sin diferencias estructurales; E2E 53/53 |
 
-**Próximo paso recomendado:** **2.3b · Inversión mobile-first** (sesión dedicada) o **4.1 · Container queries y detalles UI** (M). La Fase 3 queda cerrada.
+**Próximo paso recomendado:** **4.1 · Container queries y detalles UI** (M) o **4.2 · Tema automático del sistema** (S); son mejoras opcionales de la Fase 4. El plan obligatorio (fases 0–3) queda cerrado.

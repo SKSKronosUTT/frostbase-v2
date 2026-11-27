@@ -66,7 +66,7 @@ El paso a paso con ejemplos está en la [guía de estilos](../docs/guia-estilos.
 
 - **Tokens:** colores, tipografía, espaciado, sombras y `--viewport-height` salen de `css/tokens.css`. No escribas hex fuera de tokens ni `100vh`.
 - **CSS:** BEM parcial (`bloque__elemento--modificador`), estados `is-*`, sin IDs para estilos y sin `!important` salvo utilidades.
-- **Breakpoints:** solo 480, 768, 1024 y 1280 px. La estrategia actual es `max-width`; la inversión mobile-first es el pendiente 2.3b.
+- **Breakpoints:** solo 480, 768, 1024 y 1280 px, todos `min-width` (base móvil). No uses `max-width`.
 - **Accesibilidad:** landmarks, un `h1`, etiquetas de formulario, `th scope`, foco visible, modales con focus trap y mensajes `role="status"`/`alert`.
 - **HTML dinámico:** usa `escapeHtml` de `core/helpers.js`; `npm run check:html` falla si interpolas datos sin sanear.
 - **Rendimiento:** el build deja una sola hoja CSS por página; no añadas `<link>` en el HTML. El tema va inline con hash CSP.

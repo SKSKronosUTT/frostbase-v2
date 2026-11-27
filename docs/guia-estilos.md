@@ -165,7 +165,7 @@ Si un componente se usa en dos páginas, muévelo a `components.css`.
 
 ### 5.3 Breakpoints
 
-Los únicos cortes permitidos son **480, 768, 1024 y 1280 px**. La estrategia actual es `max-width` (desktop-first); la inversión completa a `min-width` es el paso pendiente **2.3b**. Mientras tanto:
+Los únicos cortes permitidos son **480, 768, 1024 y 1280 px**. La estrategia es **mobile-first**: la base de cada hoja es el layout móvil y los cortes se escriben con `min-width`. No uses `max-width` para anchos. Escribe primero el diseño móvil y añade la mejora de escritorio/tablet dentro del corte correspondiente.
 
 - No añadas breakpoints nuevos.
 - Reutiliza uno de los cuatro valores.

@@ -4,6 +4,12 @@
   padding: var(--space-8) 18px;
 }
 
+.drivers-table {
+  display: block;
+  overflow-x: auto;
+  white-space: nowrap;
+}
+
 .drivers-table td {
   vertical-align: middle;
 }
@@ -18,10 +24,10 @@
   margin-top: var(--space-5);
 }
 
-@media (max-width: 1024px) {
+@media (min-width: 1024px) {
   .drivers-table {
-    display: block;
-    overflow-x: auto;
-    white-space: nowrap;
+    display: table;
+    overflow: visible;
+    white-space: normal;
   }
 }
