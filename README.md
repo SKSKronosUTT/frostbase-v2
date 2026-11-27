@@ -626,6 +626,8 @@ Los hooks de `pre-commit` ejecutan `npm run lint` y `npm run verify:html` cuando
 | Documento | Cuándo consultarlo |
 |---|---|
 | [docs/INSTALLATION.md](docs/INSTALLATION.md) | Instalación detallada, variables, cambio y recuperación de contraseña. |
+| [docs/guia-estilos.md](docs/guia-estilos.md) | Tokens, componentes, accesibilidad y recetas para crear páginas. |
+| [frontend/README.md](frontend/README.md) | Arranque, estructura y comandos del frontend. |
 | [docs/API.md](docs/API.md) | Endpoints, ejemplos de peticiones y respuestas. |
 | [docs/DATABASE.md](docs/DATABASE.md) | Tablas, relaciones y columnas. |
 | [docs/IOT-INTEGRATION.md](docs/IOT-INTEGRATION.md) | Integración de firmware ESP32-S3. |

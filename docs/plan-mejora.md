@@ -44,7 +44,7 @@ Este plan solo contiene acciones derivadas de hallazgos verificados. No incluye 
 | 3.2 | Rendimiento de carga | FE-028, FE-030, FE-031, FE-032 | M | Medio | 2.5 | ✅ |
 | 3.3 | `100dvh` y Safari | FE-029 | S | Bajo | — | ✅ |
 | 3.4 | Ampliar suite a11y | FE-036 | M | Medio | 1.x | ✅ |
-| 3.5 | Guía de estilos y README frontend | — | M | Medio | 2.x | ⬜ |
+| 3.5 | Guía de estilos y README frontend | — | M | Medio | 2.x | ✅ |
 | 4.1 | Container queries y detalles UI | — | M | Bajo | 2.3 | ⬜ |
 | 4.2 | Tema automático del sistema | — | S | Bajo | 0.2 | ⬜ |
 
@@ -648,14 +648,23 @@ La verificación A/B de estilos computados se ejecutó en la app real (login, da
 
 ---
 
-## 3.5 · Guía de estilos y README frontend — ⬜
+## 3.5 · Guía de estilos y README frontend — ✅ Aplicado
 
-**Tareas:** documentar tokens, escala tipográfica, espaciado, breakpoints, convención BEM, estados de componentes (hover/focus/active/disabled/error), checklist de PR y comandos de validación.
+**Tareas realizadas**
 
-**Archivos:** `docs/guia-estilos.md` (nuevo), `frontend/README.md` (nuevo o ampliación del raíz).
+1. `docs/guia-estilos.md`: principios, estructura, build/parciales, tokens (color, tipografía, espaciado, forma, movimiento y `--viewport-height`), convención BEM, breakpoints, estados de componentes, componentes base con ejemplos, checklist de accesibilidad, rendimiento, recetas para crear página/componente, checklist de PR, comandos y anti-patrones.
+2. `frontend/README.md`: arranque, estructura, comandos (`lint`, `verify`, `lint:html`, Playwright), páginas/parciales, convenciones y build de producción.
+3. README raíz: enlaces a la guía y al README del frontend.
+4. Se revisaron tokens, clases y APIs citadas contra el código (`card__body`, `notify.*`, `activateModal`, `setButtonLoading`, `renderTableState`, etc.) y se corrigió la guía con Prettier.
+
+**Archivos:** `docs/guia-estilos.md`, `frontend/README.md`, `README.md`.
 **Esfuerzo:** M · **Impacto:** Medio · **Dependencias:** 2.x.
 
-**Aceptación:** un desarrollador nuevo puede crear una página siguiendo la guía sin consultar el CSS existente.
+**Aceptación:** un desarrollador nuevo puede crear una página siguiendo la guía sin consultar el CSS existente ✅.
+
+**Verificación:** revisión cruzada de tokens/clases/APIs, enlaces relativos y comandos; Prettier sobre los dos documentos nuevos.
+
+**Resultado:** guía de ~300 líneas con ejemplos reales y un README de frontend de inicio rápido. No se tocó código de producción; `npm run verify` sigue en verde y la guía refleja el estado tras 3.1–3.4 (CSS único, tema inline con hash, 4 breakpoints y suite a11y).
 
 ---
 
@@ -764,5 +773,6 @@ npx lighthouse http://localhost:8050/dashboard.html \
 | 2026-11-26 | 3.4 | `tests/e2e/accessibility.spec.js`, `package.json`, CI | 30 pruebas (12 páginas × 2 temas, `moderate+`) y 4 de foco; E2E 39 → **53**; 30/30 estable en dos pasadas |
 | 2026-11-26 | 3.2 | `build.mjs`, `main.py`, `map.js`, `components.css`, assets y Dockerfile | Tema inline con hash CSP; CSS único por página; logo 71 → 18 KB; LCP móvil 2,17 s; CLS 0,034; Lighthouse 90–100 |
 | 2026-11-26 | 3.3 | `tokens.css` + 7 hojas CSS | Token `--viewport-height` (100vh → 100dvh con `@supports`); 9 usos sustituidos; login sin scroll y modales dentro del viewport en Chromium y WebKit; E2E 53/53 |
+| 2026-11-26 | 3.5 | `docs/guia-estilos.md`, `frontend/README.md`, `README.md` | Guía de ~300 líneas (tokens, componentes, a11y, recetas, checklist) y README de frontend; enlaces desde el raíz; solo documentación |
 
-**Próximo paso recomendado:** **3.5 · Guía de estilos y README frontend** (M) o **2.3b · Inversión mobile-first** (sesión dedicada).
+**Próximo paso recomendado:** **2.3b · Inversión mobile-first** (sesión dedicada) o **4.1 · Container queries y detalles UI** (M). La Fase 3 queda cerrada.

@@ -15,7 +15,7 @@ npm run build
 
 **Estado de git al iniciar:** rama `devolp`, con un archivo no rastreado (`plan_implementacion_modulo_conductores.md`, del equipo, excluido de esta auditoría). No se modificó ningún archivo durante la auditoría.
 
-> **Actualización posterior:** tras la auditoría se aplicaron los pasos **0.1, 0.2, 0.3, 0.4, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 3.1, 3.2, 3.3 y 3.4** del plan (`docs/plan-mejora.md`); 2.3 queda parcial (cortes unificados, falta la inversión mobile-first). Los hallazgos afectados aparecen marcados como **Resuelto**; el resto sigue pendiente.
+> **Actualización posterior:** tras la auditoría se aplicaron los pasos **0.1, 0.2, 0.3, 0.4, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 3.1, 3.2, 3.3, 3.4 y 3.5** del plan (`docs/plan-mejora.md`); 2.3 queda parcial (cortes unificados, falta la inversión mobile-first). Los hallazgos afectados aparecen marcados como **Resuelto**; el resto sigue pendiente.
 
 ---
 
@@ -23,7 +23,7 @@ npm run build
 
 Proyecto con una base mejor que la media: sistema de tokens real con tema claro/oscuro, build con assets hasheados y caché inmutable, CSP y cabeceras de seguridad en servidor, cero estilos en línea, solo 3 `!important`, imágenes con dimensiones reservadas y una suite de accesibilidad con axe ya escrita. El diseño es coherente y el uso de Grid/Flexbox es correcto.
 
-Los riesgos iniciales se han ido cerrando: la Fase 1 resolvió las barreras de accesibilidad, 2.1 unificó la cascada (**0 selectores duplicados**, frente a 130) y 2.2 consolidó tipografía, espaciado y color en tokens (**8 tamaños**, **0 hex sueltos**). Los breakpoints ya son **4** (aún `max-width`; la inversión mobile-first queda como 2.3b), 2.5 dejó un único `<head>` y la navegación en el HTML, 3.1 incorporó Stylelint y html-validate a CI y pre-commit, 3.2 redujo la carga a una hoja CSS y LCP < 2,5 s, 3.3 unificó la altura del viewport con `dvh` y 3.4 amplió la suite a las 12 páginas. Quedan la guía de estilos y la inversión mobile-first.
+Los riesgos iniciales se han ido cerrando: la Fase 1 resolvió las barreras de accesibilidad, 2.1 unificó la cascada (**0 selectores duplicados**, frente a 130) y 2.2 consolidó tipografía, espaciado y color en tokens (**8 tamaños**, **0 hex sueltos**). Los breakpoints ya son **4** (aún `max-width`; la inversión mobile-first queda como 2.3b), 2.5 dejó un único `<head>` y la navegación en el HTML, 3.1 incorporó Stylelint y html-validate a CI y pre-commit, 3.2 redujo la carga a una hoja CSS y LCP < 2,5 s, 3.3 unificó la altura del viewport con `dvh`, 3.4 amplió la suite a las 12 páginas y 3.5 documentó tokens, componentes y recetas. Queda la inversión mobile-first y las mejoras opcionales de la Fase 4.
 
 **Nota global: 6/10** en el momento de la auditoría; **6,5/10** tras 0.1, 0.2 y 0.4, **7/10** tras 0.3, **7,5/10** tras 1.1, **8/10** tras 1.2, **8,5/10** tras 1.5, 1.6 y 1.7, **9/10** tras 2.1, 2.2 y 2.5, y **9,5/10** tras 3.1, 3.2, 3.3 y 3.4. La accesibilidad, la cascada, los tokens, la navegación estática, la validación automatizada, la carga inicial y el viewport móvil están resueltos; quedan breakpoints, guía y metadatos.
 
@@ -88,6 +88,7 @@ frontend/
 | LCP móvil (Lighthouse) | **1,48 s** login · **2,17 s** dashboard (3.2) |
 | CLS | **0** móvil · **0,034** escritorio (3.2) |
 | Usos de `100vh` | **9 → 0** (token con fallback `100dvh`, 3.3) |
+| Documentación frontend | `docs/guia-estilos.md` + `frontend/README.md` (3.5) |
 | Selectores repetidos en el mismo archivo (conteo propio) | **209** |
 | Errores reales de `html-validate` | **44** (2 tras 1.1) |
 | Avisos de estilo `html-validate` (`void-style`, `doctype-style`) | 198 |
