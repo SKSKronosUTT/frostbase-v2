@@ -432,6 +432,7 @@ La suite `tests/e2e/accessibility.spec.js` audita las 12 páginas en ambos temas
 - El build deja **una hoja CSS por página**; no añadas hojas sueltas al HTML.
 - El tema va inline con hash CSP (`build/csp.json`); no vuelvas a cargar `theme-boot.js` como script externo.
 - Las imágenes llevan `width`/`height`. Usa `logo-160.png` (no el PNG maestro de 1123 px) y los iconos `favicon-32`/`apple-touch-icon`.
+- Los contenedores de logo (`.brand-logo`, `.login-brand__logo`) fijan un cuadrado; la imagen interna usa `width`/`height: 100%` y `object-fit: contain` para no deformarse cuando `max-width: 100%` recorta el ancho.
 - Los mapas bajo el pliegue usan `lazy: true`.
 - No añadas dependencias de runtime sin justificar peso y licencia; los vendors se generan con `tools/vendor_assets.py`.
 - Objetivos: LCP < 2,5 s en 4G simulada, CLS < 0,1 y CSP sin violaciones. Mide con Lighthouse y la suite E2E.
