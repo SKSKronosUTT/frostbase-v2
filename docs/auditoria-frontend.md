@@ -993,3 +993,9 @@ const PAGES = ["dashboard.html","trucks.html","drivers.html","routes.html","aler
 - `html-validate` reportó 242 problemas, de los cuales 198 son `void-style`/`doctype-style` (convención de autocierre, no errores HTML5). Los 44 restantes son los hallazgos reales.
 - No se auditó `frontend/build` (generado), `assets/vendors` ni el backend, salvo CSP y cabeceras.
 - El contexto inicial del proyecto venía con campos de plantilla sin rellenar; los supuestos aplicados están declarados al inicio.
+
+---
+
+## 8. Mantenimiento posterior
+
+- **2026-11-27 · Logo del login:** el `<img>` de `.login-brand__logo` heredaba `max-width: 100%` del reset y mantenía el `height="72"` del atributo, así que se renderizaba a 38×72 px (deformado). Se añadió `width`/`height: 100%` + `object-fit: contain`, el mismo patrón que `.brand-logo__img`, y una prueba E2E (`login-logo.spec.js`) que verifica la proporción 1:1.

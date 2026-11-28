@@ -93,6 +93,13 @@ body.login-page {
   box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.4);
 }
 
+.login-brand__logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: var(--space-2);
+}
+
 .login-brand__logo--placeholder {
   border: 1px dashed rgba(255, 255, 255, 0.35);
 }
