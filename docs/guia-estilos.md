@@ -482,6 +482,8 @@ Ejemplo: una página interna `reports.html`.
 
 Las páginas públicas (login, splash) no llevan sidebar ni `app-shell`; el portal del conductor usa `driver-shell`.
 
+En el portal del conductor, los cuatro indicadores del contenedor van en **1 columna en móvil y 2×2 desde 480 px**. No uses 3 columnas: el cuarto indicador deja celdas vacías que muestran el fondo oscuro de la rejilla. El logo del portal es el PNG blanco: su contenedor debe llevar fondo oscuro (`--sidebar`) también en tema claro.
+
 ### 9.2 Configuración
 
 Añade la entrada en `pages.config.json`:
