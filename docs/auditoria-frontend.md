@@ -999,3 +999,5 @@ const PAGES = ["dashboard.html","trucks.html","drivers.html","routes.html","aler
 ## 8. Mantenimiento posterior
 
 - **2026-11-27 · Logo del login:** el `<img>` de `.login-brand__logo` heredaba `max-width: 100%` del reset y mantenía el `height="72"` del atributo, así que se renderizaba a 38×72 px (deformado). Se añadió `width`/`height: 100%` + `object-fit: contain`, el mismo patrón que `.brand-logo__img`, y una prueba E2E (`login-logo.spec.js`) que verifica la proporción 1:1.
+- **2026-11-27 · Logo del portal del conductor:** el PNG del logo es blanco y el contenedor usaba `var(--surface)`, así que en tema claro quedaba blanco sobre blanco. Ahora usa `var(--sidebar)` y una prueba E2E comprueba que el fondo es oscuro y la imagen cuadrada.
+- **2026-11-27 · Indicadores del conductor:** la rejilla pasaba a 3 columnas desde 480 px con 4 indicadores, dejando dos celdas vacías que mostraban el fondo oscuro de la rejilla. Ahora es 2×2 desde 480 px; la prueba E2E verifica 4 celdas y 2 filas completas.
